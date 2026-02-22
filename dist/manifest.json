@@ -5,14 +5,11 @@
   "description": "Enhance the Gemini web interface",
   "content_scripts": [
     {
-      "js": [
-        "assets/content.jsx-Pnj3N97b.js"
-      ],
       "matches": [
         "*://gemini.google.com/*"
       ],
-      "css": [
-        "assets/content-lHdOApwb.css"
+      "js": [
+        "src/content.jsx-loader.js"
       ]
     }
   ],
@@ -28,13 +25,18 @@
     "48": "public/icons/icon48.png",
     "128": "public/icons/icon128.png"
   },
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
   "web_accessible_resources": [
     {
       "matches": [
-        "*://gemini.google.com/*"
+        "<all_urls>"
       ],
       "resources": [
-        "assets/content.jsx-Pnj3N97b.js"
+        "**/*",
+        "*"
       ],
       "use_dynamic_url": false
     }

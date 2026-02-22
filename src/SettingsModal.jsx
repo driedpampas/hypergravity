@@ -9,6 +9,7 @@ export function SettingsModal({ onClose }) {
     autoScrollEnabled: false,
     wideModeEnabled: false,
     hideSidebarEnabled: false,
+    showExportButton: true,
   });
 
   const toggleSetting = (key) => {
@@ -56,6 +57,11 @@ export function SettingsModal({ onClose }) {
            settingKey="wideModeEnabled" 
            description="Expand chat width to utilize full screen space" 
         />
+          <SettingRow 
+            label="Show Export Button" 
+            settingKey="showExportButton" 
+            description="Add chat export button in the top action bar" 
+          />
         <SettingRow 
            label="Auto-scroll" 
            settingKey="autoScrollEnabled" 
