@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { countText } from './utils/textStats';
+import { useChromeStorage } from './hooks/useChromeStorage';
 import './TokenCounter.css';
 
 function calculateTokens(node) {
@@ -41,8 +42,150 @@ function getActiveConversationContainer() {
     return visible || containers[0] || null;
 }
 
+const USER_MESSAGE_SELECTORS = [
+    'user-query',
+    '.user-message',
+    '[data-message-author="user"]',
+    '.query-content',
+];
+
+const MODEL_MESSAGE_SELECTORS = [
+    'model-response',
+    '.model-response',
+    '[data-message-author="model"]',
+    'message-content .markdown-main-panel',
+    'generative-ui-response',
+    'response-container',
+];
+
+function uniqueTopLevelNodes(nodes) {
+    return nodes.filter(
+        (node, index, arr) =>
+            !arr.some(
+                (other, otherIndex) =>
+                    index !== otherIndex && other.contains(node)
+            )
+    );
+}
+
+function collectMessageNodes(conversationContainer) {
+    const userNodes = uniqueTopLevelNodes(
+        Array.from(
+            conversationContainer.querySelectorAll(
+                USER_MESSAGE_SELECTORS.join(', ')
+            )
+        )
+    );
+
+    const modelNodes = uniqueTopLevelNodes(
+        Array.from(
+            conversationContainer.querySelectorAll(
+                MODEL_MESSAGE_SELECTORS.join(', ')
+            )
+        )
+    ).filter(
+        (modelNode) =>
+            !userNodes.some((userNode) => userNode.contains(modelNode))
+    );
+
+    return { userNodes, modelNodes };
+}
+
+function getNodeText(node) {
+    return (node?.innerText || node?.textContent || '').trim();
+}
+
+function getTextSignature(text) {
+    const normalized = (text || '').replace(/\s+/g, ' ').trim();
+    return `${normalized.length}:${normalized}`;
+}
+
+function getApiKeyMarker(apiKey) {
+    return (apiKey || '').slice(-8);
+}
+
+function readCachedExactToken(node, role, signature, apiKeyMarker) {
+    if (!node) return null;
+    const storedRole = node.getAttribute('data-hg-token-role');
+    const storedSignature = node.getAttribute('data-hg-token-signature');
+    const storedApiKey = node.getAttribute('data-hg-token-key');
+    const storedValue = node.getAttribute('data-hg-token-value');
+    const tokenValue = Number(storedValue);
+
+    if (
+        storedRole === role &&
+        storedSignature === signature &&
+        storedApiKey === apiKeyMarker &&
+        Number.isFinite(tokenValue)
+    ) {
+        return tokenValue;
+    }
+
+    return null;
+}
+
+function writeCachedExactToken(
+    node,
+    role,
+    signature,
+    apiKeyMarker,
+    tokenValue
+) {
+    if (!node) return;
+    node.setAttribute('data-hg-token-processed', '1');
+    node.setAttribute('data-hg-token-role', role);
+    node.setAttribute('data-hg-token-signature', signature);
+    node.setAttribute('data-hg-token-key', apiKeyMarker);
+    node.setAttribute('data-hg-token-value', String(tokenValue));
+}
+
+function saveStatsForConversation(conversationId, stats) {
+    if (!conversationId) return;
+    const savedMap = JSON.parse(localStorage.getItem('hg_token_map') || '{}');
+    savedMap[conversationId] = stats;
+    localStorage.setItem('hg_token_map', JSON.stringify(savedMap));
+}
+
+async function countTokensWithGemini(text, apiKey, signal) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:countTokens?key=${encodeURIComponent(apiKey)}`;
+    const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: text || '' }],
+                },
+            ],
+        }),
+        signal,
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(
+            `countTokens failed (${response.status}): ${errorBody}`
+        );
+    }
+
+    const data = await response.json();
+    return Number(data?.totalTokens || 0);
+}
+
 export function TokenCounter() {
     const [stats, setStats] = useState({ inputTokens: 0, outputTokens: 0 });
+    const [debugCycleStats, setDebugCycleStats] = useState({
+        inputCached: 0,
+        inputFetched: 0,
+        outputCached: 0,
+        outputFetched: 0,
+    });
+    const [geminiSettings] = useChromeStorage('hypergravityGeminiSettings', {
+        geminiApiKey: '',
+    });
     const [conversationId, setConversationId] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const currentIdRef = useRef(null);
@@ -131,36 +274,45 @@ export function TokenCounter() {
         let interval;
         let containerObserver;
 
-        const updateTokens = () => {
+        let exactDebounceTimeout;
+        let exactRequestSeq = 0;
+        let exactController = null;
+
+        const updateTokens = async () => {
             const conversationContainer = getActiveConversationContainer();
             if (!conversationContainer) return;
 
             let inTokens = 0;
             let outTokens = 0;
 
-            const userQueries =
-                conversationContainer.querySelectorAll('user-query');
-            userQueries.forEach((q) => {
-                inTokens += calculateTokens(q);
+            const { userNodes, modelNodes } = collectMessageNodes(
+                conversationContainer
+            );
+
+            const inputMessages = userNodes.map((node) => {
+                const text = getNodeText(node);
+                const estimatedTokens = countText(text).tokens;
+                inTokens += estimatedTokens;
+                return { node, text, estimatedTokens };
             });
 
-            const modelResponses = conversationContainer.querySelectorAll(
-                'model-response, generative-ui-response, response-container'
-            );
-            modelResponses.forEach((r) => {
-                outTokens += calculateTokens(r);
+            const outputMessages = modelNodes.map((node) => {
+                const text = getNodeText(node);
+                const estimatedTokens = countText(text).tokens;
+                outTokens += estimatedTokens;
+                return { node, text, estimatedTokens };
             });
 
             debugLog('Token scan', {
                 containerTag: conversationContainer.tagName,
                 containerClasses: conversationContainer.className,
                 selectors: {
-                    input: 'user-query',
-                    output: 'model-response, generative-ui-response, response-container',
+                    input: USER_MESSAGE_SELECTORS.join(', '),
+                    output: MODEL_MESSAGE_SELECTORS.join(', '),
                 },
                 counts: {
-                    userQueries: userQueries.length,
-                    modelResponses: modelResponses.length,
+                    userQueries: inputMessages.length,
+                    modelResponses: outputMessages.length,
                 },
                 tokens: {
                     inputTokens: inTokens,
@@ -168,29 +320,205 @@ export function TokenCounter() {
                 },
             });
 
+            const apiKey = (geminiSettings?.geminiApiKey || '').trim();
+            if (!apiKey) {
+                setStats((prevStats) => {
+                    if (
+                        prevStats.inputTokens === inTokens &&
+                        prevStats.outputTokens === outTokens
+                    ) {
+                        return prevStats;
+                    }
+                    const newStats = {
+                        inputTokens: inTokens,
+                        outputTokens: outTokens,
+                    };
+
+                    debugLog('Tokens updated (estimate only):', newStats);
+                    saveStatsForConversation(conversationId, newStats);
+                    return newStats;
+                });
+                return;
+            }
+
+            const apiKeyMarker = getApiKeyMarker(apiKey);
+
+            const resolvedInputMessages = inputMessages.map((message) => {
+                const signature = getTextSignature(message.text);
+                const cachedTokens = readCachedExactToken(
+                    message.node,
+                    'input',
+                    signature,
+                    apiKeyMarker
+                );
+                return {
+                    ...message,
+                    role: 'input',
+                    signature,
+                    cachedTokens,
+                };
+            });
+
+            const resolvedOutputMessages = outputMessages.map((message) => {
+                const signature = getTextSignature(message.text);
+                const cachedTokens = readCachedExactToken(
+                    message.node,
+                    'output',
+                    signature,
+                    apiKeyMarker
+                );
+                return {
+                    ...message,
+                    role: 'output',
+                    signature,
+                    cachedTokens,
+                };
+            });
+
+            const hybridStats = {
+                inputTokens: resolvedInputMessages.reduce(
+                    (sum, message) =>
+                        sum +
+                        (message.cachedTokens === null
+                            ? message.estimatedTokens
+                            : message.cachedTokens),
+                    0
+                ),
+                outputTokens: resolvedOutputMessages.reduce(
+                    (sum, message) =>
+                        sum +
+                        (message.cachedTokens === null
+                            ? message.estimatedTokens
+                            : message.cachedTokens),
+                    0
+                ),
+            };
+
             setStats((prevStats) => {
                 if (
-                    prevStats.inputTokens === inTokens &&
-                    prevStats.outputTokens === outTokens
+                    prevStats.inputTokens === hybridStats.inputTokens &&
+                    prevStats.outputTokens === hybridStats.outputTokens
                 ) {
                     return prevStats;
                 }
-                const newStats = {
-                    inputTokens: inTokens,
-                    outputTokens: outTokens,
-                };
 
-                debugLog('Tokens updated:', newStats);
-
-                // Save to localStorage map
-                const savedMap = JSON.parse(
-                    localStorage.getItem('hg_token_map') || '{}'
+                debugLog(
+                    'Tokens updated (cached exact + estimate):',
+                    hybridStats
                 );
-                savedMap[conversationId] = newStats;
-                localStorage.setItem('hg_token_map', JSON.stringify(savedMap));
-
-                return newStats;
+                saveStatsForConversation(conversationId, hybridStats);
+                return hybridStats;
             });
+
+            clearTimeout(exactDebounceTimeout);
+            exactDebounceTimeout = setTimeout(async () => {
+                try {
+                    exactRequestSeq += 1;
+                    const requestId = exactRequestSeq;
+
+                    const pendingRequests = [
+                        ...resolvedInputMessages,
+                        ...resolvedOutputMessages,
+                    ].filter((message) => message.cachedTokens === null);
+
+                    const inputFetchedCount = pendingRequests.filter(
+                        (message) => message.role === 'input'
+                    ).length;
+                    const outputFetchedCount = pendingRequests.filter(
+                        (message) => message.role === 'output'
+                    ).length;
+
+                    setDebugCycleStats({
+                        inputCached: Math.max(
+                            0,
+                            resolvedInputMessages.length - inputFetchedCount
+                        ),
+                        inputFetched: inputFetchedCount,
+                        outputCached: Math.max(
+                            0,
+                            resolvedOutputMessages.length - outputFetchedCount
+                        ),
+                        outputFetched: outputFetchedCount,
+                    });
+
+                    if (pendingRequests.length === 0) {
+                        return;
+                    }
+
+                    if (exactController) {
+                        exactController.abort();
+                    }
+                    exactController = new AbortController();
+
+                    await Promise.all(
+                        pendingRequests.map(async (message) => {
+                            const exactTokens = await countTokensWithGemini(
+                                message.text,
+                                apiKey,
+                                exactController.signal
+                            );
+                            writeCachedExactToken(
+                                message.node,
+                                message.role,
+                                message.signature,
+                                apiKeyMarker,
+                                exactTokens
+                            );
+                        })
+                    );
+
+                    if (requestId !== exactRequestSeq) return;
+
+                    let exactInputTokens = 0;
+                    let exactOutputTokens = 0;
+
+                    resolvedInputMessages.forEach((message) => {
+                        const cached = readCachedExactToken(
+                            message.node,
+                            'input',
+                            message.signature,
+                            apiKeyMarker
+                        );
+                        exactInputTokens +=
+                            cached === null ? message.estimatedTokens : cached;
+                    });
+
+                    resolvedOutputMessages.forEach((message) => {
+                        const cached = readCachedExactToken(
+                            message.node,
+                            'output',
+                            message.signature,
+                            apiKeyMarker
+                        );
+                        exactOutputTokens +=
+                            cached === null ? message.estimatedTokens : cached;
+                    });
+
+                    const exactStats = {
+                        inputTokens: exactInputTokens,
+                        outputTokens: exactOutputTokens,
+                    };
+
+                    setStats((prevStats) => {
+                        if (
+                            prevStats.inputTokens === exactStats.inputTokens &&
+                            prevStats.outputTokens === exactStats.outputTokens
+                        ) {
+                            return prevStats;
+                        }
+
+                        debugLog('Exact tokens updated from Gemini API:', {
+                            ...exactStats,
+                            pendingRequests: pendingRequests.length,
+                        });
+                        saveStatsForConversation(conversationId, exactStats);
+                        return exactStats;
+                    });
+                } catch (error) {
+                    if (error?.name === 'AbortError') return;
+                    debugLog('Gemini countTokens error:', error);
+                }
+            }, 700);
         };
 
         const scheduleUpdate = () => {
@@ -250,20 +578,26 @@ export function TokenCounter() {
             if (containerObserver) containerObserver.disconnect();
             if (interval) clearInterval(interval);
             clearTimeout(debounceTimeout);
+            clearTimeout(exactDebounceTimeout);
+            if (exactController) exactController.abort();
         };
-    }, [conversationId]);
+    }, [conversationId, geminiSettings?.geminiApiKey]);
 
-    const MAX_TOKENS = 1000000; // 1M tokens assumption for pie chart
+    const MAX_TOKENS = 1000000;
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
         totalTokens === 0
             ? 0
             : Math.min(100, Math.max(1, (totalTokens / MAX_TOKENS) * 100));
 
-    // Ensure there's a small visible pie piece if tokens are used but tiny relative to 1M
-    if (totalTokens > 0 && fillPercentage < 2) {
-        fillPercentage = 2;
+    if (totalTokens > 0 && fillPercentage < 3) {
+        fillPercentage = 3;
     }
+
+    const radius = 8;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset =
+        circumference - (fillPercentage / 100) * circumference;
 
     return (
         <div className="hg-token-counter-wrapper" ref={popupRef}>
@@ -273,12 +607,27 @@ export function TokenCounter() {
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
             >
-                <div
-                    className="hg-token-pie"
-                    style={{
-                        background: `conic-gradient(currentColor ${fillPercentage}%, transparent 0)`,
-                    }}
-                ></div>
+                <svg className="hg-token-ring" viewBox="0 0 20 20">
+                    <circle
+                        className="hg-token-ring-bg"
+                        cx="10"
+                        cy="10"
+                        r={radius}
+                        fill="none"
+                        strokeWidth="2"
+                    />
+                    <circle
+                        className="hg-token-ring-fill"
+                        cx="10"
+                        cy="10"
+                        r={radius}
+                        fill="none"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={strokeDashoffset}
+                    />
+                </svg>
             </button>
 
             {isExpanded && (
@@ -341,6 +690,20 @@ export function TokenCounter() {
                             {totalTokens.toLocaleString()}
                         </div>
                     </div>
+
+                    {isDebugEnabled() && (
+                        <div className="hg-token-popup-row">
+                            <div className="hg-token-popup-label">
+                                <span>API Cache</span>
+                            </div>
+                            <div className="hg-token-popup-value">
+                                In C:{debugCycleStats.inputCached} F:
+                                {debugCycleStats.inputFetched} / Out C:
+                                {debugCycleStats.outputCached} F:
+                                {debugCycleStats.outputFetched}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

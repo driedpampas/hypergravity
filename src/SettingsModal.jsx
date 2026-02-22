@@ -10,6 +10,7 @@ export function SettingsModal({ onClose }) {
     wideModeEnabled: false,
     hideSidebarEnabled: false,
     showExportButton: true,
+    geminiApiKey: '',
   });
 
   const toggleSetting = (key) => {
@@ -72,6 +73,27 @@ export function SettingsModal({ onClose }) {
            settingKey="hideSidebarEnabled" 
            description="Collapse the native Gemini sidebar by default" 
         />
+        <div className="hg-setting-row hg-setting-row-input">
+          <div className="hg-setting-info">
+            <span className="hg-setting-label">Gemini API Key</span>
+            <span className="hg-setting-desc">Used for exact token counts via Gemini countTokens API</span>
+          </div>
+          <input
+            type="text"
+            className="hg-setting-input"
+            value={settings.geminiApiKey || ''}
+            onChange={(event) =>
+              setSettings({
+                ...settings,
+                geminiApiKey: event.target.value,
+              })
+            }
+            onClick={(event) => event.stopPropagation()}
+            placeholder="AIza..."
+            spellCheck={false}
+            autoComplete="off"
+          />
+        </div>
       </div>
     </div>
   );

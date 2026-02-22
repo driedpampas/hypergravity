@@ -57,6 +57,16 @@
     background: var(--gem-sys-color--surface-container, #e3e8f0);
 }
 
+.hg-setting-row-input {
+    cursor: default;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.hg-setting-row-input:hover {
+    background: transparent;
+}
+
 .hg-setting-info {
     display: flex;
     flex-direction: column;
@@ -72,6 +82,22 @@
 .hg-setting-desc {
     font-size: 13px;
     color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+.hg-setting-input {
+    width: 220px;
+    max-width: 50%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    font-size: 13px;
+    outline: none;
+}
+
+.hg-setting-input:focus {
+    border-color: var(--gem-sys-color--primary, #4285f4);
 }
 
 /* Toggle Switch Styles */
