@@ -82,9 +82,13 @@
 }
 
 body.hg-wide-chat .conversation-container,
+body.hg-wide-chat conversation-container,
 body.hg-wide-chat user-query,
 body.hg-wide-chat model-response,
 body.hg-wide-chat .response-container,
+body.hg-wide-chat response-container,
+body.hg-wide-chat message-content,
+body.hg-wide-chat .markdown-main-panel,
 body.hg-wide-chat hallucination-disclaimer,
 body.hg-wide-chat .hallucination-disclaimer,
 body.hg-wide-chat .human-review-disclosure-container {
@@ -92,9 +96,43 @@ body.hg-wide-chat .human-review-disclosure-container {
     width: 100% !important;
 }
 
+body.hg-wide-chat .conversation-container,
+body.hg-wide-chat conversation-container,
+body.hg-wide-chat user-query,
+body.hg-wide-chat model-response,
+body.hg-wide-chat .response-container,
+body.hg-wide-chat response-container {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.hg-wide-chat infinite-scroller.chat-history,
+body.hg-wide-chat .chat-history,
+body.hg-wide-chat .conversation-history,
+body.hg-wide-chat .main-content,
+body.hg-wide-chat main {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+body.hg-wide-chat input-container,
+body.hg-wide-chat input-container .input-area-container,
+body.hg-wide-chat input-container.input-gradient,
+body.hg-wide-chat .input-area-container,
+body.hg-wide-chat .text-input-field {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
 body.hg-wide-chat .bottom-gradient,
 body.hg-wide-chat .top-gradient {
     display: none !important;
+}
+
+body.hg-wide-chat .input-gradient::before,
+body.hg-wide-chat input-container.input-gradient::before {
+    background: none !important;
+    background-image: none !important;
 }
 
 .hg-export-overlay,

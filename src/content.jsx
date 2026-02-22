@@ -142,12 +142,17 @@ function getChatHistory() {
     let nodes = Array.from(document.querySelectorAll(allSelectors));
     nodes = nodes.filter(
         (node, index, arr) =>
-            !arr.some((other, otherIndex) => index !== otherIndex && other.contains(node))
+            !arr.some(
+                (other, otherIndex) =>
+                    index !== otherIndex && other.contains(node)
+            )
     );
 
     return nodes
         .map((node) => {
-            const isUser = userSelectors.some((selector) => node.matches(selector) || node.closest(selector));
+            const isUser = userSelectors.some(
+                (selector) => node.matches(selector) || node.closest(selector)
+            );
             const text = (node.innerText || '').trim();
             if (!text) return null;
 
@@ -220,7 +225,11 @@ async function exportChatAsPdf() {
         pdf.text(title, margin, y);
         y += 24;
         pdf.setFontSize(10);
-        pdf.text(`Exported using hypergravity on: ${new Date().toLocaleString()}`, margin, y);
+        pdf.text(
+            `Exported using hypergravity on: ${new Date().toLocaleString()}`,
+            margin,
+            y
+        );
         y += 22;
 
         const ensureSpace = (needed = 18) => {
@@ -289,12 +298,18 @@ async function exportChatAsDocx() {
         messages.forEach((msg) => {
             children.push(
                 new Paragraph({
-                    children: [new TextRun({ text: msg.role, bold: true, size: 24 })],
+                    children: [
+                        new TextRun({ text: msg.role, bold: true, size: 24 }),
+                    ],
                 })
             );
 
             msg.text.split('\n').forEach((line) => {
-                children.push(new Paragraph({ children: [new TextRun({ text: line, size: 22 })] }));
+                children.push(
+                    new Paragraph({
+                        children: [new TextRun({ text: line, size: 22 })],
+                    })
+                );
             });
             children.push(new Paragraph({ text: '' }));
         });
@@ -329,7 +344,7 @@ function printChat() {
             <head>
                 <title>${title}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
+                    body { font-family: 'Google Sans Text', Roboto, Arial, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
                     .msg { margin-bottom: 22px; }
                     .role { font-weight: 700; margin-bottom: 8px; }
                     .text { white-space: pre-wrap; line-height: 1.5; }
@@ -411,7 +426,9 @@ function showExportPopup() {
         </div>
     `;
 
-    popup.querySelector('.hg-export-close')?.addEventListener('click', closeExportPopup);
+    popup
+        .querySelector('.hg-export-close')
+        ?.addEventListener('click', closeExportPopup);
     popup.querySelectorAll('.hg-export-action').forEach((button) => {
         button.addEventListener('click', async () => {
             const format = button.getAttribute('data-format');
@@ -437,6 +454,38 @@ async function updateWideChatClass() {
     const shouldApply =
         Boolean(settings.wideModeEnabled) &&
         !window.location.pathname.includes('/gems/');
+
+    const wideTargets = document.querySelectorAll(
+        [
+            '.conversation-container',
+            'conversation-container',
+            'user-query',
+            'model-response',
+            '.response-container',
+            'response-container',
+            'message-content',
+            '.markdown-main-panel',
+            'input-container',
+            '.input-area-container',
+            '.text-input-field',
+            'infinite-scroller.chat-history',
+        ].join(', ')
+    );
+
+    wideTargets.forEach((node) => {
+        if (shouldApply) {
+            node.style.setProperty('max-width', '100%', 'important');
+            node.style.setProperty('width', '100%', 'important');
+            node.style.setProperty('margin-left', '0', 'important');
+            node.style.setProperty('margin-right', '0', 'important');
+        } else {
+            node.style.removeProperty('max-width');
+            node.style.removeProperty('width');
+            node.style.removeProperty('margin-left');
+            node.style.removeProperty('margin-right');
+        }
+    });
+
     document.body.classList.toggle('hg-wide-chat', shouldApply);
 
     const wideButton = document.querySelector('#hg-header-wide-btn');
@@ -455,15 +504,22 @@ function inferChatInfoFromConversationRow(row) {
     if (!id) return null;
 
     const title =
-        row.querySelector('.conversation-title, [class*="title"]')?.textContent?.trim() ||
-        row.textContent?.replace(/more_vert/gi, '').replace(/\s+/g, ' ').trim() ||
+        row
+            .querySelector('.conversation-title, [class*="title"]')
+            ?.textContent?.trim() ||
+        row.textContent
+            ?.replace(/more_vert/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim() ||
         'Untitled Chat';
 
     return { id, title: title.slice(0, 100), url: href };
 }
 
 function handleGlobalMenuButtonTracking(event) {
-    const button = event.target.closest('button[data-test-id="side-nav-menu-button"]');
+    const button = event.target.closest(
+        'button[data-test-id="side-nav-menu-button"]'
+    );
     if (!button) return;
 
     const row = button.closest(
@@ -529,49 +585,60 @@ async function showAddToFolderMenu(chatInfo) {
     const close = () => overlay.remove();
 
     const attachRowHandlers = () => {
-        modal.querySelectorAll('.hg-folder-select-item').forEach((rowButton) => {
-            rowButton.addEventListener('click', () => {
-                const folderId = rowButton.getAttribute('data-folder-id');
-                if (!folderId) return;
+        modal
+            .querySelectorAll('.hg-folder-select-item')
+            .forEach((rowButton) => {
+                rowButton.addEventListener('click', () => {
+                    const folderId = rowButton.getAttribute('data-folder-id');
+                    if (!folderId) return;
 
-                if (selected.has(folderId)) selected.delete(folderId);
-                else selected.add(folderId);
+                    if (selected.has(folderId)) selected.delete(folderId);
+                    else selected.add(folderId);
 
-                modal.querySelector('.hg-folder-select-list').innerHTML = renderRows();
-                attachRowHandlers();
+                    modal.querySelector('.hg-folder-select-list').innerHTML =
+                        renderRows();
+                    attachRowHandlers();
+                });
             });
-        });
     };
 
     attachRowHandlers();
 
-    modal.querySelector('.hg-folder-select-close')?.addEventListener('click', close);
-    modal.querySelector('.hg-folder-select-save')?.addEventListener('click', async () => {
-        const updatedFolders = folders.map((folder) => {
-            const chats = Array.isArray(folder.chats) ? [...folder.chats] : [];
-            const existingIndex = chats.findIndex((chat) => chat.id === chatInfo.id);
-            const shouldContain = selected.has(folder.id);
+    modal
+        .querySelector('.hg-folder-select-close')
+        ?.addEventListener('click', close);
+    modal
+        .querySelector('.hg-folder-select-save')
+        ?.addEventListener('click', async () => {
+            const updatedFolders = folders.map((folder) => {
+                const chats = Array.isArray(folder.chats)
+                    ? [...folder.chats]
+                    : [];
+                const existingIndex = chats.findIndex(
+                    (chat) => chat.id === chatInfo.id
+                );
+                const shouldContain = selected.has(folder.id);
 
-            if (shouldContain && existingIndex === -1) {
-                chats.push({
-                    id: chatInfo.id,
-                    title: chatInfo.title,
-                    url: chatInfo.url || getAccountAwareUrl(chatInfo.id),
-                    pinned: false,
-                });
-            }
+                if (shouldContain && existingIndex === -1) {
+                    chats.push({
+                        id: chatInfo.id,
+                        title: chatInfo.title,
+                        url: chatInfo.url || getAccountAwareUrl(chatInfo.id),
+                        pinned: false,
+                    });
+                }
 
-            if (!shouldContain && existingIndex >= 0) {
-                chats.splice(existingIndex, 1);
-            }
+                if (!shouldContain && existingIndex >= 0) {
+                    chats.splice(existingIndex, 1);
+                }
 
-            return { ...folder, chats };
+                return { ...folder, chats };
+            });
+
+            await setStorageValue(FOLDERS_KEY, updatedFolders);
+            showToast('Folder changes saved', 'success');
+            close();
         });
-
-        await setStorageValue(FOLDERS_KEY, updatedFolders);
-        showToast('Folder changes saved', 'success');
-        close();
-    });
 
     overlay.addEventListener('click', (event) => {
         if (event.target === overlay) close();
@@ -634,7 +701,9 @@ function injectHeaderButtons() {
         `;
         wideButton.addEventListener('click', async () => {
             const settings = await getSettings();
-            await updateSettings({ wideModeEnabled: !settings.wideModeEnabled });
+            await updateSettings({
+                wideModeEnabled: !settings.wideModeEnabled,
+            });
             updateWideChatClass();
         });
         topBar.appendChild(wideButton);
@@ -701,7 +770,7 @@ function insertHypergravitySidebar() {
     const rootElement = document.createElement('div');
     rootElement.id = 'hypergravity-root';
     rootElement.style.cssText =
-        'margin: 0 12px 8px 12px; overflow: visible; transition: margin-top 0.2s ease;';
+        'overflow: visible; transition: margin-top 0.2s ease;';
 
     if (needsAfterEnd) {
         const gemsList = document.querySelector('.gems-list-container');
@@ -785,4 +854,3 @@ if (hasChromeStorage()) {
         }
     });
 }
-

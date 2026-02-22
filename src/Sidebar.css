@@ -1,5 +1,4 @@
 .hypergravity-sidebar-container {
-    margin: 0 12px 8px 12px;
     overflow: visible;
     transition: margin-top 0.2s ease;
     font-family:
@@ -49,6 +48,5 @@
 .hg-dropdown-icon {
     width: 20px;
     height: 20px;
-    color: #575a5a;
     flex-shrink: 0;
 }
