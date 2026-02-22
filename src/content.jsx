@@ -14,12 +14,17 @@ function insertHypergravitySidebar() {
             target = gemsList.parentElement;
             needsAfterEnd = true;
         } else {
-            // Fallback
-            target = document.querySelector("nav") || document.body;
+            const sideNav = document.querySelector('bard-sidenav infinite-scroller') || 
+                            document.querySelector('infinite-scroller[scrollable="true"]') ||
+                            document.querySelector('.conversations-container');
+            if (sideNav) {
+                target = sideNav;
+                needsAfterEnd = false;
+            }
         }
     }
 
-    if (!target || document.querySelector('#hypergravity-root')) {
+    if (!target || target === document.body || document.querySelector('#hypergravity-root')) {
         return;
     }
 

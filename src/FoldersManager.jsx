@@ -26,10 +26,10 @@ export function FoldersManager({ onClose }) {
   };
 
   return (
-    <div className="sg-folders-modal">
-      <div className="sg-folders-header">
-        <div className="sg-folders-header-left">
-          <button className="sg-back-btn" onClick={onClose}>
+    <div className="hg-folders-modal">
+      <div className="hg-folders-header">
+        <div className="hg-folders-header-left">
+          <button className="hg-back-btn" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
@@ -38,16 +38,16 @@ export function FoldersManager({ onClose }) {
         </div>
       </div>
       
-      <div className="sg-folders-toolbar">
+      <div className="hg-folders-toolbar">
          {!isAdding ? (
-             <button className="sg-add-folder-btn" onClick={() => setIsAdding(true)}>
+             <button className="hg-add-folder-btn" onClick={() => setIsAdding(true)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                     <path d="M12 5v14M5 12h14"/>
                 </svg>
                 Add Folder
              </button>
          ) : (
-             <div className="sg-add-folder-form">
+             <div className="hg-add-folder-form">
                  <input 
                     autoFocus
                     type="text" 
@@ -62,9 +62,9 @@ export function FoldersManager({ onClose }) {
          )}
       </div>
 
-      <div className="sg-folder-list">
+      <div className="hg-folder-list">
         {folders.length === 0 ? (
-            <div className="sg-empty-state">
+            <div className="hg-empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                 </svg>
@@ -72,15 +72,15 @@ export function FoldersManager({ onClose }) {
             </div>
         ) : (
             folders.map(folder => (
-                <div key={folder.id} className="sg-folder-item">
-                    <div className="sg-folder-info">
+                <div key={folder.id} className="hg-folder-item">
+                    <div className="hg-folder-info">
                         <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" style={{color: folder.color}}>
                             <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
                         </svg>
                         <span>{folder.name}</span>
-                        <span className="sg-folder-count">{folder.chats?.length || 0} chats</span>
+                        <span className="hg-folder-count">{folder.chats?.length || 0} chats</span>
                     </div>
-                    <button className="sg-folder-delete" onClick={() => deleteFolder(folder.id)}>
+                    <button className="hg-folder-delete" onClick={() => deleteFolder(folder.id)}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
                             <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                         </svg>

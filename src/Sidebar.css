@@ -7,7 +7,7 @@
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
 
-.sg-section-header {
+.hg-section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -19,18 +19,18 @@
     border-radius: 28px;
 }
 
-.sg-section-title {
+.hg-section-title {
     font-size: 14px;
     font-weight: 500;
 }
 
-.sg-dropdown-menu {
+.hg-dropdown-menu {
     display: flex;
     flex-direction: column;
     margin-top: 8px;
 }
 
-.sg-dropdown-item {
+.hg-dropdown-item {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -42,11 +42,11 @@
     margin-left: 2px;
 }
 
-.sg-dropdown-item:hover {
+.hg-dropdown-item:hover {
     background: var(--gem-sys-color--surface-container-high, #e9eef6);
 }
 
-.sg-dropdown-icon {
+.hg-dropdown-icon {
     width: 20px;
     height: 20px;
     color: #575a5a;

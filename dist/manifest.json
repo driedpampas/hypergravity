@@ -6,7 +6,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/content.jsx-BC9gSBgp.js"
+        "assets/content.jsx-Pnj3N97b.js"
       ],
       "matches": [
         "*://gemini.google.com/*"
@@ -34,7 +34,7 @@
         "*://gemini.google.com/*"
       ],
       "resources": [
-        "assets/content.jsx-BC9gSBgp.js"
+        "assets/content.jsx-Pnj3N97b.js"
       ],
       "use_dynamic_url": false
     }

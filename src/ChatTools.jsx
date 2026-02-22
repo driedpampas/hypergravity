@@ -83,7 +83,7 @@ export function ChatTools() {
 
       // Calculate position (hovering above the input box)
       const rect = inputEl.getBoundingClientRect();
-      const bottom = window.innerHeight - rect.top + 17; // offset from top of input
+      const bottom = window.innerHeight - rect.top; // offset from top of input
       
       setPosition({
         bottom: bottom,
@@ -94,7 +94,7 @@ export function ChatTools() {
       // Optimize button is placed to the top right of the token counter
       setOptimizePos({
         bottom: bottom,
-        left: rect.left + 140 // offset roughly past the token counter
+        left: rect.left // offset roughly past the token counter
       });
     };
 
@@ -122,61 +122,61 @@ export function ChatTools() {
   return (
     <>
       <div 
-        id="sg-word-counter" 
+        id="hg-word-counter" 
         className={isExpanded ? 'expanded' : ''}
         style={{ bottom: position.bottom + 'px', left: position.left + 'px' }}
         onClick={() => setIsExpanded(!isExpanded)}
         tabIndex="0"
       >
-        <div className="sg-counter-summary">
+        <div className="hg-counter-summary">
           <strong>{textStats.words}</strong>&nbsp;words /&nbsp;<strong>{textStats.chars}</strong>&nbsp;characters
         </div>
         {isExpanded && (
-          <div className="sg-counter-details">
-            <div className="sg-stat-row"><span>Chars (space):</span> <strong>{textStats.chars}</strong></div>
-            <div className="sg-stat-row"><span>Chars (no space):</span> <strong>{textStats.charsNoSpace}</strong></div>
-            <div className="sg-stat-row"><span>Words:</span> <strong>{textStats.words}</strong></div>
-            <div className="sg-stat-row"><span>Sentences:</span> <strong>{textStats.sentences}</strong></div>
-            <div className="sg-stat-row"><span>Paragraphs:</span> <strong>{textStats.paragraphs}</strong></div>
-            <div className="sg-stat-row"><span>Lines:</span> <strong>{textStats.lines}</strong></div>
-            <div className="sg-stat-row"><span>Tokens (~est):</span> <strong>{textStats.tokens}</strong></div>
+          <div className="hg-counter-details">
+            <div className="hg-stat-row"><span>Chars (space):</span> <strong>{textStats.chars}</strong></div>
+            <div className="hg-stat-row"><span>Chars (no space):</span> <strong>{textStats.charsNoSpace}</strong></div>
+            <div className="hg-stat-row"><span>Words:</span> <strong>{textStats.words}</strong></div>
+            <div className="hg-stat-row"><span>Sentences:</span> <strong>{textStats.sentences}</strong></div>
+            <div className="hg-stat-row"><span>Paragraphs:</span> <strong>{textStats.paragraphs}</strong></div>
+            <div className="hg-stat-row"><span>Lines:</span> <strong>{textStats.lines}</strong></div>
+            <div className="hg-stat-row"><span>Tokens (~est):</span> <strong>{textStats.tokens}</strong></div>
           </div>
         )}
       </div>
 
       <button 
-        id="sg-optimize-prompt-btn" 
-        className="sg-optimize-btn"
+        id="hg-optimize-prompt-btn" 
+        className="hg-optimize-btn"
         style={{ bottom: optimizePos.bottom + 'px', left: optimizePos.left + 'px' }}
         title="Optimize prompt with AI"
         aria-label="Optimize prompt with AI"
       >
-        <svg className="sg-optimize-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+        <svg className="hg-optimize-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
             <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
             <path d="M20 3v4"/>
             <path d="M22 5h-4"/>
             <path d="M4 17v2"/>
             <path d="M5 18H3"/>
         </svg>
-        <span className="sg-optimize-label">Optimize</span>
+        <span className="hg-optimize-label">Optimize</span>
       </button>
 
       {/* Render matching Quick Actions */}
       <div 
-        id="sg-quick-action-buttons" 
+        id="hg-quick-action-buttons" 
         style={{ 
           position: 'fixed',
           display: 'flex',
           gap: '8px',
           bottom: position.bottom + 'px', 
-          left: (optimizePos.left + 110) + 'px',
+          left: (optimizePos.left) + 'px',
           zIndex: 999
         }}
       >
         {quickActions.map((action, idx) => (
           <button
             key={idx}
-            className="sg-optimize-btn"
+            className="hg-optimize-btn"
             style={{ backgroundColor: action.color || 'var(--gem-sys-color--surface-container)' }}
             title={action.prompt || action.name}
             onClick={() => {
@@ -188,7 +188,7 @@ export function ChatTools() {
             }}
           >
             {action.icon && <span style={{ marginRight: '4px' }}>{action.icon}</span>}
-            <span className="sg-optimize-label">{action.name}</span>
+            <span className="hg-optimize-label">{action.name}</span>
           </button>
         ))}
       </div>

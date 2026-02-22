@@ -16,22 +16,22 @@ export function SettingsModal({ onClose }) {
   };
 
   const SettingRow = ({ label, settingKey, description }) => (
-    <div className="sg-setting-row" onClick={() => toggleSetting(settingKey)}>
-      <div className="sg-setting-info">
-        <span className="sg-setting-label">{label}</span>
-        {description && <span className="sg-setting-desc">{description}</span>}
+    <div className="hg-setting-row" onClick={() => toggleSetting(settingKey)}>
+      <div className="hg-setting-info">
+        <span className="hg-setting-label">{label}</span>
+        {description && <span className="hg-setting-desc">{description}</span>}
       </div>
-      <div className={`sg-toggle ${settings[settingKey] ? 'active' : ''}`}>
-        <div className="sg-toggle-knob"></div>
+      <div className={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}>
+        <div className="hg-toggle-knob"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="sg-settings-modal">
-      <div className="sg-settings-header">
-        <div className="sg-settings-header-left">
-          <button className="sg-back-btn" onClick={onClose}>
+    <div className="hg-settings-modal">
+      <div className="hg-settings-header">
+        <div className="hg-settings-header-left">
+          <button className="hg-back-btn" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
               <path d="M15 18l-6-6 6-6"/>
             </svg>
@@ -40,7 +40,7 @@ export function SettingsModal({ onClose }) {
         </div>
       </div>
       
-      <div className="sg-settings-list">
+      <div className="hg-settings-list">
         <SettingRow 
            label="Enable Hypergravity" 
            settingKey="enabled" 

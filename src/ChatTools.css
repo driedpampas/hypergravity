@@ -1,5 +1,5 @@
 /* CSS for Chat Tools (Token Counter and Optimize Button) */
-#sg-word-counter {
+#hg-word-counter {
     position: fixed;
     z-index: 999;
     background: var(--gem-sys-color--surface, #f0f4f8);
@@ -22,20 +22,20 @@
     min-width: 120px;
 }
 
-#sg-word-counter:hover:not(.expanded) {
+#hg-word-counter:hover:not(.expanded) {
     background: var(--gem-sys-color--surface-container-high, #e9eef6);
     border-color: var(--gem-sys-color--outline, #727676);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-#sg-word-counter.expanded {
+#hg-word-counter.expanded {
     max-height: 250px;
     border-radius: 12px;
     padding: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.sg-counter-summary {
+.hg-counter-summary {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,14 +44,14 @@
     transition: opacity 0.2s ease;
 }
 
-#sg-word-counter.expanded .sg-counter-summary {
+#hg-word-counter.expanded .hg-counter-summary {
     margin-bottom: 8px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
     font-weight: 500;
 }
 
-.sg-counter-details {
+.hg-counter-details {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -59,11 +59,11 @@
     transition: opacity 0.3s ease;
 }
 
-#sg-word-counter.expanded .sg-counter-details {
+#hg-word-counter.expanded .hg-counter-details {
     opacity: 1;
 }
 
-.sg-stat-row {
+.hg-stat-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -71,7 +71,7 @@
 }
 
 /* Optimize Button */
-.sg-optimize-btn {
+.hg-optimize-btn {
     position: fixed;
     z-index: 999;
     display: flex;
@@ -91,13 +91,13 @@
     height: 28px;
 }
 
-.sg-optimize-btn:hover {
+.hg-optimize-btn:hover {
     background: var(--gem-sys-color--surface-container-high, #e9eef6);
     color: #4285f4;
     border-color: #4285f4;
 }
 
-.sg-optimize-icon {
+.hg-optimize-icon {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
