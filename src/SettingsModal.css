@@ -1,0 +1,108 @@
+.sg-settings-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    height: 60vh;
+    background: var(--gem-sys-color--surface, #f0f4f8);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Google Sans', Roboto, sans-serif;
+    z-index: 10000;
+}
+
+.sg-settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.sg-settings-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sg-settings-header-left h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.sg-settings-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+}
+
+.sg-setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, transparent);
+}
+
+.sg-setting-row:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.sg-setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sg-setting-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.sg-setting-desc {
+    font-size: 13px;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+/* Toggle Switch Styles */
+.sg-toggle {
+    width: 44px;
+    height: 24px;
+    background: var(--gem-sys-color--outline, #727676);
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+}
+
+.sg-toggle.active {
+    background: #4285f4;
+}
+
+.sg-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.sg-toggle.active .sg-toggle-knob {
+    transform: translateX(20px);
+}

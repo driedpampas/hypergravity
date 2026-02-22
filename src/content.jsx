@@ -1,47 +1,58 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import './content.css';
-import SvgComponent from './Icon.jsx';
+import { Sidebar } from './Sidebar';
+import { ChatTools } from './ChatTools';
 
-function insertHypergravityButton() {
-    // Find the container with class 'chat-history'
-    const chatHistory = document.querySelector('.chat-history');
+function insertHypergravitySidebar() {
+    // Attempt to find the target injection point like the original extension
+    let target = document.querySelector("conversations-list");
+    let needsAfterEnd = false;
+    
+    if (!target) {
+        const gemsList = document.querySelector(".gems-list-container");
+        if (gemsList) {
+            target = gemsList.parentElement;
+            needsAfterEnd = true;
+        } else {
+            // Fallback
+            target = document.querySelector("nav") || document.body;
+        }
+    }
 
-    if (!chatHistory || document.querySelector('#hypergravity-btn')) {
+    if (!target || document.querySelector('#hypergravity-root')) {
         return;
     }
 
-    const btn = document.createElement('button');
-    btn.id = 'hypergravity-btn';
-    // Use Gemini sidebar item classes for a more native look and feel
-    btn.className = 'hypergravity-injected-btn';
+    const rootElement = document.createElement('div');
+    rootElement.id = 'hypergravity-root';
+    rootElement.style.cssText = "margin: 0 12px 8px 12px; overflow: visible; transition: margin-top 0.2s ease;";
+    
+    if (needsAfterEnd) {
+        const gemsList = document.querySelector(".gems-list-container");
+        if (gemsList) {
+            gemsList.insertAdjacentElement("afterend", rootElement);
+        } else {
+            target.prepend(rootElement);
+        }
+    } else {
+        target.prepend(rootElement);
+    }
+    
+    createRoot(rootElement).render(<Sidebar />);
 
-    // Add an SVG meteor / falling star icon via React
-    const iconSpan = document.createElement('span');
-    btn.appendChild(iconSpan);
-    createRoot(iconSpan).render(<SvgComponent className="hypergravity-icon" color="var(--gem-sys-color--on-surface)" />);
-
-    const textSpan = document.createElement('span');
-    textSpan.textContent = 'Hypergravity';
-    textSpan.className = 'hypergravity-text';
-
-    btn.appendChild(textSpan);
-
-    btn.addEventListener('click', () => {
-        console.log('Hypergravity button clicked!');
-    });
-
-    // Insert above the chat-history container
-    chatHistory.parentNode.insertBefore(btn, chatHistory);
+    // Inject Chat Tools globally attached to body
+    if (!document.querySelector('#hypergravity-chat-tools-root')) {
+        const toolsRootElement = document.createElement('div');
+        toolsRootElement.id = 'hypergravity-chat-tools-root';
+        document.body.appendChild(toolsRootElement);
+        createRoot(toolsRootElement).render(<ChatTools />);
+    }
 }
 
 // Since gemini.google.com is likely a Single Page App, we use a MutationObserver
 const observer = new MutationObserver((mutations) => {
-    if (
-        document.querySelector('.chat-history') &&
-        !document.querySelector('#hypergravity-btn')
-    ) {
-        insertHypergravityButton();
+    if (!document.querySelector('#hypergravity-root')) {
+        insertHypergravitySidebar();
     }
 });
 
@@ -51,4 +62,4 @@ observer.observe(document.body, {
 });
 
 // Try to insert on initial load
-insertHypergravityButton();
+insertHypergravitySidebar();

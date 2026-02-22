@@ -1,0 +1,54 @@
+.hypergravity-sidebar-container {
+    margin: 0 12px 8px 12px;
+    overflow: visible;
+    transition: margin-top 0.2s ease;
+    font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.sg-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+    border-radius: 28px;
+}
+
+.sg-section-title {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.sg-dropdown-menu {
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+}
+
+.sg-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-radius: 24px;
+    background: transparent;
+    margin-left: 2px;
+}
+
+.sg-dropdown-item:hover {
+    background: var(--gem-sys-color--surface-container-high, #e9eef6);
+}
+
+.sg-dropdown-icon {
+    width: 20px;
+    height: 20px;
+    color: #575a5a;
+    flex-shrink: 0;
+}
