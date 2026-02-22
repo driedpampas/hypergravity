@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "hypergravity",
+  "version": "1.0",
+  "description": "Enhance the Gemini web interface",
+  "content_scripts": [
+    {
+      "js": [
+        "assets/content.js-Cetdpj-4.js"
+      ],
+      "matches": [
+        "*://gemini.google.com/*"
+      ],
+      "css": [
+        "assets/content-DSzRnh4B.css"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "*://gemini.google.com/*"
+      ],
+      "resources": [
+        "assets/content.js-Cetdpj-4.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ]
+}

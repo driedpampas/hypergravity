@@ -1,0 +1,14 @@
+{
+  "name": "hypergravity",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.0.0-beta.23",
+    "vite": "^5.1.4"
+  }
+}

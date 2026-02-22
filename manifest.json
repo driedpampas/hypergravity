@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "hypergravity",
+  "version": "1.0",
+  "description": "Enhance the Gemini web interface",
+  "content_scripts": [
+    {
+      "matches": ["*://gemini.google.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
