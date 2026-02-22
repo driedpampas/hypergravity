@@ -185,6 +185,7 @@ export function TokenCounter() {
     });
     const [geminiSettings] = useChromeStorage('hypergravityGeminiSettings', {
         geminiApiKey: '',
+        tokenLimit: 1000000,
     });
     const [conversationId, setConversationId] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -583,7 +584,7 @@ export function TokenCounter() {
         };
     }, [conversationId, geminiSettings?.geminiApiKey]);
 
-    const MAX_TOKENS = 1000000;
+    const MAX_TOKENS = geminiSettings?.tokenLimit || 1000000;
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
         totalTokens === 0
