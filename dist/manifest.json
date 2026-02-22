@@ -5,24 +5,26 @@
   "description": "Enhance the Gemini web interface",
   "content_scripts": [
     {
-      "js": [
-        "assets/content.js-Cetdpj-4.js"
-      ],
       "matches": [
         "*://gemini.google.com/*"
       ],
-      "css": [
-        "assets/content-DSzRnh4B.css"
+      "js": [
+        "src/content.jsx-loader.js"
       ]
     }
   ],
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
   "web_accessible_resources": [
     {
       "matches": [
-        "*://gemini.google.com/*"
+        "<all_urls>"
       ],
       "resources": [
-        "assets/content.js-Cetdpj-4.js"
+        "**/*",
+        "*"
       ],
       "use_dynamic_url": false
     }

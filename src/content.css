@@ -1,0 +1,33 @@
+#hypergravity-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0px 0px 0px 12px;
+    padding: 12px 12px;
+    width: fit-content;
+    background-color: transparent;
+    color: var(--bard-color-on-surface, #e3e3e3);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    font-size: 14px;
+}
+
+#hypergravity-btn:hover {
+    background-color: var(
+        --bard-color-surface-variant,
+        rgba(255, 255, 255, 0.08)
+    );
+}
+
+#hypergravity-btn .hypergravity-icon {
+    flex-shrink: 0;
+    color: var(--bard-color-on-surface-variant, #c4c7c5);
+}
+
+#hypergravity-btn .hypergravity-text {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}

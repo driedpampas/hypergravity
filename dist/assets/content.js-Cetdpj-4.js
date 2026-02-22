@@ -1,2 +1,0 @@
-(function(){function r(){const e=document.querySelector(".chat-history");if(!e||document.querySelector("#hypergravity-btn"))return;const t=document.createElement("button");t.id="hypergravity-btn",t.textContent="hypergravity",t.className="hypergravity-injected-btn",t.addEventListener("click",()=>{console.log("Hypergravity button clicked!")}),e.parentNode.insertBefore(t,e)}const n=new MutationObserver(e=>{document.querySelector(".chat-history")&&!document.querySelector("#hypergravity-btn")&&r()});n.observe(document.body,{childList:!0,subtree:!0});r();
-})()
