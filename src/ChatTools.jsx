@@ -124,11 +124,15 @@ export function ChatTools() {
                     <span className="hg-optimize-label">Optimize</span>
                 </button>
 
+                <TokenCounter />
+
                 {/* Render matching Quick Actions */}
                 <div
                     id="hg-quick-action-buttons"
                     style={{
                         display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
                         gap: '8px',
                     }}
                 >
@@ -165,17 +169,6 @@ export function ChatTools() {
                         </button>
                     ))}
                 </div>
-            </div>
-
-            <div
-                className="hg-chat-tools-right"
-                style={{
-                    display: 'flex',
-                    marginLeft: 'auto',
-                    alignItems: 'center',
-                }}
-            >
-                <TokenCounter />
             </div>
         </>
     );
