@@ -87,7 +87,8 @@ function collectMessageNodes(conversationContainer) {
 
     const userNodes = userResolved.nodes;
     const modelNodes = modelResolved.nodes.filter(
-        (modelNode) => !userNodes.some((userNode) => userNode.contains(modelNode))
+        (modelNode) =>
+            !userNodes.some((userNode) => userNode.contains(modelNode))
     );
 
     return {
@@ -620,10 +621,11 @@ export function TokenCounter() {
         fillPercentage = 3;
     }
 
-    const radius = 8;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset =
-        circumference - (fillPercentage / 100) * circumference;
+    const formatTokenCount = (count) => {
+        if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+        if (count >= 1000) return `${(count / 1000).toFixed(0)}k`;
+        return String(count);
+    };
 
     return (
         <div className="hg-token-counter-wrapper" ref={popupRef}>
@@ -638,22 +640,22 @@ export function TokenCounter() {
                         className="hg-token-ring-bg"
                         cx="10"
                         cy="10"
-                        r={radius}
-                        fill="none"
-                        strokeWidth="2"
+                        r="9"
                     />
                     <circle
                         className="hg-token-ring-fill"
                         cx="10"
                         cy="10"
-                        r={radius}
-                        fill="none"
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
+                        r="9"
+                        style={{
+                            clipPath: `inset(${100 - fillPercentage}% 0 0 0)`,
+                        }}
                     />
                 </svg>
+                <span className="hg-token-label">
+                    {formatTokenCount(totalTokens)}/
+                    {formatTokenCount(MAX_TOKENS)}
+                </span>
             </button>
 
             {isExpanded && (

@@ -7,12 +7,12 @@
 .hg-token-counter-btn {
     background: transparent;
     border: none;
-    padding: 8px;
+    padding: 4px 8px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: 50%;
+    gap: 5px;
+    border-radius: 14px;
     color: var(--gem-sys-color--on-surface-variant, #888);
     transition:
         background-color 0.2s,
@@ -28,18 +28,29 @@
 }
 
 .hg-token-ring {
-    width: 20px;
-    height: 20px;
-    transform: rotate(-90deg);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
 }
 
 .hg-token-ring-bg {
-    stroke: var(--gem-sys-color--outline-variant, rgba(140, 140, 140, 0.3));
+    fill: var(--gem-sys-color--outline-variant, rgba(140, 140, 140, 0.3));
 }
 
 .hg-token-ring-fill {
-    stroke: var(--gem-sys-color--primary, #8ab4f8);
-    transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    fill: var(--gem-sys-color--primary, #8ab4f8);
+    transition: clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hg-token-label {
+    font-family: 'Google Sans Text', Roboto, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--gem-sys-color--on-surface-variant, #888);
+    font-variant-numeric: tabular-nums;
 }
 
 .hg-token-popup {

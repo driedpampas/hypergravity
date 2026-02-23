@@ -102,3 +102,55 @@
     height: 14px;
     flex-shrink: 0;
 }
+
+.hg-optimize-btn.loading {
+    animation: hg-pulse 1.2s ease-in-out infinite;
+    border-color: #4285f4;
+    color: #4285f4;
+}
+
+@keyframes hg-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(66, 133, 244, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(66, 133, 244, 0);
+    }
+}
+
+.hg-optimize-confirmation {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.hg-confirm-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    background: var(--gem-sys-color--surface, #f0f4f8);
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: background 0.15s ease;
+}
+
+.hg-confirm-btn:hover {
+    background: var(--gem-sys-color--surface-container-high, #e9eef6);
+}
+
+.hg-confirm-accept:hover {
+    color: #1e8e3e;
+    border-color: #1e8e3e;
+}
+
+.hg-confirm-reject:hover {
+    color: #c5221f;
+    border-color: #c5221f;
+}
