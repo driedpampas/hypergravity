@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { ChatTools } from './ChatTools';
 import './content.css';
 import { ChatExportController } from './features/chatExport';
-import { TopBarToolsManager } from './features/topBarToolsManager';
+import { createTopBarToolsManager } from './features/topBarToolsManager';
 
 const SETTINGS_KEY = 'hypergravityGeminiSettings';
 const FOLDERS_KEY = 'hypergravityGeminiFolders';
@@ -361,7 +361,7 @@ function initializeFeatureModules() {
     }
 
     if (!topBarToolsManager) {
-        topBarToolsManager = new TopBarToolsManager({
+        topBarToolsManager = createTopBarToolsManager({
             getSettings,
             updateSettings,
             onExportClick: () => chatExportController?.showPopup(),

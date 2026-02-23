@@ -3,6 +3,9 @@
   "name": "hypergravity",
   "version": "1.0",
   "description": "Enhance the Gemini web interface",
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
       "matches": [

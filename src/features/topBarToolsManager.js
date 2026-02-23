@@ -1,16 +1,13 @@
-class WideLayoutEngine {
-    constructor() {
-        this.enabled = false;
-        this.markedTargets = new Set();
-        this.styleId = 'hg-wide-dynamic-style';
-        this.ensureDynamicStyle();
-    }
+function createWideLayoutEngine() {
+    let enabled = false;
+    const markedTargets = new Set();
+    const styleId = 'hg-wide-dynamic-style';
 
-    ensureDynamicStyle() {
-        if (document.getElementById(this.styleId)) return;
+    function ensureDynamicStyle() {
+        if (document.getElementById(styleId)) return;
 
         const style = document.createElement('style');
-        style.id = this.styleId;
+        style.id = styleId;
         style.textContent = `
             body.hg-wide-chat [data-hg-wide-target="1"] {
                 max-width: 100% !important;
@@ -22,22 +19,22 @@ class WideLayoutEngine {
         document.head.appendChild(style);
     }
 
-    clearMarkedTargets() {
-        this.markedTargets.forEach((element) => {
+    function clearMarkedTargets() {
+        markedTargets.forEach((element) => {
             if (!element?.isConnected) return;
             element.removeAttribute('data-hg-wide-target');
         });
-        this.markedTargets.clear();
+        markedTargets.clear();
     }
 
-    getChatRoots() {
+    function getChatRoots() {
         return [
             document.querySelector('infinite-scroller.chat-history'),
             document.querySelector('.chat-history'),
         ].filter((node) => node instanceof HTMLElement);
     }
 
-    getMessageSelectors() {
+    function getMessageSelectors() {
         return [
             '.conversation-container',
             '.user-message',
@@ -54,9 +51,9 @@ class WideLayoutEngine {
         ];
     }
 
-    collectKnownTargets() {
-        const roots = this.getChatRoots();
-        const messageSelectors = this.getMessageSelectors().join(', ');
+    function collectKnownTargets() {
+        const roots = getChatRoots();
+        const messageSelectors = getMessageSelectors().join(', ');
         const candidates = new Set();
 
         roots.forEach((root) => {
@@ -71,7 +68,7 @@ class WideLayoutEngine {
         return Array.from(candidates);
     }
 
-    collectInputTargets() {
+    function collectInputTargets() {
         return Array.from(
             document.querySelectorAll(
                 [
@@ -85,11 +82,11 @@ class WideLayoutEngine {
         ).filter((node) => node instanceof HTMLElement);
     }
 
-    collectNarrowAncestorsFromMessages() {
-        const roots = this.getChatRoots();
+    function collectNarrowAncestorsFromMessages() {
+        const roots = getChatRoots();
         if (!roots.length) return [];
 
-        const messageSelectors = this.getMessageSelectors().join(', ');
+        const messageSelectors = getMessageSelectors().join(', ');
         const messages = Array.from(
             roots.flatMap((root) => Array.from(root.querySelectorAll(messageSelectors)))
         ).filter((node) => node instanceof HTMLElement);
@@ -129,8 +126,8 @@ class WideLayoutEngine {
         return Array.from(candidates);
     }
 
-    collectInlineMaxWidthTargets() {
-        const roots = this.getChatRoots();
+    function collectInlineMaxWidthTargets() {
+        const roots = getChatRoots();
 
         if (!roots.length) return [];
 
@@ -155,57 +152,68 @@ class WideLayoutEngine {
         return Array.from(candidates);
     }
 
-    markTarget(element) {
+    function markTarget(element) {
         if (!(element instanceof HTMLElement)) return;
 
         element.setAttribute('data-hg-wide-target', '1');
 
-        this.markedTargets.add(element);
+        markedTargets.add(element);
         console.log('[WideLayoutEngine] Marked element for wide layout:', element);
     }
 
-    refreshTargets() {
-        this.clearMarkedTargets();
+    function refreshTargets() {
+        clearMarkedTargets();
 
-        const knownTargets = this.collectKnownTargets();
-        const inputTargets = this.collectInputTargets();
-        const detectedTargets = this.collectNarrowAncestorsFromMessages();
-        const inlineMaxWidthTargets = this.collectInlineMaxWidthTargets();
+        const knownTargets = collectKnownTargets();
+        const inputTargets = collectInputTargets();
+        const detectedTargets = collectNarrowAncestorsFromMessages();
+        const inlineMaxWidthTargets = collectInlineMaxWidthTargets();
 
-        [...knownTargets, ...inputTargets, ...detectedTargets, ...inlineMaxWidthTargets].forEach((target) => {
-            this.markTarget(target);
+        [
+            ...knownTargets,
+            ...inputTargets,
+            ...detectedTargets,
+            ...inlineMaxWidthTargets,
+        ].forEach((target) => {
+            markTarget(target);
         });
     }
 
-    setEnabled(enabled) {
-        this.enabled = Boolean(enabled);
+    function setEnabled(nextEnabled) {
+        enabled = Boolean(nextEnabled);
 
-        if (!this.enabled) {
+        if (!enabled) {
             document.body.classList.remove('hg-wide-chat');
-            this.clearMarkedTargets();
+            clearMarkedTargets();
             return;
         }
 
         document.body.classList.add('hg-wide-chat');
-        this.refreshTargets();
+        refreshTargets();
     }
 
-    refresh() {
-        if (!this.enabled) return;
-        this.refreshTargets();
+    function refresh() {
+        if (!enabled) return;
+        refreshTargets();
     }
+
+    ensureDynamicStyle();
+
+    return {
+        setEnabled,
+        refresh,
+    };
 }
 
-export class TopBarToolsManager {
-    constructor({ getSettings, updateSettings, onExportClick, onWideToggleDebug }) {
-        this.getSettings = getSettings;
-        this.updateSettings = updateSettings;
-        this.onExportClick = onExportClick;
-        this.onWideToggleDebug = onWideToggleDebug;
-        this.wideLayoutEngine = new WideLayoutEngine();
-    }
+export function createTopBarToolsManager({
+    getSettings,
+    updateSettings,
+    onExportClick,
+    onWideToggleDebug,
+}) {
+    const wideLayoutEngine = createWideLayoutEngine();
 
-    ensureButton({ id, title, svg, onClick }) {
+    function ensureButton({ id, title, svg, onClick }) {
         const topBar = document.querySelector('top-bar-actions');
         if (!topBar) return null;
 
@@ -228,36 +236,36 @@ export class TopBarToolsManager {
         return button;
     }
 
-    async handleWideToggle() {
-        const settings = await this.getSettings();
+    async function handleWideToggle() {
+        const settings = await getSettings();
         const nextWideModeEnabled = !settings.wideModeEnabled;
 
-        await this.updateSettings({
+        await updateSettings({
             wideModeEnabled: nextWideModeEnabled,
         });
 
-        if (typeof this.onWideToggleDebug === 'function') {
-            this.onWideToggleDebug(nextWideModeEnabled);
+        if (typeof onWideToggleDebug === 'function') {
+            onWideToggleDebug(nextWideModeEnabled);
         }
 
-        await this.refresh();
+        await refresh();
     }
 
-    async refresh() {
-        const settings = await this.getSettings();
+    async function refresh() {
+        const settings = await getSettings();
         const shouldApplyWide =
             Boolean(settings.wideModeEnabled) &&
             !window.location.pathname.includes('/gems/');
 
-        this.wideLayoutEngine.setEnabled(shouldApplyWide);
+        wideLayoutEngine.setEnabled(shouldApplyWide);
 
         const topBar = document.querySelector('top-bar-actions');
         if (!topBar) {
-            this.wideLayoutEngine.refresh();
+            wideLayoutEngine.refresh();
             return;
         }
 
-        const wideButton = this.ensureButton({
+        const wideButton = ensureButton({
             id: 'hg-header-wide-btn',
             title: 'Toggle Wide Chat',
             svg: `
@@ -266,7 +274,7 @@ export class TopBarToolsManager {
                     <path class="hg-arrow-right" d="M15 5v14l7-7-7-7z"/>
                 </svg>
             `,
-            onClick: () => this.handleWideToggle(),
+            onClick: () => handleWideToggle(),
         });
 
         wideButton?.classList.toggle('hg-wide-active', shouldApplyWide);
@@ -277,7 +285,7 @@ export class TopBarToolsManager {
         if (!shouldShowExport) {
             existingExport?.remove();
         } else {
-            this.ensureButton({
+            ensureButton({
                 id: 'hg-header-export-btn',
                 title: 'Export Chat',
                 svg: `
@@ -285,14 +293,19 @@ export class TopBarToolsManager {
                         <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
                     </svg>
                 `,
-                onClick: () => this.onExportClick(),
+                onClick: () => onExportClick(),
             });
         }
 
-        this.wideLayoutEngine.refresh();
+        wideLayoutEngine.refresh();
     }
 
-    destroy() {
-        this.wideLayoutEngine.setEnabled(false);
+    function destroy() {
+        wideLayoutEngine.setEnabled(false);
     }
+
+    return {
+        refresh,
+        destroy,
+    };
 }
