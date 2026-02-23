@@ -16,6 +16,14 @@ let lastWideChatUrl = window.location.href;
 let chatExportController = null;
 let topBarToolsManager = null;
 
+function applyChatboxHeaderStyleSetting(settings) {
+    const isEnabled = Boolean(settings?.chatboxHeaderStyleEnabled);
+    document.body.classList.toggle(
+        'hg-chatbox-header-style-enabled',
+        isEnabled
+    );
+}
+
 function getStorageValue(key, fallback) {
     return new Promise((resolve) => {
         if (!hasChromeStorage()) {
@@ -331,11 +339,6 @@ function initializeFeatureModules() {
             getSettings,
             updateSettings,
             onExportClick: () => chatExportController?.showPopup(),
-            onWideToggleDebug: (isEnabled) =>
-                showToast(
-                    `Wide chat toggle clicked: ${isEnabled ? 'ON' : 'OFF'}`,
-                    'info'
-                ),
         });
     }
 }
@@ -394,9 +397,6 @@ function insertChatTools() {
         toolsRoot = document.createElement('div');
         toolsRoot.id = 'hypergravity-chat-tools-root';
         toolsRoot.className = 'hg-chat-tools-container';
-        // Style it to blend naturally at the top of the input field row
-        toolsRoot.style.cssText =
-            'display: flex; justify-content: space-between; align-items: center; margin-top: -30px; width: 100%; max-width: 100%; box-sizing: border-box; grid-column: 1 / -1;';
         createRoot(toolsRoot).render(<ChatTools />);
     }
 
@@ -439,6 +439,7 @@ initializeFeatureModules();
 insertHypergravitySidebar();
 insertChatTools();
 topBarToolsManager?.refresh();
+getSettings().then(applyChatboxHeaderStyleSetting);
 
 document.addEventListener('click', handleGlobalMenuButtonTracking, true);
 
@@ -447,6 +448,10 @@ if (hasChromeStorage()) {
         if (areaName !== 'local') return;
         if (changes[SETTINGS_KEY]) {
             topBarToolsManager?.refresh();
+            applyChatboxHeaderStyleSetting({
+                ...DEFAULT_SETTINGS,
+                ...(changes[SETTINGS_KEY].newValue || {}),
+            });
         }
     });
 }

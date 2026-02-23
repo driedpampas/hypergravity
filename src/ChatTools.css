@@ -1,6 +1,50 @@
 /* CSS for Chat Tools (Token Counter and Optimize Button) */
+.hg-chat-tools-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -30px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    grid-column: 1 / -1;
+}
+
+.hg-chat-tools-shell {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.hg-chat-tools-rail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.hg-chat-tools {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.hg-chat-tools-right {
+    justify-content: flex-end;
+}
+
+.hg-quick-action-icon {
+    margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
 #hg-word-counter {
     position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--gem-sys-color--surface, #f0f4f8);
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
     border-radius: 20px;
@@ -197,4 +241,111 @@
     outline: 2px solid var(--gem-sys-color--primary, #4285f4);
     outline-offset: -2px;
     z-index: 1;
+}
+
+/* New Raised Chatbox Header Style (feature-flagged) */
+
+/*
+ * The strip is taken out of normal flow and placed directly above
+ * .text-input-field via bottom:100%. All ancestors have overflow:visible
+ * so it peeks above the chatbox visual box. The chatbox's own background
+ * (on input-area-v2) sits below the strip, creating "chatbox on top" depth.
+ */
+body.hg-chatbox-header-style-enabled .hg-chat-tools-container {
+    position: absolute;
+    bottom: calc(100% - 10px);
+    left: 0;
+    right: 0;
+    margin: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body.hg-chatbox-header-style-enabled .hg-chat-tools-shell {
+    width: 100%;
+    pointer-events: none;
+}
+
+body.hg-chatbox-header-style-enabled .hg-chat-tools-rail {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    min-height: 40px;
+    box-sizing: border-box;
+    /* Top radius matches the chatbox corner radius; no bottom radius so
+       the strip visually merges into the chatbox top edge */
+    border-radius: 24px 24px 0 0;
+    padding: 3px 14px 13px;
+    /* Darker than the chatbox (--surface < --surface-container) */
+    background: var(--gem-sys-color--surface, #131314);
+    border: 1px solid var(--gem-sys-color--outline-variant, #3c4043);
+    border-bottom: none;
+    box-shadow: none;
+    pointer-events: auto;
+}
+
+body.hg-chatbox-header-style-enabled .hg-chat-tools {
+    gap: 6px;
+}
+
+body.hg-chatbox-header-style-enabled #hg-word-counter {
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    padding: 3px 8px;
+    box-shadow: none;
+    height: 24px;
+    min-width: 108px;
+}
+
+body.hg-chatbox-header-style-enabled #hg-word-counter:hover:not(.expanded) {
+    background: var(--gem-sys-color--surface-container-high, #28292a);
+    border-color: transparent;
+    color: var(--gem-sys-color--on-surface, #e3e3e3);
+    box-shadow: none;
+}
+
+body.hg-chatbox-header-style-enabled #hg-word-counter.expanded {
+    border-color: transparent;
+    background: var(--gem-sys-color--surface-container-high, #28292a);
+}
+
+body.hg-chatbox-header-style-enabled .hg-optimize-btn {
+    gap: 5px;
+    padding: 3px 8px;
+    background: transparent !important;
+    border: none;
+    border-radius: 10px;
+    box-shadow: none;
+    height: 24px;
+}
+
+body.hg-chatbox-header-style-enabled .hg-optimize-btn:hover {
+    background: var(
+        --gem-sys-color--surface-container-high,
+        #28292a
+    ) !important;
+    color: var(--gem-sys-color--primary, #8ab4f8);
+}
+
+body.hg-chatbox-header-style-enabled .hg-optimize-btn.loading {
+    border-color: transparent;
+    color: var(--gem-sys-color--primary, #8ab4f8);
+}
+
+body.hg-chatbox-header-style-enabled .hg-scroll-controls {
+    border: none;
+    border-radius: 10px;
+    height: 24px;
+    background: transparent;
+    box-shadow: none;
+}
+
+body.hg-chatbox-header-style-enabled .hg-scroll-btn {
+    width: 26px;
+    height: 24px;
+}
+body.hg-chatbox-header-style-enabled input-area-v2 {
+    margin-top: 10px !important;
 }

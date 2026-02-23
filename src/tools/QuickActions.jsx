@@ -32,9 +32,7 @@ export function QuickActions() {
                     }}
                 >
                     {action.icon && (
-                        <span style={{ marginRight: '4px' }}>
-                            {action.icon}
-                        </span>
+                        <span className="hg-quick-action-icon">{action.icon}</span>
                     )}
                     <span className="hg-optimize-label">{action.name}</span>
                 </button>

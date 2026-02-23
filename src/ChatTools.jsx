@@ -33,43 +33,26 @@ function sortByWeight(tools) {
 
 const SORTED_TOOLS = sortByWeight(TOOLS);
 
-const toolGroupStyle = {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-    flexWrap: 'nowrap',
-    minWidth: 0,
-};
-
 export function ChatTools() {
     const left = SORTED_TOOLS.filter((t) => t.align === 'left');
     const right = SORTED_TOOLS.filter((t) => t.align === 'right');
 
     return (
-        <div
-            className="hg-chat-tools"
-            style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                width: '100%',
-            }}
-        >
-            <div className="hg-chat-tools-left" style={toolGroupStyle}>
-                {left.map(({ component: C }, i) => (
-                    <C key={i} />
-                ))}
-            </div>
-            {right.length > 0 && (
-                <div
-                    className="hg-chat-tools-right"
-                    style={{ ...toolGroupStyle, justifyContent: 'flex-end' }}
-                >
-                    {right.map(({ component: C }, i) => (
+        <div className="hg-chat-tools-shell">
+            <div className="hg-chat-tools-rail">
+                <div className="hg-chat-tools hg-chat-tools-left">
+                    {left.map(({ component: C }, i) => (
                         <C key={i} />
                     ))}
                 </div>
-            )}
+                {right.length > 0 && (
+                    <div className="hg-chat-tools hg-chat-tools-right">
+                    {right.map(({ component: C }, i) => (
+                        <C key={i} />
+                    ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

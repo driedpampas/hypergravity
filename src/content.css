@@ -345,3 +345,69 @@ body.hg-wide-chat input-container.input-gradient::before {
 .hg-toast-error {
     background: #c5221f;
 }
+
+/*
+ * ── Raised Chatbox Header Style: layout plumbing ──────────────────────
+ *
+ * .hg-chat-tools-container is positioned absolute with bottom:100%
+ * relative to .text-input-field, so it sits directly above the input area.
+ * Every ancestor up to the visual chatbox shell must have overflow:visible
+ * so the strip can peek above the chatbox boundary.
+ * The chatbox (input-area-v2) already has its own background so it
+ * visually appears in front of the darker strip behind it.
+ */
+body.hg-chatbox-header-style-enabled fieldset.input-area-container,
+body.hg-chatbox-header-style-enabled input-area-v2,
+body.hg-chatbox-header-style-enabled .input-area {
+    overflow: visible !important;
+}
+
+body.hg-chatbox-header-style-enabled .text-input-field,
+body.hg-chatbox-header-style-enabled .text-input-field.with-toolbox-drawer {
+    overflow: visible !important;
+    /* Containing block for the absolute-positioned strip */
+    position: relative !important;
+}
+
+/* ── Native bottom-row button size reduction ──────────────────────────
+ *
+ * Targets from the live HTML:
+ *   .upload-card-button          → the "+" icon button
+ *   .toolbox-drawer-button       → the "Tools" button
+ *   .input-area-switch           → the "Fast / Pro" model picker
+ *   .speech_dictation_mic_button → microphone icon button
+ *   .send-button                 → send arrow icon button
+ */
+body.hg-chatbox-header-style-enabled .upload-card-button {
+    height: 32px !important;
+    min-height: 32px !important;
+    width: 32px !important;
+}
+
+body.hg-chatbox-header-style-enabled .toolbox-drawer-button {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+body.hg-chatbox-header-style-enabled
+    .toolbox-drawer-button-with-label
+    .mdc-button__label {
+    line-height: 32px;
+}
+
+body.hg-chatbox-header-style-enabled .input-area-switch {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 32px !important;
+}
+
+body.hg-chatbox-header-style-enabled .speech_dictation_mic_button,
+body.hg-chatbox-header-style-enabled .send-button {
+    height: 32px !important;
+    width: 32px !important;
+    min-height: 32px !important;
+}

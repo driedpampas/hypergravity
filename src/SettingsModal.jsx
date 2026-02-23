@@ -130,6 +130,11 @@ export function SettingsModal({ onClose }) {
                     settingKey="showScrollButtons"
                     description="Add scroll up/down controls in the chat tools"
                 />
+                <SettingRow
+                    label="New Chatbox Header Style"
+                    settingKey="chatboxHeaderStyleEnabled"
+                    description="Show tools in a raised strip and tighten input-area button spacing"
+                />
                 <div className="hg-setting-row hg-setting-row-input">
                     <div className="hg-setting-info">
                         <span className="hg-setting-label">Gemini API Key</span>

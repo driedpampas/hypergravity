@@ -134,3 +134,21 @@
     font-variant-numeric: tabular-nums;
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
+
+body.hg-chatbox-header-style-enabled .hg-token-counter-btn {
+    border-radius: 12px;
+    height: 24px;
+}
+
+body.hg-chatbox-header-style-enabled .hg-token-counter-btn--labeled {
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    padding: 4px 8px;
+    box-shadow: none;
+    height: 24px;
+}
+
+body.hg-chatbox-header-style-enabled .hg-token-counter-btn--labeled:hover {
+    border-color: transparent;
+}
