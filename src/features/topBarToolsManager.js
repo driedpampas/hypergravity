@@ -14,6 +14,7 @@ function createWideLayoutEngine() {
                 width: 100% !important;
                 margin-left: 0 !important;
                 margin-right: 0 !important;
+                box-sizing: border-box !important;
             }
         `;
         document.head.appendChild(style);

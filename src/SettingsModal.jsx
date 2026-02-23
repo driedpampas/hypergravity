@@ -12,6 +12,7 @@ export function SettingsModal({ onClose }) {
             wideModeEnabled: false,
             hideSidebarEnabled: false,
             showExportButton: true,
+            showTokenLabel: true,
             geminiApiKey: '',
             tokenLimit: 1048576,
         }
@@ -90,6 +91,11 @@ export function SettingsModal({ onClose }) {
                     label="Hide Sidebar"
                     settingKey="hideSidebarEnabled"
                     description="Collapse the native Gemini sidebar by default"
+                />
+                <SettingRow
+                    label="Show Token Count Label"
+                    settingKey="showTokenLabel"
+                    description="Display token usage text next to the progress circle"
                 />
                 <div className="hg-setting-row hg-setting-row-input">
                     <div className="hg-setting-info">

@@ -148,6 +148,8 @@ export function ChatTools() {
                     gap: '8px',
                     alignItems: 'center',
                     flexWrap: 'nowrap',
+                    minWidth: 0,
+                    maxWidth: '100%',
                 }}
             >
                 <div

@@ -134,6 +134,7 @@ body.hg-wide-chat .input-area-container,
 body.hg-wide-chat .text-input-field {
     max-width: 100% !important;
     width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 body.hg-wide-chat .bottom-gradient,

@@ -430,7 +430,7 @@ function insertChatTools() {
         toolsRoot.className = 'hg-chat-tools-container';
         // Style it to blend naturally at the top of the input field row
         toolsRoot.style.cssText =
-            'display: flex; justify-content: space-between; align-items: center; margin-top: -30px; width: 100%; box-sizing: border-box;';
+            'display: flex; justify-content: space-between; align-items: center; margin-top: -30px; width: 100%; max-width: 100%; box-sizing: border-box;';
         createRoot(toolsRoot).render(<ChatTools />);
     }
 

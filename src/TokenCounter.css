@@ -19,6 +19,22 @@
         color 0.2s;
 }
 
+.hg-token-counter-btn--labeled {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+    border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    border-radius: 20px;
+    padding: 6px 14px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    height: 28px;
+    box-sizing: border-box;
+}
+
+.hg-token-counter-btn--labeled:hover {
+    background: var(--gem-sys-color--surface-container-high, #e9eef6);
+    color: var(--gem-sys-color--on-surface, #333);
+    border-color: var(--gem-sys-color--outline, #727676);
+}
+
 .hg-token-counter-btn:hover {
     background-color: var(
         --gem-sys-color--surface-variant,
@@ -41,7 +57,6 @@
 
 .hg-token-ring-fill {
     fill: var(--gem-sys-color--primary, #8ab4f8);
-    transition: clip-path 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hg-token-label {

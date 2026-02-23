@@ -194,6 +194,7 @@ export function TokenCounter() {
     const [geminiSettings] = useChromeStorage('hypergravityGeminiSettings', {
         geminiApiKey: '',
         tokenLimit: 1000000,
+        showTokenLabel: true,
     });
     const [conversationId, setConversationId] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -611,6 +612,7 @@ export function TokenCounter() {
     }, [conversationId, geminiSettings?.geminiApiKey]);
 
     const MAX_TOKENS = geminiSettings?.tokenLimit || 1000000;
+    const showLabel = geminiSettings?.showTokenLabel !== false;
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
         totalTokens === 0
@@ -627,10 +629,13 @@ export function TokenCounter() {
         return String(count);
     };
 
+    const fillDeg = (fillPercentage / 100) * 360;
+    const ringMask = `conic-gradient(#000 ${fillDeg}deg, transparent ${fillDeg}deg)`;
+
     return (
         <div className="hg-token-counter-wrapper" ref={popupRef}>
             <button
-                className="hg-token-counter-btn"
+                className={`hg-token-counter-btn${showLabel ? ' hg-token-counter-btn--labeled' : ''}`}
                 onClick={() => setIsExpanded(!isExpanded)}
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
@@ -647,15 +652,15 @@ export function TokenCounter() {
                         cx="10"
                         cy="10"
                         r="9"
-                        style={{
-                            clipPath: `inset(${100 - fillPercentage}% 0 0 0)`,
-                        }}
+                        style={{ mask: ringMask, WebkitMask: ringMask }}
                     />
                 </svg>
-                <span className="hg-token-label">
-                    {formatTokenCount(totalTokens)}/
-                    {formatTokenCount(MAX_TOKENS)}
-                </span>
+                {showLabel && (
+                    <span className="hg-token-label">
+                        {formatTokenCount(totalTokens)}/
+                        {formatTokenCount(MAX_TOKENS)}
+                    </span>
+                )}
             </button>
 
             {isExpanded && (
