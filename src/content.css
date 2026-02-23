@@ -83,12 +83,19 @@
 
 body.hg-wide-chat .conversation-container,
 body.hg-wide-chat conversation-container,
+body.hg-wide-chat .user-message,
+body.hg-wide-chat [data-message-author='user'],
+body.hg-wide-chat .query-content,
 body.hg-wide-chat user-query,
+body.hg-wide-chat .model-response,
+body.hg-wide-chat [data-message-author='model'],
 body.hg-wide-chat model-response,
 body.hg-wide-chat .response-container,
 body.hg-wide-chat response-container,
 body.hg-wide-chat message-content,
 body.hg-wide-chat .markdown-main-panel,
+body.hg-wide-chat [class*='chat-history'],
+body.hg-wide-chat .conversation-history,
 body.hg-wide-chat hallucination-disclaimer,
 body.hg-wide-chat .hallucination-disclaimer,
 body.hg-wide-chat .human-review-disclosure-container {
@@ -98,7 +105,12 @@ body.hg-wide-chat .human-review-disclosure-container {
 
 body.hg-wide-chat .conversation-container,
 body.hg-wide-chat conversation-container,
+body.hg-wide-chat .user-message,
+body.hg-wide-chat [data-message-author='user'],
+body.hg-wide-chat .query-content,
 body.hg-wide-chat user-query,
+body.hg-wide-chat .model-response,
+body.hg-wide-chat [data-message-author='model'],
 body.hg-wide-chat model-response,
 body.hg-wide-chat .response-container,
 body.hg-wide-chat response-container {

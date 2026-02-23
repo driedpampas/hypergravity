@@ -34,39 +34,70 @@ class WideLayoutEngine {
         this.markedTargets.clear();
     }
 
-    collectKnownTargets() {
-        const selectors = [
+    getChatRoots() {
+        return [
+            document.querySelector('infinite-scroller.chat-history'),
+            document.querySelector('.chat-history'),
+            document.querySelector('conversation-container'),
+        ].filter((node) => node instanceof HTMLElement);
+    }
+
+    getMessageSelectors() {
+        return [
             '.conversation-container',
             'conversation-container',
+            '.user-message',
+            '[data-message-author="user"]',
+            '.query-content',
             'user-query',
+            '.model-response',
+            '[data-message-author="model"]',
             'model-response',
             '.response-container',
             'response-container',
             'message-content',
             '.markdown-main-panel',
-            'input-container',
-            '.input-area-container',
-            '.text-input-field',
-            'infinite-scroller.chat-history',
-            '.chat-history',
         ];
+    }
 
-        return Array.from(document.querySelectorAll(selectors.join(', '))).filter(
-            (node) => node instanceof HTMLElement
-        );
+    collectKnownTargets() {
+        const roots = this.getChatRoots();
+        const messageSelectors = this.getMessageSelectors().join(', ');
+        const candidates = new Set();
+
+        roots.forEach((root) => {
+            candidates.add(root);
+            root.querySelectorAll(messageSelectors).forEach((node) => {
+                if (node instanceof HTMLElement) {
+                    candidates.add(node);
+                }
+            });
+        });
+
+        return Array.from(candidates);
+    }
+
+    collectInputTargets() {
+        return Array.from(
+            document.querySelectorAll(
+                [
+                    'input-container',
+                    'input-container .input-area-container',
+                    'input-container.input-gradient',
+                    '.input-area-container',
+                    '.text-input-field',
+                ].join(', ')
+            )
+        ).filter((node) => node instanceof HTMLElement);
     }
 
     collectNarrowAncestorsFromMessages() {
+        const roots = this.getChatRoots();
+        if (!roots.length) return [];
+
+        const messageSelectors = this.getMessageSelectors().join(', ');
         const messages = Array.from(
-            document.querySelectorAll(
-                [
-                    'user-query',
-                    'model-response',
-                    'response-container',
-                    '.response-container',
-                    'message-content .markdown-main-panel',
-                ].join(', ')
-            )
+            roots.flatMap((root) => Array.from(root.querySelectorAll(messageSelectors)))
         ).filter((node) => node instanceof HTMLElement);
 
         const candidates = new Set();
@@ -79,7 +110,7 @@ class WideLayoutEngine {
                 current &&
                 current instanceof HTMLElement &&
                 current !== document.body &&
-                depth < 12
+                depth < 18
             ) {
                 const rect = current.getBoundingClientRect();
                 const isVisible = rect.width > 0 && rect.height > 0;
@@ -92,9 +123,39 @@ class WideLayoutEngine {
                     candidates.add(current);
                 }
 
+                if (roots.some((root) => current === root)) {
+                    break;
+                }
+
                 current = current.parentElement;
                 depth += 1;
             }
+        });
+
+        return Array.from(candidates);
+    }
+
+    collectInlineMaxWidthTargets() {
+        const roots = this.getChatRoots();
+
+        if (!roots.length) return [];
+
+        const candidates = new Set();
+
+        roots.forEach((root) => {
+            root.querySelectorAll('[style*="max-width"]').forEach((node) => {
+                if (!(node instanceof HTMLElement)) return;
+
+                const rect = node.getBoundingClientRect();
+                if (rect.width <= 320 || rect.height <= 0) return;
+
+                const maxWidth = window.getComputedStyle(node).maxWidth;
+                if (!maxWidth || maxWidth === 'none' || maxWidth === '100%') {
+                    return;
+                }
+
+                candidates.add(node);
+            });
         });
 
         return Array.from(candidates);
@@ -110,15 +171,18 @@ class WideLayoutEngine {
         element.style.setProperty('margin-right', '0', 'important');
 
         this.markedTargets.add(element);
+        console.log('[WideLayoutEngine] Marked element for wide layout:', element);
     }
 
     refreshTargets() {
         this.clearMarkedTargets();
 
         const knownTargets = this.collectKnownTargets();
+        const inputTargets = this.collectInputTargets();
         const detectedTargets = this.collectNarrowAncestorsFromMessages();
+        const inlineMaxWidthTargets = this.collectInlineMaxWidthTargets();
 
-        [...knownTargets, ...detectedTargets].forEach((target) => {
+        [...knownTargets, ...inputTargets, ...detectedTargets, ...inlineMaxWidthTargets].forEach((target) => {
             this.markTarget(target);
         });
     }
@@ -178,8 +242,17 @@ export class TopBarToolsManager {
 
     async refresh() {
         const settings = await this.getSettings();
+        const shouldApplyWide =
+            Boolean(settings.wideModeEnabled) &&
+            !window.location.pathname.includes('/gems/');
+
+        this.wideLayoutEngine.setEnabled(shouldApplyWide);
+
         const topBar = document.querySelector('top-bar-actions');
-        if (!topBar) return;
+        if (!topBar) {
+            this.wideLayoutEngine.refresh();
+            return;
+        }
 
         const wideButton = this.ensureButton({
             id: 'hg-header-wide-btn',
@@ -193,11 +266,6 @@ export class TopBarToolsManager {
             onClick: () => this.handleWideToggle(),
         });
 
-        const shouldApplyWide =
-            Boolean(settings.wideModeEnabled) &&
-            !window.location.pathname.includes('/gems/');
-
-        this.wideLayoutEngine.setEnabled(shouldApplyWide);
         wideButton?.classList.toggle('hg-wide-active', shouldApplyWide);
 
         const shouldShowExport = settings.showExportButton !== false;
