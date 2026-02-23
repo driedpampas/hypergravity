@@ -4,6 +4,7 @@ import { WordCounter } from './tools/WordCounter';
 import { OptimizeButton } from './tools/OptimizeButton';
 import { TokenCounter } from './tools/TokenCounter';
 import { QuickActions } from './tools/QuickActions';
+import { ScrollButtons } from './tools/ScrollButtons';
 
 export function ChatTools() {
     return (
@@ -21,6 +22,7 @@ export function ChatTools() {
             >
                 <WordCounter />
                 <OptimizeButton />
+                <ScrollButtons />
                 <TokenCounter />
                 <QuickActions />
             </div>

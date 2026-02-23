@@ -13,6 +13,7 @@ export function SettingsModal({ onClose }) {
             hideSidebarEnabled: false,
             showExportButton: true,
             showTokenLabel: true,
+            showScrollButtons: true,
             geminiApiKey: '',
             tokenLimit: 1048576,
         }
@@ -96,6 +97,11 @@ export function SettingsModal({ onClose }) {
                     label="Show Token Count Label"
                     settingKey="showTokenLabel"
                     description="Display token usage text next to the progress circle"
+                />
+                <SettingRow
+                    label="Show Scroll Buttons"
+                    settingKey="showScrollButtons"
+                    description="Add scroll up/down controls in the chat tools"
                 />
                 <div className="hg-setting-row hg-setting-row-input">
                     <div className="hg-setting-info">

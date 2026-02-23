@@ -5,6 +5,12 @@ const INPUT_SELECTORS = [
     'rich-textarea .ql-editor',
 ];
 
+const CHAT_HISTORY_SELECTORS = [
+    '[data-test-id="chat-history-container"]',
+    'infinite-scroller.chat-history',
+    '.chat-history',
+];
+
 const TOOLS_ROOT_ID = 'hypergravity-chat-tools-root';
 
 function getInputElement() {
@@ -18,6 +24,39 @@ function getInputElement() {
 function getInputText() {
     const el = getInputElement();
     return (el && (el.innerText || el.textContent || el.value)) || '';
+}
+
+function isGemInstructionsField(element) {
+    if (!element) return false;
+
+    const richTextarea = element.closest('rich-textarea');
+    return (
+        !!richTextarea?.classList.contains('instruction-rich-input') ||
+        !!element.closest('.instructions-input-container') ||
+        window.location.pathname.includes('/gems/')
+    );
+}
+
+function getInputAnchorElement() {
+    const input = getInputElement();
+    if (!input) return null;
+
+    return (
+        input.closest('input-area-v2') ||
+        input.closest('.input-area') ||
+        input.closest('.text-input-field') ||
+        input.closest('rich-textarea') ||
+        input
+    );
+}
+
+function getChatHistoryContainer() {
+    for (const selector of CHAT_HISTORY_SELECTORS) {
+        const el = document.querySelector(selector);
+        if (el) return el;
+    }
+
+    return null;
 }
 
 function setInputText(text) {
@@ -99,7 +138,10 @@ function hasTool(id) {
 
 export const chatBoxManager = {
     getInputElement,
+    getInputAnchorElement,
     getInputText,
+    getChatHistoryContainer,
+    isGemInstructionsField,
     setInputText,
     getToolsContainer,
     addTool,

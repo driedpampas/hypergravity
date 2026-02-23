@@ -20,6 +20,7 @@ const DEFAULT_SETTINGS = {
     hideSidebarEnabled: false,
     showExportButton: true,
     showTokenLabel: true,
+    showScrollButtons: true,
     geminiApiKey: '',
     tokenLimit: 1048576,
 };
