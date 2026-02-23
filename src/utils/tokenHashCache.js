@@ -1,0 +1,150 @@
+import { hasChromeStorage } from './storage';
+import { debugLog as _debugLog } from './debug';
+
+const CACHE_KEY = 'hg_token_hash_cache';
+const FLUSH_DELAY = 1500;
+
+let memoryCache = null;
+let flushTimer = null;
+let loadPromise = null;
+let dirty = false;
+
+const debugLog = (...args) => _debugLog('Cache', ...args);
+
+function loadCache() {
+    if (loadPromise) return loadPromise;
+
+    loadPromise = new Promise((resolve) => {
+        if (!hasChromeStorage()) {
+            try {
+                const raw = localStorage.getItem(CACHE_KEY);
+                memoryCache = raw ? JSON.parse(raw) : {};
+            } catch {
+                memoryCache = {};
+            }
+            resolve(memoryCache);
+            return;
+        }
+
+        chrome.storage.local.get([CACHE_KEY], (result) => {
+            memoryCache = result[CACHE_KEY] || {};
+            debugLog(
+                'Cache loaded from chrome.storage,',
+                Object.keys(memoryCache).length,
+                'entries'
+            );
+            resolve(memoryCache);
+        });
+    });
+
+    return loadPromise;
+}
+
+function flushToStorage() {
+    if (!memoryCache || !dirty) return;
+    dirty = false;
+
+    const data = { ...memoryCache };
+    debugLog('Flushing', Object.keys(data).length, 'entries to storage');
+
+    if (hasChromeStorage()) {
+        chrome.storage.local.set({ [CACHE_KEY]: data });
+    }
+
+    try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch {
+        // quota exceeded
+    }
+}
+
+function scheduleFlush() {
+    dirty = true;
+    clearTimeout(flushTimer);
+    flushTimer = setTimeout(flushToStorage, FLUSH_DELAY);
+}
+
+try {
+    window.addEventListener('beforeunload', flushToStorage);
+} catch {
+    // not in a window context
+}
+
+const USER_PREFIXES = [/^You said\n\n/, /^You said\n/];
+
+const MODEL_PREFIXES = [
+    /^Show thinking\nGemini said\n\n/,
+    /^Show thinking\nGemini said\n/,
+    /^Gemini said\n\n/,
+    /^Gemini said\n/,
+];
+
+export function sanitizeMessageText(text, role) {
+    if (!text) return '';
+    let cleaned = text;
+    const prefixes = role === 'input' ? USER_PREFIXES : MODEL_PREFIXES;
+    for (const prefix of prefixes) {
+        cleaned = cleaned.replace(prefix, '');
+        if (cleaned !== text) break;
+    }
+    return cleaned.trim();
+}
+
+export async function hashText(text) {
+    const normalized = (text || '').replace(/\s+/g, ' ').trim();
+    const encoded = new TextEncoder().encode(normalized);
+    const buffer = await crypto.subtle.digest('SHA-256', encoded);
+    const bytes = new Uint8Array(buffer);
+    let hex = '';
+    for (let i = 0; i < 8; i++) {
+        hex += bytes[i].toString(16).padStart(2, '0');
+    }
+    return hex;
+}
+
+export async function getCachedTokenCount(hash) {
+    const cache = await loadCache();
+    const value = cache[hash];
+    const result = Number.isFinite(value) ? value : null;
+    debugLog(
+        result !== null ? `Cache HIT ${hash} → ${result}` : `Cache MISS ${hash}`
+    );
+    return result;
+}
+
+export async function setCachedTokenCount(hash, count) {
+    const cache = await loadCache();
+    cache[hash] = count;
+    debugLog(`Cache SET ${hash} → ${count}`);
+    scheduleFlush();
+}
+
+export function forceFlush() {
+    flushToStorage();
+}
+
+export async function getAllCacheData() {
+    const cache = await loadCache();
+    return { ...cache };
+}
+
+export async function importCacheData(data) {
+    if (!data || typeof data !== 'object') return 0;
+    const cache = await loadCache();
+    let imported = 0;
+    for (const [hash, count] of Object.entries(data)) {
+        if (typeof hash === 'string' && Number.isFinite(count)) {
+            cache[hash] = count;
+            imported++;
+        }
+    }
+    dirty = true;
+    flushToStorage();
+    return imported;
+}
+
+export async function getCacheStats() {
+    const cache = await loadCache();
+    const entries = Object.keys(cache).length;
+    return { entries };
+}

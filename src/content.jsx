@@ -4,6 +4,11 @@ import { ChatTools } from './ChatTools';
 import './content.css';
 import { ChatExportController } from './features/chatExport';
 import { createTopBarToolsManager } from './features/topBarToolsManager';
+import {
+    hasChromeStorage,
+    readLocalStorageValue,
+    writeLocalStorageValue,
+} from './utils/storage';
 
 const SETTINGS_KEY = 'hypergravityGeminiSettings';
 const FOLDERS_KEY = 'hypergravityGeminiFolders';
@@ -23,35 +28,6 @@ let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
 let chatExportController = null;
 let topBarToolsManager = null;
-
-function hasChromeStorage() {
-    return (
-        typeof chrome !== 'undefined' &&
-        chrome.storage &&
-        chrome.storage.local &&
-        typeof chrome.storage.local.get === 'function' &&
-        typeof chrome.storage.local.set === 'function'
-    );
-}
-
-function readLocalStorageValue(key) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (raw === null) return undefined;
-        return JSON.parse(raw);
-    } catch {
-        return undefined;
-    }
-}
-
-function writeLocalStorageValue(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-        // Ignore localStorage write failures
-        console.error('Failed to write to localStorage');
-    }
-}
 
 function getStorageValue(key, fallback) {
     return new Promise((resolve) => {

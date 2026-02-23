@@ -161,10 +161,6 @@ function createWideLayoutEngine() {
         element.setAttribute('data-hg-wide-target', '1');
 
         markedTargets.add(element);
-        console.log(
-            '[WideLayoutEngine] Marked element for wide layout:',
-            element
-        );
     }
 
     function refreshTargets() {

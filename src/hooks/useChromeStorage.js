@@ -1,28 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
-
-function hasChromeStorage() {
-    return (
-        typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local
-    );
-}
-
-function readLocalStorageValue(key) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (raw === null) return undefined;
-        return JSON.parse(raw);
-    } catch {
-        return undefined;
-    }
-}
-
-function writeLocalStorageValue(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-        // Ignore storage write failures (quota/private mode)
-    }
-}
+import {
+    hasChromeStorage,
+    readLocalStorageValue,
+    writeLocalStorageValue,
+} from '../utils/storage';
 
 function mergeWithDefaults(stored, defaults) {
     if (

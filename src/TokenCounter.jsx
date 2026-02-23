@@ -1,26 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { countText } from './utils/textStats';
 import { useChromeStorage } from './hooks/useChromeStorage';
+import {
+    sanitizeMessageText,
+    hashText,
+    getCachedTokenCount,
+    setCachedTokenCount,
+    forceFlush,
+} from './utils/tokenHashCache';
+import { debugLog as _debugLog } from './utils/debug';
 import './TokenCounter.css';
 
-function calculateTokens(node) {
-    if (!node) return 0;
-    const text = node.textContent || '';
-    return countText(text).tokens;
-}
-
-function isDebugEnabled() {
-    return (
-        window.__HG_DEBUG_TOKEN_COUNTER__ === true ||
-        localStorage.getItem('hg_debug_token_counter') === '1'
-    );
-}
-
-function debugLog(...args) {
-    if (isDebugEnabled()) {
-        console.log('[HG TokenCounter]', ...args);
-    }
-}
+const debugLog = (...args) => _debugLog('TokenCounter', ...args);
 
 function getChatHistoryRoot() {
     return (
@@ -61,6 +52,10 @@ function uniqueTopLevelNodes(nodes) {
     );
 }
 
+function getNodeText(node) {
+    return (node?.innerText || node?.textContent || '').trim();
+}
+
 function resolveNodesByPriority(conversationContainer, selectorGroups) {
     for (const selectors of selectorGroups) {
         const nodes = uniqueTopLevelNodes(
@@ -99,75 +94,13 @@ function collectMessageNodes(conversationContainer) {
     };
 }
 
-function getNodeText(node) {
-    return (node?.innerText || node?.textContent || '').trim();
-}
-
-function getTextSignature(text) {
-    const normalized = (text || '').replace(/\s+/g, ' ').trim();
-    return `${normalized.length}:${normalized}`;
-}
-
-function getApiKeyMarker(apiKey) {
-    return (apiKey || '').slice(-8);
-}
-
-function readCachedExactToken(node, role, signature, apiKeyMarker) {
-    if (!node) return null;
-    const storedRole = node.getAttribute('data-hg-token-role');
-    const storedSignature = node.getAttribute('data-hg-token-signature');
-    const storedApiKey = node.getAttribute('data-hg-token-key');
-    const storedValue = node.getAttribute('data-hg-token-value');
-    const tokenValue = Number(storedValue);
-
-    if (
-        storedRole === role &&
-        storedSignature === signature &&
-        storedApiKey === apiKeyMarker &&
-        Number.isFinite(tokenValue)
-    ) {
-        return tokenValue;
-    }
-
-    return null;
-}
-
-function writeCachedExactToken(
-    node,
-    role,
-    signature,
-    apiKeyMarker,
-    tokenValue
-) {
-    if (!node) return;
-    node.setAttribute('data-hg-token-processed', '1');
-    node.setAttribute('data-hg-token-role', role);
-    node.setAttribute('data-hg-token-signature', signature);
-    node.setAttribute('data-hg-token-key', apiKeyMarker);
-    node.setAttribute('data-hg-token-value', String(tokenValue));
-}
-
-function saveStatsForConversation(conversationId, stats) {
-    if (!conversationId) return;
-    const savedMap = JSON.parse(localStorage.getItem('hg_token_map') || '{}');
-    savedMap[conversationId] = stats;
-    localStorage.setItem('hg_token_map', JSON.stringify(savedMap));
-}
-
 async function countTokensWithGemini(text, apiKey, signal) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:countTokens?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            contents: [
-                {
-                    role: 'user',
-                    parts: [{ text: text || '' }],
-                },
-            ],
+            contents: [{ role: 'user', parts: [{ text: text || '' }] }],
         }),
         signal,
     });
@@ -185,12 +118,6 @@ async function countTokensWithGemini(text, apiKey, signal) {
 
 export function TokenCounter() {
     const [stats, setStats] = useState({ inputTokens: 0, outputTokens: 0 });
-    const [debugCycleStats, setDebugCycleStats] = useState({
-        inputCached: 0,
-        inputFetched: 0,
-        outputCached: 0,
-        outputFetched: 0,
-    });
     const [geminiSettings] = useChromeStorage('hypergravityGeminiSettings', {
         enabled: true,
         foldersEnabled: true,
@@ -215,7 +142,7 @@ export function TokenCounter() {
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () =>
-            window.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -237,22 +164,13 @@ export function TokenCounter() {
                     conversationId: newId,
                 });
 
-                if (newId) {
-                    const savedMap = JSON.parse(
-                        localStorage.getItem('hg_token_map') || '{}'
-                    );
-                    setStats(
-                        savedMap[newId] || { inputTokens: 0, outputTokens: 0 }
-                    );
-                } else {
+                if (!newId) {
                     setStats({ inputTokens: 0, outputTokens: 0 });
                 }
             }
         };
 
-        const onUrlMaybeChanged = () => {
-            checkUrl();
-        };
+        const onUrlMaybeChanged = () => checkUrl();
 
         const originalPushState = window.history.pushState;
         const originalReplaceState = window.history.replaceState;
@@ -289,7 +207,6 @@ export function TokenCounter() {
         let observer;
         let interval;
         let containerObserver;
-
         let exactDebounceTimeout;
         let exactRequestSeq = 0;
         let exactController = null;
@@ -298,255 +215,117 @@ export function TokenCounter() {
             const conversationContainers = getConversationContainers();
             if (conversationContainers.length === 0) return;
 
-            let inTokens = 0;
-            let outTokens = 0;
+            const allMessages = [];
 
-            const selectorUsage = {
-                input: new Set(),
-                output: new Set(),
-            };
+            for (const container of conversationContainers) {
+                const { userNodes, modelNodes } =
+                    collectMessageNodes(container);
 
-            const inputMessages = [];
-            const outputMessages = [];
-
-            conversationContainers.forEach((conversationContainer) => {
-                const {
-                    userNodes,
-                    modelNodes,
-                    userSelectorsUsed,
-                    modelSelectorsUsed,
-                } = collectMessageNodes(conversationContainer);
-
-                selectorUsage.input.add(userSelectorsUsed);
-                selectorUsage.output.add(modelSelectorsUsed);
-
-                userNodes.forEach((node) => {
-                    const text = getNodeText(node);
-                    const estimatedTokens = countText(text).tokens;
-                    inTokens += estimatedTokens;
-                    inputMessages.push({ node, text, estimatedTokens });
-                });
-
-                modelNodes.forEach((node) => {
-                    const text = getNodeText(node);
-                    const estimatedTokens = countText(text).tokens;
-                    outTokens += estimatedTokens;
-                    outputMessages.push({ node, text, estimatedTokens });
-                });
-            });
-
-            debugLog('Token scan', {
-                containers: {
-                    total: conversationContainers.length,
-                },
-                selectors: {
-                    input: Array.from(selectorUsage.input).join(' || '),
-                    output: Array.from(selectorUsage.output).join(' || '),
-                },
-                counts: {
-                    userQueries: inputMessages.length,
-                    modelResponses: outputMessages.length,
-                },
-                tokens: {
-                    inputTokens: inTokens,
-                    outputTokens: outTokens,
-                },
-            });
-
-            const apiKey = (geminiSettings?.geminiApiKey || '').trim();
-            if (!apiKey) {
-                setStats((prevStats) => {
-                    if (
-                        prevStats.inputTokens === inTokens &&
-                        prevStats.outputTokens === outTokens
-                    ) {
-                        return prevStats;
-                    }
-                    const newStats = {
-                        inputTokens: inTokens,
-                        outputTokens: outTokens,
-                    };
-
-                    debugLog('Tokens updated (estimate only):', newStats);
-                    saveStatsForConversation(conversationId, newStats);
-                    return newStats;
-                });
-                return;
-            }
-
-            const apiKeyMarker = getApiKeyMarker(apiKey);
-
-            const resolvedInputMessages = inputMessages.map((message) => {
-                const signature = getTextSignature(message.text);
-                const cachedTokens = readCachedExactToken(
-                    message.node,
-                    'input',
-                    signature,
-                    apiKeyMarker
-                );
-                return {
-                    ...message,
-                    role: 'input',
-                    signature,
-                    cachedTokens,
-                };
-            });
-
-            const resolvedOutputMessages = outputMessages.map((message) => {
-                const signature = getTextSignature(message.text);
-                const cachedTokens = readCachedExactToken(
-                    message.node,
-                    'output',
-                    signature,
-                    apiKeyMarker
-                );
-                return {
-                    ...message,
-                    role: 'output',
-                    signature,
-                    cachedTokens,
-                };
-            });
-
-            const hybridStats = {
-                inputTokens: resolvedInputMessages.reduce(
-                    (sum, message) =>
-                        sum +
-                        (message.cachedTokens === null
-                            ? message.estimatedTokens
-                            : message.cachedTokens),
-                    0
-                ),
-                outputTokens: resolvedOutputMessages.reduce(
-                    (sum, message) =>
-                        sum +
-                        (message.cachedTokens === null
-                            ? message.estimatedTokens
-                            : message.cachedTokens),
-                    0
-                ),
-            };
-
-            setStats((prevStats) => {
-                if (
-                    prevStats.inputTokens === hybridStats.inputTokens &&
-                    prevStats.outputTokens === hybridStats.outputTokens
-                ) {
-                    return prevStats;
+                for (const node of userNodes) {
+                    const rawText = getNodeText(node);
+                    const cleanText = sanitizeMessageText(rawText, 'input');
+                    allMessages.push({
+                        text: cleanText,
+                        role: 'input',
+                        estimatedTokens: countText(cleanText).tokens,
+                    });
                 }
 
-                debugLog(
-                    'Tokens updated (cached exact + estimate):',
-                    hybridStats
-                );
-                saveStatsForConversation(conversationId, hybridStats);
-                return hybridStats;
-            });
+                for (const node of modelNodes) {
+                    const rawText = getNodeText(node);
+                    const cleanText = sanitizeMessageText(rawText, 'output');
+                    allMessages.push({
+                        text: cleanText,
+                        role: 'output',
+                        estimatedTokens: countText(cleanText).tokens,
+                    });
+                }
+            }
 
+            // Hash all messages and look up cache
+            const resolved = await Promise.all(
+                allMessages.map(async (msg) => {
+                    const hash = await hashText(msg.text);
+                    const cached = await getCachedTokenCount(hash);
+                    return { ...msg, hash, cachedTokens: cached };
+                })
+            );
+
+            // Priority: cached API count > estimated (initial render)
+            const computeStats = () => {
+                let inTok = 0;
+                let outTok = 0;
+                for (const m of resolved) {
+                    const tokens =
+                        m.cachedTokens !== null
+                            ? m.cachedTokens
+                            : m.estimatedTokens;
+                    if (m.role === 'input') inTok += tokens;
+                    else outTok += tokens;
+                }
+                return { inputTokens: inTok, outputTokens: outTok };
+            };
+
+            const applyStats = (label) => {
+                const next = computeStats();
+                setStats((prev) => {
+                    if (
+                        prev.inputTokens === next.inputTokens &&
+                        prev.outputTokens === next.outputTokens
+                    )
+                        return prev;
+                    debugLog(`Tokens updated (${label}):`, next);
+                    return next;
+                });
+            };
+
+            applyStats('cached+estimated');
+
+            // Only contact the API if a key is configured
+            const apiKey = (geminiSettings?.geminiApiKey || '').trim();
+            if (!apiKey) return;
+
+            const pending = resolved.filter((m) => m.cachedTokens === null);
+            if (pending.length === 0) return;
+
+            // Debounce API calls to avoid spamming during rapid DOM changes
             clearTimeout(exactDebounceTimeout);
             exactDebounceTimeout = setTimeout(async () => {
                 try {
                     exactRequestSeq += 1;
                     const requestId = exactRequestSeq;
 
-                    const pendingRequests = [
-                        ...resolvedInputMessages,
-                        ...resolvedOutputMessages,
-                    ].filter((message) => message.cachedTokens === null);
+                    debugLog(
+                        `Fetching exact counts for ${pending.length} messages`
+                    );
 
-                    const inputFetchedCount = pendingRequests.filter(
-                        (message) => message.role === 'input'
-                    ).length;
-                    const outputFetchedCount = pendingRequests.filter(
-                        (message) => message.role === 'output'
-                    ).length;
-
-                    setDebugCycleStats({
-                        inputCached: Math.max(
-                            0,
-                            resolvedInputMessages.length - inputFetchedCount
-                        ),
-                        inputFetched: inputFetchedCount,
-                        outputCached: Math.max(
-                            0,
-                            resolvedOutputMessages.length - outputFetchedCount
-                        ),
-                        outputFetched: outputFetchedCount,
-                    });
-
-                    if (pendingRequests.length === 0) {
-                        return;
-                    }
-
-                    if (exactController) {
-                        exactController.abort();
-                    }
+                    if (exactController) exactController.abort();
                     exactController = new AbortController();
 
-                    await Promise.all(
-                        pendingRequests.map(async (message) => {
-                            const exactTokens = await countTokensWithGemini(
-                                message.text,
-                                apiKey,
-                                exactController.signal
-                            );
-                            writeCachedExactToken(
-                                message.node,
-                                message.role,
-                                message.signature,
-                                apiKeyMarker,
-                                exactTokens
-                            );
-                        })
-                    );
+                    const BATCH_SIZE = 3;
+                    for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+                        const batch = pending.slice(i, i + BATCH_SIZE);
+                        await Promise.all(
+                            batch.map(async (msg) => {
+                                const exactTokens = await countTokensWithGemini(
+                                    msg.text,
+                                    apiKey,
+                                    exactController.signal
+                                );
+                                await setCachedTokenCount(
+                                    msg.hash,
+                                    exactTokens
+                                );
+                                msg.cachedTokens = exactTokens;
+                            })
+                        );
+                    }
+
+                    forceFlush();
 
                     if (requestId !== exactRequestSeq) return;
 
-                    let exactInputTokens = 0;
-                    let exactOutputTokens = 0;
-
-                    resolvedInputMessages.forEach((message) => {
-                        const cached = readCachedExactToken(
-                            message.node,
-                            'input',
-                            message.signature,
-                            apiKeyMarker
-                        );
-                        exactInputTokens +=
-                            cached === null ? message.estimatedTokens : cached;
-                    });
-
-                    resolvedOutputMessages.forEach((message) => {
-                        const cached = readCachedExactToken(
-                            message.node,
-                            'output',
-                            message.signature,
-                            apiKeyMarker
-                        );
-                        exactOutputTokens +=
-                            cached === null ? message.estimatedTokens : cached;
-                    });
-
-                    const exactStats = {
-                        inputTokens: exactInputTokens,
-                        outputTokens: exactOutputTokens,
-                    };
-
-                    setStats((prevStats) => {
-                        if (
-                            prevStats.inputTokens === exactStats.inputTokens &&
-                            prevStats.outputTokens === exactStats.outputTokens
-                        ) {
-                            return prevStats;
-                        }
-
-                        debugLog('Exact tokens updated from Gemini API:', {
-                            ...exactStats,
-                            pendingRequests: pendingRequests.length,
-                        });
-                        saveStatsForConversation(conversationId, exactStats);
-                        return exactStats;
-                    });
+                    applyStats('exact');
                 } catch (error) {
                     if (error?.name === 'AbortError') return;
                     debugLog('Gemini countTokens error:', error);
@@ -563,7 +342,7 @@ export function TokenCounter() {
             const chatHistoryRoot = getChatHistoryRoot();
             if (!chatHistoryRoot) return false;
 
-            updateTokens(); // Initial update
+            updateTokens();
             debugLog('Observer attached', {
                 rootTag: chatHistoryRoot.tagName,
                 rootClasses: chatHistoryRoot.className,
@@ -571,10 +350,7 @@ export function TokenCounter() {
             });
 
             if (observer) observer.disconnect();
-            observer = new MutationObserver(() => {
-                scheduleUpdate();
-            });
-
+            observer = new MutationObserver(() => scheduleUpdate());
             observer.observe(chatHistoryRoot, {
                 childList: true,
                 subtree: true,
@@ -588,16 +364,13 @@ export function TokenCounter() {
                 attachObserverToConversation();
                 scheduleUpdate();
             });
-
             containerObserver.observe(document.body, {
                 childList: true,
                 subtree: true,
             });
         };
 
-        // Try to attach immediately
         if (!attachObserverToConversation()) {
-            // Conversation container not found yet, poll for it
             interval = setInterval(() => {
                 if (attachObserverToConversation()) {
                     clearInterval(interval);
@@ -729,20 +502,6 @@ export function TokenCounter() {
                             {totalTokens.toLocaleString()}
                         </div>
                     </div>
-
-                    {isDebugEnabled() && (
-                        <div className="hg-token-popup-row">
-                            <div className="hg-token-popup-label">
-                                <span>API Cache</span>
-                            </div>
-                            <div className="hg-token-popup-value">
-                                In C:{debugCycleStats.inputCached} F:
-                                {debugCycleStats.inputFetched} / Out C:
-                                {debugCycleStats.outputCached} F:
-                                {debugCycleStats.outputFetched}
-                            </div>
-                        </div>
-                    )}
                 </div>
             )}
         </div>
