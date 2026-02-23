@@ -367,24 +367,23 @@ function initializeFeatureModules() {
             onExportClick: () => chatExportController?.showPopup(),
             onWideToggleDebug: (isEnabled) =>
                 showToast(
-                    `Wide chat toggle clicked: ${
-                        isEnabled ? 'ON' : 'OFF'
-                    }`,
+                    `Wide chat toggle clicked: ${isEnabled ? 'ON' : 'OFF'}`,
                     'info'
                 ),
         });
     }
 }
 function insertHypergravitySidebar() {
-    // Attempt to find the target injection point like the original extension
+    if (document.querySelector('#hypergravity-root')) return;
+
     let target = document.querySelector('conversations-list');
-    let needsAfterEnd = false;
+    let insertMode = 'prepend'; // 'prepend' | 'afterend' | 'before'
 
     if (!target) {
         const gemsList = document.querySelector('.gems-list-container');
         if (gemsList) {
-            target = gemsList.parentElement;
-            needsAfterEnd = true;
+            target = gemsList;
+            insertMode = 'afterend';
         } else {
             const sideNav =
                 document.querySelector('bard-sidenav infinite-scroller') ||
@@ -394,38 +393,27 @@ function insertHypergravitySidebar() {
                 document.querySelector('.conversations-container');
             if (sideNav) {
                 target = sideNav;
-                needsAfterEnd = false;
+                insertMode = 'before';
             }
         }
     }
 
-    if (
-        !target ||
-        target === document.body ||
-        document.querySelector('#hypergravity-root')
-    ) {
-        return;
-    }
+    if (!target || target === document.body) return;
 
     const rootElement = document.createElement('div');
     rootElement.id = 'hypergravity-root';
     rootElement.style.cssText =
         'overflow: visible; transition: margin-top 0.2s ease;';
 
-    if (needsAfterEnd) {
-        const gemsList = document.querySelector('.gems-list-container');
-        if (gemsList) {
-            gemsList.insertAdjacentElement('afterend', rootElement);
-        } else {
-            target.prepend(rootElement);
-        }
+    if (insertMode === 'afterend') {
+        target.insertAdjacentElement('afterend', rootElement);
+    } else if (insertMode === 'before') {
+        target.insertAdjacentElement('beforebegin', rootElement);
     } else {
         target.prepend(rootElement);
     }
 
     createRoot(rootElement).render(<Sidebar />);
-
-    // Chat Tools injection is now handled separately
 }
 
 function insertChatTools() {
@@ -452,24 +440,27 @@ function insertChatTools() {
     }
 }
 
-// Since gemini.google.com is likely a Single Page App, we use a MutationObserver
-const observer = new MutationObserver((mutations) => {
-    if (!document.querySelector('#hypergravity-root')) {
-        insertHypergravitySidebar();
-    }
-    insertChatTools();
-    topBarToolsManager?.refresh();
-
-    const menuRoots = document.querySelectorAll(
-        '.cdk-overlay-pane, mat-menu-panel, .mat-mdc-menu-panel'
-    );
-    menuRoots.forEach((menuRoot) => injectAddToFolderOption(menuRoot));
-
-    const currentUrl = window.location.href;
-    if (currentUrl !== lastWideChatUrl) {
-        lastWideChatUrl = currentUrl;
+let mutationDebounceTimer = null;
+const observer = new MutationObserver(() => {
+    clearTimeout(mutationDebounceTimer);
+    mutationDebounceTimer = setTimeout(() => {
+        if (!document.querySelector('#hypergravity-root')) {
+            insertHypergravitySidebar();
+        }
+        insertChatTools();
         topBarToolsManager?.refresh();
-    }
+
+        const menuRoots = document.querySelectorAll(
+            '.cdk-overlay-pane, mat-menu-panel, .mat-mdc-menu-panel'
+        );
+        menuRoots.forEach((menuRoot) => injectAddToFolderOption(menuRoot));
+
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastWideChatUrl) {
+            lastWideChatUrl = currentUrl;
+            topBarToolsManager?.refresh();
+        }
+    }, 150);
 });
 
 observer.observe(document.body, {

@@ -88,7 +88,9 @@ function createWideLayoutEngine() {
 
         const messageSelectors = getMessageSelectors().join(', ');
         const messages = Array.from(
-            roots.flatMap((root) => Array.from(root.querySelectorAll(messageSelectors)))
+            roots.flatMap((root) =>
+                Array.from(root.querySelectorAll(messageSelectors))
+            )
         ).filter((node) => node instanceof HTMLElement);
 
         const candidates = new Set();
@@ -158,7 +160,10 @@ function createWideLayoutEngine() {
         element.setAttribute('data-hg-wide-target', '1');
 
         markedTargets.add(element);
-        console.log('[WideLayoutEngine] Marked element for wide layout:', element);
+        console.log(
+            '[WideLayoutEngine] Marked element for wide layout:',
+            element
+        );
     }
 
     function refreshTargets() {
@@ -222,16 +227,15 @@ export function createTopBarToolsManager({
             button = document.createElement('button');
             button.id = id;
             button.className = 'hg-header-btn';
+            button.title = title;
+            button.innerHTML = svg;
+            button.addEventListener('click', onClick);
             topBar.appendChild(button);
         }
 
         if (button.parentElement !== topBar) {
             topBar.appendChild(button);
         }
-
-        button.title = title;
-        button.innerHTML = svg;
-        button.onclick = onClick;
 
         return button;
     }

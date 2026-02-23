@@ -1,12 +1,12 @@
 {
   "../../../../../@crx/manifest": {
-    "file": "assets/crx-manifest.js-CpMXHLp5.js",
+    "file": "assets/crx-manifest.js-BS9HuGm2.js",
     "name": "crx-manifest.js",
     "src": "../../../../../@crx/manifest",
     "isEntry": true
   },
-  "_jspdf.es.min-8rrYQug4.js": {
-    "file": "assets/jspdf.es.min-8rrYQug4.js",
+  "_jspdf.es.min-DpU19H0r.js": {
+    "file": "assets/jspdf.es.min-DpU19H0r.js",
     "name": "jspdf.es.min",
     "isDynamicEntry": true,
     "imports": [
@@ -19,16 +19,16 @@
     ]
   },
   "content.jsx-loader.js": {
-    "file": "assets/content.jsx-loader-By-cglMO.js",
+    "file": "assets/content.jsx-loader-Kc5s_Ya0.js",
     "src": "content.jsx-loader.js"
   },
   "node_modules/canvg/lib/index.es.js": {
-    "file": "assets/index.es-57C9fxxC.js",
+    "file": "assets/index.es-Bw_-945R.js",
     "name": "index.es",
     "src": "node_modules/canvg/lib/index.es.js",
     "isDynamicEntry": true,
     "imports": [
-      "_jspdf.es.min-8rrYQug4.js",
+      "_jspdf.es.min-DpU19H0r.js",
       "src/content.jsx"
     ]
   },
@@ -51,12 +51,12 @@
     "isDynamicEntry": true
   },
   "src/content.jsx": {
-    "file": "assets/content.jsx-DZ-YIzx1.js",
+    "file": "assets/content.jsx-U575nHIZ.js",
     "name": "content.jsx",
     "src": "src/content.jsx",
     "isEntry": true,
     "dynamicImports": [
-      "_jspdf.es.min-8rrYQug4.js",
+      "_jspdf.es.min-DpU19H0r.js",
       "node_modules/docx/dist/index.mjs"
     ],
     "css": [
