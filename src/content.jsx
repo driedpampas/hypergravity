@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS = {
     wideModeEnabled: false,
     hideSidebarEnabled: false,
     showExportButton: true,
+    showTokenLabel: true,
+    geminiApiKey: '',
+    tokenLimit: 1048576,
 };
 
 let lastClickedChatInfo = null;

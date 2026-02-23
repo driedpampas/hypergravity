@@ -12,7 +12,8 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    font-family: 'Google Sans', Roboto, sans-serif;
+    font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     z-index: 10000;
 }
 

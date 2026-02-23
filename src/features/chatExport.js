@@ -52,7 +52,8 @@ export class ChatExportController {
         return nodes
             .map((node) => {
                 const isUser = userSelectors.some(
-                    (selector) => node.matches(selector) || node.closest(selector)
+                    (selector) =>
+                        node.matches(selector) || node.closest(selector)
                 );
                 const text = (node.innerText || '').trim();
                 if (!text) return null;
@@ -150,7 +151,9 @@ export class ChatExportController {
                 y += 10;
             });
 
-            pdf.save(`${fileBase}_${new Date().toISOString().slice(0, 10)}.pdf`);
+            pdf.save(
+                `${fileBase}_${new Date().toISOString().slice(0, 10)}.pdf`
+            );
             this.showToast('PDF downloaded', 'success');
         } catch (error) {
             console.error('[hypergravity] PDF export error:', error);
@@ -174,7 +177,9 @@ export class ChatExportController {
 
             const children = [
                 new Paragraph({
-                    children: [new TextRun({ text: title, bold: true, size: 32 })],
+                    children: [
+                        new TextRun({ text: title, bold: true, size: 32 }),
+                    ],
                 }),
                 new Paragraph({
                     children: [
@@ -190,7 +195,13 @@ export class ChatExportController {
             messages.forEach((msg) => {
                 children.push(
                     new Paragraph({
-                        children: [new TextRun({ text: msg.role, bold: true, size: 24 })],
+                        children: [
+                            new TextRun({
+                                text: msg.role,
+                                bold: true,
+                                size: 24,
+                            }),
+                        ],
                     })
                 );
 
@@ -236,7 +247,7 @@ export class ChatExportController {
                 <head>
                     <title>${title}</title>
                     <style>
-                        body { font-family: 'Google Sans Text', Roboto, Arial, sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
+                        body { font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
                         .msg { margin-bottom: 22px; }
                         .role { font-weight: 700; margin-bottom: 8px; }
                         .text { white-space: pre-wrap; line-height: 1.5; }

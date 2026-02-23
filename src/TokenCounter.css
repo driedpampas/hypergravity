@@ -60,7 +60,8 @@
 }
 
 .hg-token-label {
-    font-family: 'Google Sans Text', Roboto, Arial, sans-serif;
+    font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     font-size: 11px;
     font-weight: 500;
     white-space: nowrap;
@@ -81,7 +82,8 @@
     flex-direction: column;
     gap: 10px;
     z-index: 100;
-    font-family: 'Google Sans Text', Roboto, Arial, sans-serif;
+    font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     font-size: 13px;
     min-width: 160px;
     border: 1px solid
