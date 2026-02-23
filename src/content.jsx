@@ -365,6 +365,13 @@ function initializeFeatureModules() {
             getSettings,
             updateSettings,
             onExportClick: () => chatExportController?.showPopup(),
+            onWideToggleDebug: (isEnabled) =>
+                showToast(
+                    `Wide chat toggle clicked: ${
+                        isEnabled ? 'ON' : 'OFF'
+                    }`,
+                    'info'
+                ),
         });
     }
 }

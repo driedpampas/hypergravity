@@ -26,10 +26,6 @@ class WideLayoutEngine {
         this.markedTargets.forEach((element) => {
             if (!element?.isConnected) return;
             element.removeAttribute('data-hg-wide-target');
-            element.style.removeProperty('max-width');
-            element.style.removeProperty('width');
-            element.style.removeProperty('margin-left');
-            element.style.removeProperty('margin-right');
         });
         this.markedTargets.clear();
     }
@@ -38,14 +34,12 @@ class WideLayoutEngine {
         return [
             document.querySelector('infinite-scroller.chat-history'),
             document.querySelector('.chat-history'),
-            document.querySelector('conversation-container'),
         ].filter((node) => node instanceof HTMLElement);
     }
 
     getMessageSelectors() {
         return [
             '.conversation-container',
-            'conversation-container',
             '.user-message',
             '[data-message-author="user"]',
             '.query-content',
@@ -165,10 +159,6 @@ class WideLayoutEngine {
         if (!(element instanceof HTMLElement)) return;
 
         element.setAttribute('data-hg-wide-target', '1');
-        element.style.setProperty('max-width', '100%', 'important');
-        element.style.setProperty('width', '100%', 'important');
-        element.style.setProperty('margin-left', '0', 'important');
-        element.style.setProperty('margin-right', '0', 'important');
 
         this.markedTargets.add(element);
         console.log('[WideLayoutEngine] Marked element for wide layout:', element);
@@ -207,10 +197,11 @@ class WideLayoutEngine {
 }
 
 export class TopBarToolsManager {
-    constructor({ getSettings, updateSettings, onExportClick }) {
+    constructor({ getSettings, updateSettings, onExportClick, onWideToggleDebug }) {
         this.getSettings = getSettings;
         this.updateSettings = updateSettings;
         this.onExportClick = onExportClick;
+        this.onWideToggleDebug = onWideToggleDebug;
         this.wideLayoutEngine = new WideLayoutEngine();
     }
 
@@ -239,9 +230,16 @@ export class TopBarToolsManager {
 
     async handleWideToggle() {
         const settings = await this.getSettings();
+        const nextWideModeEnabled = !settings.wideModeEnabled;
+
         await this.updateSettings({
-            wideModeEnabled: !settings.wideModeEnabled,
+            wideModeEnabled: nextWideModeEnabled,
         });
+
+        if (typeof this.onWideToggleDebug === 'function') {
+            this.onWideToggleDebug(nextWideModeEnabled);
+        }
+
         await this.refresh();
     }
 
