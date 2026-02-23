@@ -22,40 +22,33 @@ function debugLog(...args) {
     }
 }
 
-function isVisible(element) {
-    if (!element) return false;
-    const style = window.getComputedStyle(element);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-    return element.getClientRects().length > 0;
-}
-
-function getActiveConversationContainer() {
-    const containers = Array.from(
-        document.querySelectorAll('.conversation-container')
+function getChatHistoryRoot() {
+    return (
+        document.querySelector('[data-test-id="chat-history-container"]') ||
+        document.querySelector('infinite-scroller.chat-history') ||
+        document.querySelector('.chat-history') ||
+        null
     );
-    const visible = containers.find(isVisible);
-    debugLog('Container scan', {
-        totalContainers: containers.length,
-        visibleContainers: containers.filter(isVisible).length,
-        usingVisibleContainer: Boolean(visible),
-    });
-    return visible || containers[0] || null;
 }
 
-const USER_MESSAGE_SELECTORS = [
+function getConversationContainers() {
+    const root = getChatHistoryRoot();
+    if (!root) return [];
+    return Array.from(root.querySelectorAll('.conversation-container'));
+}
+
+const USER_SELECTOR_GROUPS = [
     'user-query',
-    '.user-message',
     '[data-message-author="user"]',
+    '.user-message',
     '.query-content',
 ];
 
-const MODEL_MESSAGE_SELECTORS = [
-    'model-response',
-    '.model-response',
-    '[data-message-author="model"]',
-    'message-content .markdown-main-panel',
-    'generative-ui-response',
+const MODEL_SELECTOR_GROUPS = [
+    'model-response, generative-ui-response',
+    '[data-message-author="model"], .model-response',
     'response-container',
+    'message-content .markdown-main-panel',
 ];
 
 function uniqueTopLevelNodes(nodes) {
@@ -68,27 +61,41 @@ function uniqueTopLevelNodes(nodes) {
     );
 }
 
+function resolveNodesByPriority(conversationContainer, selectorGroups) {
+    for (const selectors of selectorGroups) {
+        const nodes = uniqueTopLevelNodes(
+            Array.from(conversationContainer.querySelectorAll(selectors))
+        ).filter((node) => getNodeText(node).length > 0);
+
+        if (nodes.length > 0) {
+            return { nodes, selectors };
+        }
+    }
+
+    return { nodes: [], selectors: selectorGroups.join(' | ') };
+}
+
 function collectMessageNodes(conversationContainer) {
-    const userNodes = uniqueTopLevelNodes(
-        Array.from(
-            conversationContainer.querySelectorAll(
-                USER_MESSAGE_SELECTORS.join(', ')
-            )
-        )
+    const userResolved = resolveNodesByPriority(
+        conversationContainer,
+        USER_SELECTOR_GROUPS
+    );
+    const modelResolved = resolveNodesByPriority(
+        conversationContainer,
+        MODEL_SELECTOR_GROUPS
     );
 
-    const modelNodes = uniqueTopLevelNodes(
-        Array.from(
-            conversationContainer.querySelectorAll(
-                MODEL_MESSAGE_SELECTORS.join(', ')
-            )
-        )
-    ).filter(
-        (modelNode) =>
-            !userNodes.some((userNode) => userNode.contains(modelNode))
+    const userNodes = userResolved.nodes;
+    const modelNodes = modelResolved.nodes.filter(
+        (modelNode) => !userNodes.some((userNode) => userNode.contains(modelNode))
     );
 
-    return { userNodes, modelNodes };
+    return {
+        userNodes,
+        modelNodes,
+        userSelectorsUsed: userResolved.selectors,
+        modelSelectorsUsed: modelResolved.selectors,
+    };
 }
 
 function getNodeText(node) {
@@ -280,36 +287,53 @@ export function TokenCounter() {
         let exactController = null;
 
         const updateTokens = async () => {
-            const conversationContainer = getActiveConversationContainer();
-            if (!conversationContainer) return;
+            const conversationContainers = getConversationContainers();
+            if (conversationContainers.length === 0) return;
 
             let inTokens = 0;
             let outTokens = 0;
 
-            const { userNodes, modelNodes } = collectMessageNodes(
-                conversationContainer
-            );
+            const selectorUsage = {
+                input: new Set(),
+                output: new Set(),
+            };
 
-            const inputMessages = userNodes.map((node) => {
-                const text = getNodeText(node);
-                const estimatedTokens = countText(text).tokens;
-                inTokens += estimatedTokens;
-                return { node, text, estimatedTokens };
-            });
+            const inputMessages = [];
+            const outputMessages = [];
 
-            const outputMessages = modelNodes.map((node) => {
-                const text = getNodeText(node);
-                const estimatedTokens = countText(text).tokens;
-                outTokens += estimatedTokens;
-                return { node, text, estimatedTokens };
+            conversationContainers.forEach((conversationContainer) => {
+                const {
+                    userNodes,
+                    modelNodes,
+                    userSelectorsUsed,
+                    modelSelectorsUsed,
+                } = collectMessageNodes(conversationContainer);
+
+                selectorUsage.input.add(userSelectorsUsed);
+                selectorUsage.output.add(modelSelectorsUsed);
+
+                userNodes.forEach((node) => {
+                    const text = getNodeText(node);
+                    const estimatedTokens = countText(text).tokens;
+                    inTokens += estimatedTokens;
+                    inputMessages.push({ node, text, estimatedTokens });
+                });
+
+                modelNodes.forEach((node) => {
+                    const text = getNodeText(node);
+                    const estimatedTokens = countText(text).tokens;
+                    outTokens += estimatedTokens;
+                    outputMessages.push({ node, text, estimatedTokens });
+                });
             });
 
             debugLog('Token scan', {
-                containerTag: conversationContainer.tagName,
-                containerClasses: conversationContainer.className,
+                containers: {
+                    total: conversationContainers.length,
+                },
                 selectors: {
-                    input: USER_MESSAGE_SELECTORS.join(', '),
-                    output: MODEL_MESSAGE_SELECTORS.join(', '),
+                    input: Array.from(selectorUsage.input).join(' || '),
+                    output: Array.from(selectorUsage.output).join(' || '),
                 },
                 counts: {
                     userQueries: inputMessages.length,
@@ -528,13 +552,14 @@ export function TokenCounter() {
         };
 
         const attachObserverToConversation = () => {
-            const conversationContainer = getActiveConversationContainer();
-            if (!conversationContainer) return false;
+            const chatHistoryRoot = getChatHistoryRoot();
+            if (!chatHistoryRoot) return false;
 
             updateTokens(); // Initial update
             debugLog('Observer attached', {
-                containerTag: conversationContainer.tagName,
-                containerClasses: conversationContainer.className,
+                rootTag: chatHistoryRoot.tagName,
+                rootClasses: chatHistoryRoot.className,
+                containerCount: getConversationContainers().length,
             });
 
             if (observer) observer.disconnect();
@@ -542,7 +567,7 @@ export function TokenCounter() {
                 scheduleUpdate();
             });
 
-            observer.observe(conversationContainer, {
+            observer.observe(chatHistoryRoot, {
                 childList: true,
                 subtree: true,
                 characterData: true,
