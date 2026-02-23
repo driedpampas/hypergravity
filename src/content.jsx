@@ -26,31 +26,77 @@ function hasChromeStorage() {
         typeof chrome !== 'undefined' &&
         chrome.storage &&
         chrome.storage.local &&
-        typeof chrome.storage.local.get === 'function'
+        typeof chrome.storage.local.get === 'function' &&
+        typeof chrome.storage.local.set === 'function'
     );
+}
+
+function readLocalStorageValue(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null) return undefined;
+        return JSON.parse(raw);
+    } catch {
+        return undefined;
+    }
+}
+
+function writeLocalStorageValue(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+        // Ignore localStorage write failures
+        console.error('Failed to write to localStorage');
+    }
 }
 
 function getStorageValue(key, fallback) {
     return new Promise((resolve) => {
         if (!hasChromeStorage()) {
-            resolve(fallback);
+            const localValue = readLocalStorageValue(key);
+            resolve(localValue !== undefined ? localValue : fallback);
             return;
         }
 
         chrome.storage.local.get([key], (result) => {
             if (chrome.runtime?.lastError) {
-                resolve(fallback);
+                const localValue = readLocalStorageValue(key);
+                resolve(localValue !== undefined ? localValue : fallback);
                 return;
             }
-            resolve(result[key] !== undefined ? result[key] : fallback);
+
+            if (result[key] !== undefined) {
+                writeLocalStorageValue(key, result[key]);
+                resolve(result[key]);
+                return;
+            }
+
+            const localValue = readLocalStorageValue(key);
+            if (localValue !== undefined) {
+                chrome.storage.local.set({ [key]: localValue }, () => {
+                    resolve(localValue);
+                });
+                return;
+            }
+
+            resolve(fallback);
         });
     });
 }
 
 function setStorageValue(key, value) {
+    writeLocalStorageValue(key, value);
+
     if (!hasChromeStorage()) return Promise.resolve();
+
     return new Promise((resolve) => {
-        chrome.storage.local.set({ [key]: value }, () => resolve());
+        chrome.storage.local.set({ [key]: value }, () => {
+            if (chrome.runtime?.lastError) {
+                resolve();
+                return;
+            }
+            resolve();
+        });
     });
 }
 
