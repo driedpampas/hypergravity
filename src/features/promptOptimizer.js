@@ -1,59 +1,7 @@
-function findPromptInput() {
-    const selectors = [
-        '.ql-editor[contenteditable="true"]',
-        'div[contenteditable="true"][role="textbox"]',
-        'textarea[placeholder*="Enter"]',
-        'rich-textarea .ql-editor',
-    ];
-    for (const sel of selectors) {
-        const el = document.querySelector(sel);
-        if (el) return el;
-    }
-    return null;
-}
+import { chatBoxManager } from '../managers/chatBoxManager';
 
-function getPromptText() {
-    const el = findPromptInput();
-    return (el && (el.textContent || el.value)) || '';
-}
-
-function setPromptText(text) {
-    const el = findPromptInput();
-    if (!el) return;
-
-    if (el.getAttribute('contenteditable') === 'true') {
-        el.innerHTML = '';
-        text.split('\n').forEach((line) => {
-            const p = document.createElement('p');
-            p.textContent = line || '';
-            if (!line) p.innerHTML = '<br>';
-            el.appendChild(p);
-        });
-        el.classList.remove('ql-blank');
-        el.focus();
-
-        const range = document.createRange();
-        const sel = window.getSelection();
-        if (el.lastChild) {
-            range.selectNodeContents(el.lastChild);
-            range.collapse(false);
-        } else {
-            range.selectNodeContents(el);
-            range.collapse(false);
-        }
-        sel.removeAllRanges();
-        sel.addRange(range);
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-        el.value = text;
-        el.focus();
-        const len = el.value.length;
-        el.setSelectionRange(len, len);
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-}
+const getPromptText = () => chatBoxManager.getInputText();
+const setPromptText = (text) => chatBoxManager.setInputText(text);
 
 export function createPromptOptimizer({ showToast }) {
     let isOptimizing = false;

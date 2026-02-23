@@ -1,3 +1,5 @@
+import { topBarManager } from '../managers/topBarManager';
+
 function createWideLayoutEngine() {
     let enabled = false;
     const markedTargets = new Set();
@@ -215,28 +217,6 @@ export function createTopBarToolsManager({
 }) {
     const wideLayoutEngine = createWideLayoutEngine();
 
-    function ensureButton({ id, title, svg, onClick }) {
-        const topBar = document.querySelector('top-bar-actions');
-        if (!topBar) return null;
-
-        let button = document.getElementById(id);
-        if (!button) {
-            button = document.createElement('button');
-            button.id = id;
-            button.className = 'hg-header-btn';
-            button.title = title;
-            button.innerHTML = svg;
-            button.addEventListener('click', onClick);
-            topBar.appendChild(button);
-        }
-
-        if (button.parentElement !== topBar) {
-            topBar.appendChild(button);
-        }
-
-        return button;
-    }
-
     async function handleWideToggle() {
         const settings = await getSettings();
         const nextWideModeEnabled = !settings.wideModeEnabled;
@@ -260,13 +240,12 @@ export function createTopBarToolsManager({
 
         wideLayoutEngine.setEnabled(shouldApplyWide);
 
-        const topBar = document.querySelector('top-bar-actions');
-        if (!topBar) {
+        if (!topBarManager.getTopBar()) {
             wideLayoutEngine.refresh();
             return;
         }
 
-        const wideButton = ensureButton({
+        const wideButton = topBarManager.ensureButton({
             id: 'hg-header-wide-btn',
             title: 'Toggle Wide Chat',
             svg: `
@@ -286,7 +265,7 @@ export function createTopBarToolsManager({
         if (!shouldShowExport) {
             existingExport?.remove();
         } else {
-            ensureButton({
+            topBarManager.ensureButton({
                 id: 'hg-header-export-btn',
                 title: 'Export Chat',
                 svg: `

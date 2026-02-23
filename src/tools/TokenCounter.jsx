@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { countText } from './utils/textStats';
-import { useChromeStorage } from './hooks/useChromeStorage';
+import { countText } from '../utils/textStats';
+import { useChromeStorage } from '../hooks/useChromeStorage';
 import {
     sanitizeMessageText,
     hashText,
     getCachedTokenCount,
     setCachedTokenCount,
     forceFlush,
-} from './utils/tokenHashCache';
-import { debugLog as _debugLog } from './utils/debug';
+} from '../utils/tokenHashCache';
+import { debugLog as _debugLog } from '../utils/debug';
 import './TokenCounter.css';
 
 const debugLog = (...args) => _debugLog('TokenCounter', ...args);
