@@ -9,21 +9,7 @@ import {
     readLocalStorageValue,
     writeLocalStorageValue,
 } from './utils/storage';
-
-const SETTINGS_KEY = 'hypergravityGeminiSettings';
-const FOLDERS_KEY = 'hypergravityGeminiFolders';
-const DEFAULT_SETTINGS = {
-    enabled: true,
-    foldersEnabled: true,
-    autoScrollEnabled: false,
-    wideModeEnabled: false,
-    hideSidebarEnabled: false,
-    showExportButton: true,
-    showTokenLabel: true,
-    showScrollButtons: true,
-    geminiApiKey: '',
-    tokenLimit: 1048576,
-};
+import { SETTINGS_KEY, FOLDERS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 
 let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
@@ -410,7 +396,7 @@ function insertChatTools() {
         toolsRoot.className = 'hg-chat-tools-container';
         // Style it to blend naturally at the top of the input field row
         toolsRoot.style.cssText =
-            'display: flex; justify-content: space-between; align-items: center; margin-top: -30px; width: 100%; max-width: 100%; box-sizing: border-box;';
+            'display: flex; justify-content: space-between; align-items: center; margin-top: -30px; width: 100%; max-width: 100%; box-sizing: border-box; grid-column: 1 / -1;';
         createRoot(toolsRoot).render(<ChatTools />);
     }
 

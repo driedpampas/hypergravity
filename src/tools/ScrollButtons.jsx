@@ -1,25 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useChromeStorage } from '../hooks/useChromeStorage';
 import { createScrollManager } from '../managers/scrollManager';
-
-const DEFAULT_SETTINGS = {
-    enabled: true,
-    foldersEnabled: true,
-    autoScrollEnabled: false,
-    wideModeEnabled: false,
-    hideSidebarEnabled: false,
-    showExportButton: true,
-    showTokenLabel: true,
-    showScrollButtons: true,
-    geminiApiKey: '',
-    tokenLimit: 1048576,
-};
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 
 export function ScrollButtons() {
-    const [settings] = useChromeStorage(
-        'hypergravityGeminiSettings',
-        DEFAULT_SETTINGS
-    );
+    const [settings] = useChromeStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const managerRef = useRef(null);
     const [state, setState] = useState({
         isAutoscrollActive: false,

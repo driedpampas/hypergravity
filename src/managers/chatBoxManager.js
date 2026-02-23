@@ -101,17 +101,40 @@ function getToolsContainer() {
     return document.getElementById(TOOLS_ROOT_ID) || null;
 }
 
-function addTool(id, element, { position = 'end' } = {}) {
-    const container = getToolsContainer();
-    if (!container || !element) return false;
+function addTool(id, element, { align = 'left', weight = 50 } = {}) {
+    const root = getToolsContainer();
+    if (!root || !element) return false;
+
+    const containerClass =
+        align === 'right' ? 'hg-chat-tools-right' : 'hg-chat-tools-left';
+    const container = root.querySelector(`.${containerClass}`) || root;
 
     const existing = container.querySelector(`[data-hg-tool-id="${id}"]`);
     if (existing) return false;
 
     element.setAttribute('data-hg-tool-id', id);
+    element.setAttribute('data-hg-tool-weight', String(weight));
 
-    if (position === 'start') {
-        container.prepend(element);
+    const siblings = Array.from(
+        container.querySelectorAll('[data-hg-tool-weight]')
+    );
+
+    const duplicate = siblings.find(
+        (s) => Number(s.getAttribute('data-hg-tool-weight')) === weight
+    );
+    if (duplicate) {
+        console.warn(
+            `[hypergravity] Duplicate tool weight ${weight} on "${align}" side — ` +
+                `"${id}" collides with "${duplicate.getAttribute('data-hg-tool-id')}". Appending after.`
+        );
+    }
+
+    const insertBefore = siblings.find(
+        (s) => Number(s.getAttribute('data-hg-tool-weight')) > weight
+    );
+
+    if (insertBefore) {
+        container.insertBefore(element, insertBefore);
     } else {
         container.appendChild(element);
     }

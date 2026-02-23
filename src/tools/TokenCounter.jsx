@@ -9,6 +9,7 @@ import {
     forceFlush,
 } from '../utils/tokenHashCache';
 import { debugLog as _debugLog } from '../utils/debug';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 import './TokenCounter.css';
 
 const debugLog = (...args) => _debugLog('TokenCounter', ...args);
@@ -95,7 +96,7 @@ function collectMessageNodes(conversationContainer) {
 }
 
 async function countTokensWithGemini(text, apiKey, signal) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:countTokens?key=${encodeURIComponent(apiKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:countTokens?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,18 +119,7 @@ async function countTokensWithGemini(text, apiKey, signal) {
 
 export function TokenCounter() {
     const [stats, setStats] = useState({ inputTokens: 0, outputTokens: 0 });
-    const [geminiSettings] = useChromeStorage('hypergravityGeminiSettings', {
-        enabled: true,
-        foldersEnabled: true,
-        autoScrollEnabled: false,
-        wideModeEnabled: false,
-        hideSidebarEnabled: false,
-        showExportButton: true,
-        showTokenLabel: true,
-        showScrollButtons: true,
-        geminiApiKey: '',
-        tokenLimit: 1048576,
-    });
+    const [geminiSettings] = useChromeStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const [conversationId, setConversationId] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const currentIdRef = useRef(null);
@@ -392,7 +382,13 @@ export function TokenCounter() {
     }, [conversationId, geminiSettings?.geminiApiKey]);
 
     const MAX_TOKENS = geminiSettings?.tokenLimit || 1000000;
-    const showLabel = geminiSettings?.showTokenLabel !== false;
+    const mode = geminiSettings?.tokenCounterMode || 'both';
+
+    if (mode === 'hidden') return null;
+
+    const showCircle = mode === 'both' || mode === 'circle';
+    const showText = mode === 'both' || mode === 'text';
+
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
         totalTokens === 0
@@ -400,7 +396,7 @@ export function TokenCounter() {
             : Math.min(100, Math.max(1, (totalTokens / MAX_TOKENS) * 100));
 
     if (totalTokens > 0 && fillPercentage < 3) {
-        fillPercentage = 3;
+        fillPercentage = 0;
     }
 
     const formatTokenCount = (count) => {
@@ -415,27 +411,29 @@ export function TokenCounter() {
     return (
         <div className="hg-token-counter-wrapper" ref={popupRef}>
             <button
-                className={`hg-token-counter-btn${showLabel ? ' hg-token-counter-btn--labeled' : ''}`}
+                className={`hg-token-counter-btn${showText ? ' hg-token-counter-btn--labeled' : ''}`}
                 onClick={() => setIsExpanded(!isExpanded)}
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
             >
-                <svg className="hg-token-ring" viewBox="0 0 20 20">
-                    <circle
-                        className="hg-token-ring-bg"
-                        cx="10"
-                        cy="10"
-                        r="9"
-                    />
-                    <circle
-                        className="hg-token-ring-fill"
-                        cx="10"
-                        cy="10"
-                        r="9"
-                        style={{ mask: ringMask, WebkitMask: ringMask }}
-                    />
-                </svg>
-                {showLabel && (
+                {showCircle && (
+                    <svg className="hg-token-ring" viewBox="0 0 20 20">
+                        <circle
+                            className="hg-token-ring-bg"
+                            cx="10"
+                            cy="10"
+                            r="9"
+                        />
+                        <circle
+                            className="hg-token-ring-fill"
+                            cx="10"
+                            cy="10"
+                            r="9"
+                            style={{ mask: ringMask, WebkitMask: ringMask }}
+                        />
+                    </svg>
+                )}
+                {showText && (
                     <span className="hg-token-label">
                         {formatTokenCount(totalTokens)}/
                         {formatTokenCount(MAX_TOKENS)}
@@ -499,8 +497,25 @@ export function TokenCounter() {
                             </svg>
                             <span>Total</span>
                         </div>
-                        <div className="hg-token-popup-value">
-                            {totalTokens.toLocaleString()}
+                        <div
+                            className="hg-token-popup-value"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'baseline',
+                                gap: '6px',
+                            }}
+                        >
+                            <span>{totalTokens.toLocaleString()}</span>
+                            <span
+                                style={{
+                                    fontSize: '11px',
+                                    color: 'var(--gem-sys-color--on-surface-variant, #575a5a)',
+                                    fontWeight: 'normal',
+                                }}
+                            >
+                                ({((totalTokens / MAX_TOKENS) * 100).toFixed(1)}
+                                %)
+                            </span>
                         </div>
                     </div>
                 </div>

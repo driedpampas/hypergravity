@@ -1,22 +1,12 @@
 import React from 'react';
 import { useChromeStorage } from './hooks/useChromeStorage';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './SettingsModal.css';
 
 export function SettingsModal({ onClose }) {
     const [settings, setSettings] = useChromeStorage(
-        'hypergravityGeminiSettings',
-        {
-            enabled: true,
-            foldersEnabled: true,
-            autoScrollEnabled: false,
-            wideModeEnabled: false,
-            hideSidebarEnabled: false,
-            showExportButton: true,
-            showTokenLabel: true,
-            showScrollButtons: true,
-            geminiApiKey: '',
-            tokenLimit: 1048576,
-        }
+        SETTINGS_KEY,
+        DEFAULT_SETTINGS
     );
 
     const toggleSetting = (key) => {
@@ -38,6 +28,34 @@ export function SettingsModal({ onClose }) {
                 className={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}
             >
                 <div className="hg-toggle-knob"></div>
+            </div>
+        </div>
+    );
+
+    const ButtonGroupRow = ({ label, settingKey, description, options }) => (
+        <div className="hg-setting-row hg-setting-row-group">
+            <div className="hg-setting-info" style={{ flex: 1 }}>
+                <span className="hg-setting-label">{label}</span>
+                {description && (
+                    <span className="hg-setting-desc">{description}</span>
+                )}
+            </div>
+            <div className="hg-button-group">
+                {options.map((opt) => (
+                    <button
+                        key={opt.value}
+                        className={`hg-group-btn ${settings[settingKey] === opt.value ? 'active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSettings({
+                                ...settings,
+                                [settingKey]: opt.value,
+                            });
+                        }}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
             </div>
         </div>
     );
@@ -93,10 +111,19 @@ export function SettingsModal({ onClose }) {
                     settingKey="hideSidebarEnabled"
                     description="Collapse the native Gemini sidebar by default"
                 />
-                <SettingRow
-                    label="Show Token Count Label"
-                    settingKey="showTokenLabel"
-                    description="Display token usage text next to the progress circle"
+                <ButtonGroupRow
+                    label="Token Counter Display"
+                    settingKey="tokenCounterMode"
+                    description="Choose how context usage is shown"
+                    options={[
+                        { label: 'Hidden', value: 'hidden' },
+                        { label: 'Circle', value: 'circle' },
+                        { label: 'Text', value: 'text' },
+                        { label: 'Both', value: ' উভয়' }, // Note: both will map to just string "both"
+                        { label: 'Both', value: 'both' },
+                    ]
+                        .slice(0, 3)
+                        .concat([{ label: 'Both', value: 'both' }])}
                 />
                 <SettingRow
                     label="Show Scroll Buttons"

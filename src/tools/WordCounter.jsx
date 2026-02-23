@@ -38,11 +38,10 @@ export function WordCounter() {
             {isExpanded && (
                 <div className="hg-counter-details">
                     <div className="hg-stat-row">
-                        <span>Chars (space):</span>{' '}
-                        <strong>{textStats.chars}</strong>
+                        <span>Chars:</span> <strong>{textStats.chars}</strong>
                     </div>
                     <div className="hg-stat-row">
-                        <span>Chars (no space):</span>{' '}
+                        <span>Chars (w/o spaces):</span>{' '}
                         <strong>{textStats.charsNoSpace}</strong>
                     </div>
                     <div className="hg-stat-row">
