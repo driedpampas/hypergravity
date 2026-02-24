@@ -1,6 +1,6 @@
 :root {
-    --hg-font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue',
-        sans-serif;
+    --hg-font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     --hg-font-family-mono: 'Google Sans Mono', 'Roboto Mono', monospace;
 }
 
@@ -68,24 +68,11 @@
 }
 
 #hg-header-wide-btn svg {
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.2s ease;
 }
 
-#hg-header-wide-btn.hg-wide-active svg {
-    transform: rotate(180deg);
-}
-
-#hg-header-wide-btn .hg-arrow-left,
-#hg-header-wide-btn .hg-arrow-right {
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#hg-header-wide-btn.hg-wide-active .hg-arrow-left {
-    transform: translateX(-2px);
-}
-
-#hg-header-wide-btn.hg-wide-active .hg-arrow-right {
-    transform: translateX(2px);
+#hg-header-wide-btn:hover svg {
+    transform: scale(1.1);
 }
 
 body.hg-wide-chat .conversation-container,
@@ -135,10 +122,10 @@ body.hg-wide-chat main {
 }
 
 body.hg-wide-chat input-container,
-body.hg-wide-chat input-container .input-area-container,
 body.hg-wide-chat input-container.input-gradient,
-body.hg-wide-chat .input-area-container,
-body.hg-wide-chat .text-input-field {
+body.hg-wide-chat input-container .input-area-container:not(.is-zero-state),
+body.hg-wide-chat .input-area-container:not(.is-zero-state),
+body.hg-wide-chat .input-area-container:not(.is-zero-state) .text-input-field {
     max-width: 100% !important;
     width: 100% !important;
     box-sizing: border-box !important;

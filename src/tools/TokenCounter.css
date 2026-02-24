@@ -2,6 +2,7 @@
     position: relative;
     display: inline-flex;
     align-items: center;
+    font-family: var(--hg-font-family);
 }
 
 .hg-token-counter-btn {

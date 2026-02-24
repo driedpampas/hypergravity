@@ -5,8 +5,8 @@ import {
     ChatKeyIcon,
     CheckIcon,
     ChevronRightIcon,
-    ClockCircleIcon,
     FolderListIcon,
+    HypergravityIcon,
     InfoAlertCircleIcon,
     LockIcon,
     MenuLinesIcon,
@@ -48,7 +48,7 @@ export function WelcomeModal({ onClose }) {
         <div class="hg-welcome-step">
             <div class="hg-welcome-hero">
                 <div class="hg-welcome-icon-ring">
-                    <ClockCircleIcon width="32" height="32" />
+                    <HypergravityIcon width="32" height="32" />
                 </div>
                 <h2 class="hg-welcome-title">Welcome to Hypergravity</h2>
                 <p class="hg-welcome-subtitle">

@@ -14,7 +14,6 @@ import {
     isUserscript,
 } from './utils/browserEnv';
 import { SETTINGS_KEY, FOLDERS_KEY, DEFAULT_SETTINGS } from './utils/constants';
-import { isDebugEnabled } from './utils/debug';
 
 let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
@@ -326,9 +325,7 @@ function injectAddToFolderOption(menuRoot) {
     render(
         <>
             <FolderAddIcon width="24" height="24" />
-            <span>
-                Add chat to folder
-            </span>
+            <span>Add chat to folder</span>
         </>,
         button
     );
@@ -471,7 +468,6 @@ observer.observe(document.body, {
     childList: true,
     subtree: true,
 });
-
 
 // Initial setup
 getSettings().then((settings) => {

@@ -1,6 +1,6 @@
 :root {
-    --hg-font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue',
-        sans-serif;
+    --hg-font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     --hg-font-family-mono: 'Google Sans Mono', 'Roboto Mono', monospace;
 }
 

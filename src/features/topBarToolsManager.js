@@ -1,6 +1,6 @@
 import { topBarManager } from '../managers/topBarManager';
 import { h } from 'preact';
-import { ExportIcon, WideToggleIcon } from '../icons';
+import { ExportIcon, ExpandIcon, CollapseIcon } from '../icons';
 
 /**
  * Factory for the Wide Layout engine which allows Gemini chat content to span the full width of the screen.
@@ -94,13 +94,17 @@ function createWideLayoutEngine() {
             document.querySelectorAll(
                 [
                     'input-container',
-                    'input-container .input-area-container',
+                    'input-container .input-area-container:not(.is-zero-state)',
                     'input-container.input-gradient',
-                    '.input-area-container',
-                    '.text-input-field',
+                    '.input-area-container:not(.is-zero-state)',
+                    '.input-area-container:not(.is-zero-state) .text-input-field',
                 ].join(', ')
             )
-        ).filter((node) => node instanceof HTMLElement);
+        ).filter(
+            (node) =>
+                node instanceof HTMLElement &&
+                !node.closest('.input-area-container.is-zero-state')
+        );
     }
 
     function collectNarrowAncestorsFromMessages() {
@@ -265,8 +269,8 @@ export function createTopBarToolsManager({
 
         const wideButton = topBarManager.ensureButton({
             id: 'hg-header-wide-btn',
-            title: 'Toggle Wide Chat',
-            iconVNode: h(WideToggleIcon, null),
+            title: shouldApplyWide ? 'Collapse Chat' : 'Expand Chat',
+            iconVNode: h(shouldApplyWide ? CollapseIcon : ExpandIcon, null),
             onClick: () => handleWideToggle(),
         });
 

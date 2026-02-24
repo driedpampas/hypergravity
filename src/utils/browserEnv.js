@@ -118,7 +118,6 @@ export async function getStorageValue(key, fallback = undefined) {
     });
 }
 
-
 /**
  * Core storage persistence function that synchronizes value across available storage backends.
  * @param {string} key

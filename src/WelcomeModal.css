@@ -242,8 +242,8 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: var(--gem-sys-color--primary, #1a73e8);
-    color: #fff;
+    background: var(--gem-sys-color--primary-container, #d3e3fd);
+    color: var(--gem-sys-color--on-primary-container, #041e49);
     font-size: 12px;
     font-weight: 700;
     margin-top: 1px;

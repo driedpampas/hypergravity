@@ -31,18 +31,22 @@ function ensureButton({ id, title, svg, iconVNode, onClick }) {
         button.className = 'hg-header-btn';
         button.title = title;
 
-        if (iconVNode) {
-            render(iconVNode, button);
-        } else if (svg) {
-            const parser = new DOMParser();
-            const docHtml = parser.parseFromString(svg, 'text/html');
-            Array.from(docHtml.body.childNodes).forEach((node) => {
-                button.appendChild(node);
-            });
-        }
-
         button.addEventListener('click', onClick);
         topBar.appendChild(button);
+    }
+
+    if (button.title !== title) {
+        button.title = title;
+    }
+
+    if (iconVNode) {
+        render(iconVNode, button);
+    } else if (svg && !button.hasChildNodes()) {
+        const parser = new DOMParser();
+        const docHtml = parser.parseFromString(svg, 'text/html');
+        Array.from(docHtml.body.childNodes).forEach((node) => {
+            button.appendChild(node);
+        });
     }
 
     if (button.parentElement !== topBar) {

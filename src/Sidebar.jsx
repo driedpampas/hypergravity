@@ -6,7 +6,7 @@ import { SettingsModal } from './SettingsModal';
 import { WelcomeModal } from './WelcomeModal';
 import {
     ChevronRightIcon,
-    ClockCircleIcon,
+    WelcomeHandIcon,
     FolderEmptyIcon,
     SettingsGearIcon,
 } from './icons';
@@ -100,7 +100,7 @@ export function Sidebar() {
                                 setShowWelcome(true);
                             }}
                         >
-                            <ClockCircleIcon class="hg-dropdown-icon" />
+                            <WelcomeHandIcon class="hg-dropdown-icon" />
                             <span>Welcome & Setup</span>
                         </div>
                     )}
