@@ -168,7 +168,8 @@ body {
     background: #e8eaed;
 }
 
-.hg-popup-btn svg {
+.hg-popup-btn svg,
+.hg-popup-btn-icon svg {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
@@ -326,7 +327,8 @@ body {
         background: #383838;
     }
 
-    .hg-popup-btn svg {
+    .hg-popup-btn svg,
+    .hg-popup-btn-icon svg {
         color: #9aa0a6;
     }
 

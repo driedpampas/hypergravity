@@ -1,8 +1,10 @@
+import { h, render } from 'preact';
 import {
     getStorageValue,
     setStorageValue,
     getVersion,
 } from '../utils/browserEnv';
+import { ExportDataIcon, ImportDataIcon } from '../icons';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 
 const CACHE_KEY = 'hg_token_hash_cache';
@@ -93,7 +95,21 @@ async function handleImport(file) {
     }
 }
 
+function mountIcons() {
+    const exportIconRoot = document.getElementById('hg-export-icon');
+    const importIconRoot = document.getElementById('hg-import-icon');
+
+    if (exportIconRoot) {
+        render(h(ExportDataIcon, null), exportIconRoot);
+    }
+
+    if (importIconRoot) {
+        render(h(ImportDataIcon, null), importIconRoot);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    mountIcons();
     document.getElementById('hg-version').textContent = `v${getVersion()}`;
 
     refreshStats();
@@ -122,21 +138,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (enableToggle && toggleUi) {
         (async () => {
-            const settings = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
+            const settings = await getStorageValue(
+                SETTINGS_KEY,
+                DEFAULT_SETTINGS
+            );
             enableToggle.checked = Boolean(settings.enabled);
             toggleUi.classList.toggle('active', enableToggle.checked);
         })();
 
         const onChange = async () => {
-            const current = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
+            const current = await getStorageValue(
+                SETTINGS_KEY,
+                DEFAULT_SETTINGS
+            );
             const isChecked = !current.enabled; // toggle state
-            
+
             enableToggle.checked = isChecked;
             toggleUi.classList.toggle('active', isChecked);
 
             const newSettings = { ...current, enabled: isChecked };
             await setStorageValue(SETTINGS_KEY, newSettings);
-            
+
             showStatus(
                 `Hypergravity ${isChecked ? 'enabled' : 'disabled'}`,
                 'info'

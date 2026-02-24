@@ -1,12 +1,10 @@
 import { useStorage } from './hooks/useStorage';
+import { BackArrowIcon } from './icons';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './SettingsModal.css';
 
 export function SettingsModal({ onClose }) {
-    const [settings, setSettings] = useStorage(
-        SETTINGS_KEY,
-        DEFAULT_SETTINGS
-    );
+    const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
 
     // lightweight toast helper copied from content.jsx
     const showToast = (message, type = 'info') => {
@@ -33,7 +31,7 @@ export function SettingsModal({ onClose }) {
             const currentlyOn = Boolean(settings.enabled);
             const newVal = !currentlyOn;
             const promptMsg = newVal
-                ? 'Hypergravity will be enabled, but features won\'t appear until you reload the page. Reload now?'
+                ? "Hypergravity will be enabled, but features won't appear until you reload the page. Reload now?"
                 : 'Hypergravity will be disabled, but existing features remain until you reload. Reload now? The reload may interrupt open chats.';
             const reloadNow = window.confirm(promptMsg);
 
@@ -55,19 +53,14 @@ export function SettingsModal({ onClose }) {
     };
 
     const SettingRow = ({ label, settingKey, description }) => (
-        <div
-            class="hg-setting-row"
-            onClick={() => toggleSetting(settingKey)}
-        >
+        <div class="hg-setting-row" onClick={() => toggleSetting(settingKey)}>
             <div class="hg-setting-info">
                 <span class="hg-setting-label">{label}</span>
                 {description && (
                     <span class="hg-setting-desc">{description}</span>
                 )}
             </div>
-            <div
-                class={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}
-            >
+            <div class={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}>
                 <div class="hg-toggle-knob"></div>
             </div>
         </div>
@@ -132,16 +125,7 @@ export function SettingsModal({ onClose }) {
             <div class="hg-settings-header">
                 <div class="hg-settings-header-left">
                     <button class="hg-back-btn" onClick={onClose}>
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            width="20"
-                            height="20"
-                        >
-                            <path d="M15 18l-6-6 6-6" />
-                        </svg>
+                        <BackArrowIcon width="20" height="20" />
                     </button>
                     <h2>Settings</h2>
                 </div>
@@ -190,7 +174,10 @@ export function SettingsModal({ onClose }) {
                         { label: 'Ring', value: 'ring' },
                         { label: 'Ring + Text', value: 'ring_text' },
                         { label: 'Ring + %', value: 'ring_percentage' },
-                        { label: 'Ring + Text + %', value: 'ring_text_percentage' },
+                        {
+                            label: 'Ring + Text + %',
+                            value: 'ring_text_percentage',
+                        },
                     ]}
                 />
                 <SettingRow

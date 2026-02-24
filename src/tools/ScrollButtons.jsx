@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { ChevronDownIcon, ChevronUpIcon } from '../icons';
 import { useStorage } from '../hooks/useStorage';
 import { createScrollManager } from '../managers/scrollManager';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
@@ -82,23 +83,12 @@ export function ScrollButtons() {
     return (
         <div class="hg-scroll-controls">
             <button
-            class="hg-scroll-btn"
+                class="hg-scroll-btn"
                 title="Scroll to top"
                 aria-label="Scroll to top"
                 onClick={managerRef.current.scrollToTop}
             >
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    width="16"
-                    height="16"
-                >
-                    <path d="M18 15l-6-6-6 6" />
-                </svg>
+                <ChevronUpIcon width="16" height="16" />
             </button>
             <button
                 class={`hg-scroll-btn ${state.isAutoscrollActive ? 'active' : ''}`}
@@ -110,18 +100,7 @@ export function ScrollButtons() {
                     managerRef.current.toggleAutoscroll();
                 }}
             >
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    width="16"
-                    height="16"
-                >
-                    <path d="M6 9l6 6 6-6" />
-                </svg>
+                <ChevronDownIcon width="16" height="16" />
             </button>
         </div>
     );

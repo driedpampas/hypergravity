@@ -1,3 +1,5 @@
+import { render } from 'preact';
+
 const TOP_BAR_SELECTOR = 'top-bar-actions';
 
 /**
@@ -14,10 +16,11 @@ function getTopBar() {
  * @param {string} options.id - Button ID.
  * @param {string} options.title - Tooltip title.
  * @param {string} options.svg - SVG markup for the icon.
+ * @param {*} options.iconVNode - Preact VNode for the icon.
  * @param {Function} options.onClick - Click handler.
  * @returns {HTMLElement|null} The button element.
  */
-function ensureButton({ id, title, svg, onClick }) {
+function ensureButton({ id, title, svg, iconVNode, onClick }) {
     const topBar = getTopBar();
     if (!topBar) return null;
 
@@ -27,11 +30,16 @@ function ensureButton({ id, title, svg, onClick }) {
         button.id = id;
         button.className = 'hg-header-btn';
         button.title = title;
-        const parser = new DOMParser();
-        const docHtml = parser.parseFromString(svg, 'text/html');
-        Array.from(docHtml.body.childNodes).forEach((node) => {
-            button.appendChild(node);
-        });
+
+        if (iconVNode) {
+            render(iconVNode, button);
+        } else if (svg) {
+            const parser = new DOMParser();
+            const docHtml = parser.parseFromString(svg, 'text/html');
+            Array.from(docHtml.body.childNodes).forEach((node) => {
+                button.appendChild(node);
+            });
+        }
 
         button.addEventListener('click', onClick);
         topBar.appendChild(button);
@@ -88,7 +96,7 @@ function removeTool(id) {
 
 /**
  * Checks if a tool exists in the top bar.
- * @param {string} id 
+ * @param {string} id
  * @returns {boolean}
  */
 function hasTool(id) {

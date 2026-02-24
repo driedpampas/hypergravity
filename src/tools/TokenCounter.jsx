@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { countText } from '../utils/textStats';
 import { useStorage } from '../hooks/useStorage';
+import { InputArrowIcon, OutputArrowIcon, TotalPieIcon } from '../icons';
 import {
     sanitizeMessageText,
     hashText,
@@ -41,7 +42,11 @@ function normalizeTokenCounterMode(mode) {
 function getTokenCounterDisplayConfig(mode) {
     switch (mode) {
         case 'none':
-            return { showCircle: false, showText: false, showPercentage: false };
+            return {
+                showCircle: false,
+                showText: false,
+                showPercentage: false,
+            };
         case 'text':
             return { showCircle: false, showText: true, showPercentage: false };
         case 'percentage':
@@ -512,16 +517,7 @@ export function TokenCounter() {
 
                     <div class="hg-token-popup-row">
                         <div class="hg-token-popup-label">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M12 19V5M5 12l7-7 7 7" />
-                            </svg>
+                            <InputArrowIcon />
                             <span>Input</span>
                         </div>
                         <div class="hg-token-popup-value">
@@ -531,16 +527,7 @@ export function TokenCounter() {
 
                     <div class="hg-token-popup-row">
                         <div class="hg-token-popup-label">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M12 5v14M19 12l-7 7-7-7" />
-                            </svg>
+                            <OutputArrowIcon />
                             <span>Output</span>
                         </div>
                         <div class="hg-token-popup-value">
@@ -550,16 +537,7 @@ export function TokenCounter() {
 
                     <div class="hg-token-popup-row hg-token-popup-total">
                         <div class="hg-token-popup-label">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                            >
-                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83M22 12A10 10 0 0 0 12 2v10z" />
-                            </svg>
+                            <TotalPieIcon />
                             <span>Total</span>
                         </div>
                         <div

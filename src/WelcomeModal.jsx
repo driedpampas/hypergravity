@@ -1,5 +1,16 @@
 import { useState } from 'preact/hooks';
 import { useStorage } from './hooks/useStorage';
+import {
+    BackArrowIcon,
+    ChatKeyIcon,
+    CheckIcon,
+    ChevronRightIcon,
+    ClockCircleIcon,
+    FolderListIcon,
+    InfoAlertCircleIcon,
+    LockIcon,
+    MenuLinesIcon,
+} from './icons';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './WelcomeModal.css';
 
@@ -37,74 +48,69 @@ export function WelcomeModal({ onClose }) {
         <div class="hg-welcome-step">
             <div class="hg-welcome-hero">
                 <div class="hg-welcome-icon-ring">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <ClockCircleIcon width="32" height="32" />
                 </div>
                 <h2 class="hg-welcome-title">Welcome to Hypergravity</h2>
                 <p class="hg-welcome-subtitle">
-                    Hypergravity adds practical quality-of-life tools to Gemini so everyday chat workflows are faster and easier to manage.
+                    Hypergravity adds practical quality-of-life tools to Gemini
+                    so everyday chat workflows are faster and easier to manage.
                 </p>
             </div>
 
             <div class="hg-welcome-feature-list">
                 <div class="hg-welcome-feature">
                     <div class="hg-welcome-feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
-                        </svg>
+                        <InfoAlertCircleIcon width="20" height="20" />
                     </div>
                     <div class="hg-welcome-feature-text">
                         <strong>Token Counter + Context Ring</strong>
                         <span>
-                            Estimates the number of tokens in your conversation so you know how close you are to your context limit.
-                            Uses a fast local estimate by default, or exact counts from the Gemini API when you add an API key.
+                            Estimates the number of tokens in your conversation
+                            so you know how close you are to your context limit.
+                            Uses a fast local estimate by default, or exact
+                            counts from the Gemini API when you add an API key.
                         </span>
                     </div>
                 </div>
 
                 <div class="hg-welcome-feature">
                     <div class="hg-welcome-feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                            <path d="M3 7h18M3 12h18M3 17h18" strokeLinecap="round" />
-                        </svg>
+                        <MenuLinesIcon width="20" height="20" />
                     </div>
                     <div class="hg-welcome-feature-text">
                         <strong>Chat Productivity Tools</strong>
                         <span>
-                            Includes quick actions, word counting, scroll controls, and optional prompt optimization directly near the chat input.
+                            Includes quick actions, word counting, scroll
+                            controls, and optional prompt optimization directly
+                            near the chat input.
                         </span>
                     </div>
                 </div>
 
                 <div class="hg-welcome-feature">
                     <div class="hg-welcome-feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                            <path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M8 12h8M8 16h5" strokeLinecap="round" />
-                        </svg>
+                        <FolderListIcon width="20" height="20" />
                     </div>
                     <div class="hg-welcome-feature-text">
                         <strong>Organization + Layout Controls</strong>
                         <span>
-                            Use folders, wide mode, export actions, and sidebar/chatbox display settings to match your preferred Gemini workspace.
+                            Use folders, wide mode, export actions, and
+                            sidebar/chatbox display settings to match your
+                            preferred Gemini workspace.
                         </span>
                     </div>
                 </div>
 
                 <div class="hg-welcome-feature">
                     <div class="hg-welcome-feature-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" strokeLinecap="round" />
-                        </svg>
+                        <LockIcon width="20" height="20" />
                     </div>
                     <div class="hg-welcome-feature-text">
                         <strong>Private by Default</strong>
                         <span>
-                            Any Gemini API key you add is stored locally in your browser and only used for direct Gemini token counting requests.
+                            Any Gemini API key you add is stored locally in your
+                            browser and only used for direct Gemini token
+                            counting requests.
                         </span>
                     </div>
                 </div>
@@ -116,13 +122,12 @@ export function WelcomeModal({ onClose }) {
         <div class="hg-welcome-step">
             <div class="hg-welcome-hero hg-welcome-hero--compact">
                 <div class="hg-welcome-icon-ring">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="28" height="28">
-                        <path d="M21 2H3v16h5v4l4-4h5l4-4V2zm-10 9V7m4 4V7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                    <ChatKeyIcon width="28" height="28" />
                 </div>
                 <h2 class="hg-welcome-title">Get a Gemini API Key</h2>
                 <p class="hg-welcome-subtitle">
-                    Want exact token counts instead of estimates? You can add a free Gemini API key now, or skip this and do it later.
+                    Want exact token counts instead of estimates? You can add a
+                    free Gemini API key now, or skip this and do it later.
                 </p>
             </div>
 
@@ -155,7 +160,10 @@ export function WelcomeModal({ onClose }) {
                             <span class="hg-welcome-step-num">1</span>
                             <div class="hg-welcome-step-body">
                                 <strong>Open Google AI Studio</strong>
-                                <span>Go to your projects page and sign in with your Google account.</span>
+                                <span>
+                                    Go to your projects page and sign in with
+                                    your Google account.
+                                </span>
                                 <a
                                     class="hg-welcome-link"
                                     href="https://aistudio.google.com/projects"
@@ -172,7 +180,9 @@ export function WelcomeModal({ onClose }) {
                             <div class="hg-welcome-step-body">
                                 <strong>Select or create a project</strong>
                                 <span>
-                                    Each project has a <em>Keys</em> column. Click the key count for an existing project, or create a new project first.
+                                    Each project has a <em>Keys</em> column.
+                                    Click the key count for an existing project,
+                                    or create a new project first.
                                 </span>
                             </div>
                         </li>
@@ -182,8 +192,11 @@ export function WelcomeModal({ onClose }) {
                             <div class="hg-welcome-step-body">
                                 <strong>Copy or create a key</strong>
                                 <span>
-                                    If the project already has API keys listed, click the copy icon next to one.
-                                    If the list is empty, click <strong>Create API key</strong> and copy the value shown.
+                                    If the project already has API keys listed,
+                                    click the copy icon next to one. If the list
+                                    is empty, click{' '}
+                                    <strong>Create API key</strong> and copy the
+                                    value shown.
                                 </span>
                             </div>
                         </li>
@@ -192,7 +205,10 @@ export function WelcomeModal({ onClose }) {
                             <span class="hg-welcome-step-num">4</span>
                             <div class="hg-welcome-step-body">
                                 <strong>Paste it below</strong>
-                                <span>The key starts with <code>AIza</code>. You can also update it later in Settings.</span>
+                                <span>
+                                    The key starts with <code>AIza</code>. You
+                                    can also update it later in Settings.
+                                </span>
                                 <div class="hg-welcome-key-row">
                                     <input
                                         type="text"
@@ -206,23 +222,28 @@ export function WelcomeModal({ onClose }) {
                                     <button
                                         class={`hg-welcome-save-btn ${keyCopied ? 'hg-welcome-save-btn--saved' : ''}`}
                                         onClick={handleApiKeySave}
-                                        disabled={!apiKeyDraft.trim() || apiKeyDraft.trim() === settings.geminiApiKey}
+                                        disabled={
+                                            !apiKeyDraft.trim() ||
+                                            apiKeyDraft.trim() ===
+                                                settings.geminiApiKey
+                                        }
                                     >
                                         {keyCopied ? (
                                             <>
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-                                                    <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                                                </svg>
+                                                <CheckIcon
+                                                    width="14"
+                                                    height="14"
+                                                />
                                                 Saved
                                             </>
-                                        ) : 'Save'}
+                                        ) : (
+                                            'Save'
+                                        )}
                                     </button>
                                 </div>
                                 {settings.geminiApiKey && !apiKeyDraft && (
                                     <span class="hg-welcome-key-saved-note">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="12" height="12">
-                                            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
+                                        <CheckIcon width="12" height="12" />
                                         API key is already saved
                                     </span>
                                 )}
@@ -236,10 +257,16 @@ export function WelcomeModal({ onClose }) {
                 <div class="hg-welcome-choice-card hg-welcome-choice-card--muted">
                     <p class="hg-welcome-choice-text">
                         No problem — token counts still work in estimate mode.
-                        You can add an API key later from <strong>Settings → Gemini API Key</strong>.
+                        You can add an API key later from{' '}
+                        <strong>Settings → Gemini API Key</strong>.
                     </p>
-                    <div class="hg-welcome-later-note" role="status" aria-live="polite">
-                        <strong>Reminder:</strong> You can always add this later from Settings.
+                    <div
+                        class="hg-welcome-later-note"
+                        role="status"
+                        aria-live="polite"
+                    >
+                        <strong>Reminder:</strong> You can always add this later
+                        from Settings.
                     </div>
                     <button
                         class="hg-welcome-choice-btn hg-welcome-choice-btn--secondary"
@@ -251,7 +278,8 @@ export function WelcomeModal({ onClose }) {
             )}
 
             <p class="hg-welcome-footer-note">
-                Adding a key is optional. Hypergravity works without one, and you can change this any time in Settings.
+                Adding a key is optional. Hypergravity works without one, and
+                you can change this any time in Settings.
             </p>
         </div>
     );
@@ -260,10 +288,12 @@ export function WelcomeModal({ onClose }) {
         <div class="hg-welcome-modal">
             {/* Header */}
             <div class="hg-welcome-header">
-                <button class="hg-back-btn" onClick={saveAndClose} title="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
+                <button
+                    class="hg-back-btn"
+                    onClick={saveAndClose}
+                    title="Close"
+                >
+                    <BackArrowIcon width="20" height="20" />
                 </button>
                 {/* Step dots */}
                 <div class="hg-welcome-dots">
@@ -288,25 +318,30 @@ export function WelcomeModal({ onClose }) {
             {/* Footer nav */}
             <div class="hg-welcome-footer">
                 {step > 0 ? (
-                    <button class="hg-welcome-nav-btn hg-welcome-nav-btn--ghost" onClick={() => setStep(step - 1)}>
+                    <button
+                        class="hg-welcome-nav-btn hg-welcome-nav-btn--ghost"
+                        onClick={() => setStep(step - 1)}
+                    >
                         Back
                     </button>
                 ) : (
                     <div />
                 )}
                 {step < TOTAL_STEPS - 1 ? (
-                    <button class="hg-welcome-nav-btn hg-welcome-nav-btn--primary" onClick={() => setStep(step + 1)}>
+                    <button
+                        class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
+                        onClick={() => setStep(step + 1)}
+                    >
                         Next
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-                            <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <ChevronRightIcon width="14" height="14" />
                     </button>
                 ) : (
-                    <button class="hg-welcome-nav-btn hg-welcome-nav-btn--primary" onClick={saveAndClose}>
+                    <button
+                        class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
+                        onClick={saveAndClose}
+                    >
                         Done
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-                            <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
+                        <CheckIcon width="14" height="14" />
                     </button>
                 )}
             </div>

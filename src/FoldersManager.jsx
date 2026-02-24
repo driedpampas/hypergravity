@@ -6,7 +6,7 @@ import {
     FolderEmptyIcon,
     FolderFilledIcon,
     FolderDeleteIcon,
-} from './icons/FoldersManagerIcons';
+} from './icons';
 import './FoldersManager.css';
 
 export function FoldersManager({ onClose }) {

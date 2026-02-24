@@ -5,6 +5,7 @@ import { ChatTools } from './ChatTools';
 import './content.css';
 import { ChatExportController } from './features/chatExport';
 import { createTopBarToolsManager } from './features/topBarToolsManager';
+import { CloseIcon, FolderAddIcon } from './icons';
 import {
     getStorageValue,
     setStorageValue,
@@ -18,7 +19,6 @@ let lastWideChatUrl = window.location.href;
 let chatExportController = null;
 let topBarToolsManager = null;
 let hgEnabled = true; // mirror of settings.enabled to gate UI injection
-
 
 /**
  * Applies CSS classes to the document body based on chatbox style settings.
@@ -152,7 +152,7 @@ function inferChatInfoFromConversationRow(row) {
 
 /**
  * Captures which chat button was clicked to prepopulate folder operations.
- * @param {MouseEvent} event 
+ * @param {MouseEvent} event
  */
 function handleGlobalMenuButtonTracking(event) {
     const button = event.target.closest(
@@ -196,14 +196,7 @@ function FolderSelectModal({
                     aria-label="Close"
                     onClick={onClose}
                 >
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                    >
-                        <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
+                    <CloseIcon />
                 </button>
             </div>
             <div class="hg-folder-select-subtitle">
@@ -220,9 +213,7 @@ function FolderSelectModal({
                         <span class="hg-folder-select-check">
                             {selected.has(folder.id) ? '✓' : ''}
                         </span>
-                        <span class="hg-folder-select-name">
-                            {folder.name}
-                        </span>
+                        <span class="hg-folder-select-name">{folder.name}</span>
                         <span class="hg-folder-select-count">
                             {(folder.chats || []).length}
                         </span>
@@ -332,16 +323,7 @@ function injectAddToFolderOption(menuRoot) {
 
     render(
         <>
-            <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-            >
-                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                <line x1="12" y1="11" x2="12" y2="17" />
-                <line x1="9" y1="14" x2="15" y2="14" />
-            </svg>
+            <FolderAddIcon width="24" height="24" />
             <span>Add chat to folder</span>
         </>,
         button
@@ -514,7 +496,9 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
         // remove injected UI when toggle is off
         const sidebarRoot = document.querySelector('#hypergravity-root');
         if (sidebarRoot) sidebarRoot.remove();
-        const chatToolsRoot = document.querySelector('#hypergravity-chat-tools-root');
+        const chatToolsRoot = document.querySelector(
+            '#hypergravity-chat-tools-root'
+        );
         if (chatToolsRoot) chatToolsRoot.remove();
     } else {
         // if it was turned back on without reloading, re-insert
