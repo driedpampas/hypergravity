@@ -35,7 +35,7 @@ function getScrollableFallback() {
 
 /**
  * Determines if a DOMRect is valid for anchoring scroll operations.
- * @param {DOMRect} rect 
+ * @param {DOMRect} rect
  * @returns {boolean}
  */
 function isValidAnchorRect(rect) {
@@ -75,7 +75,10 @@ export function createScrollManager() {
     function detachManualStopListeners() {
         if (!autoscrollContainer) return;
 
-        autoscrollContainer.removeEventListener('wheel', stopAutoscrollOnManual);
+        autoscrollContainer.removeEventListener(
+            'wheel',
+            stopAutoscrollOnManual
+        );
         autoscrollContainer.removeEventListener(
             'mousedown',
             stopAutoscrollOnManual
@@ -215,7 +218,8 @@ export function createScrollManager() {
         const rect = anchor.getBoundingClientRect();
 
         if (!isValidAnchorRect(rect)) return false;
-        if (window.getComputedStyle(input).visibility === 'hidden') return false;
+        if (window.getComputedStyle(input).visibility === 'hidden')
+            return false;
 
         return true;
     }

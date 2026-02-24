@@ -48,8 +48,8 @@ export function getVersion() {
 
 /**
  * Reads a value from the synchronous localStorage, with fallback.
- * @param {string} key 
- * @param {*} [fallback=undefined] 
+ * @param {string} key
+ * @param {*} [fallback=undefined]
  * @returns {*}
  */
 export function readLocalStorageValue(key, fallback = undefined) {
@@ -64,8 +64,8 @@ export function readLocalStorageValue(key, fallback = undefined) {
 
 /**
  * Persists a value to localStorage, handling potential quota errors.
- * @param {string} key 
- * @param {*} value 
+ * @param {string} key
+ * @param {*} value
  */
 export function writeLocalStorageValue(key, value) {
     try {
@@ -78,8 +78,8 @@ export function writeLocalStorageValue(key, value) {
 /**
  * Core storage retrieval function that abstracts over chrome.storage, userscript storage, and localStorage.
  * Prioritizes chrome.storage and keeps localStorage in sync as a backup.
- * @param {string} key 
- * @param {*} [fallback=undefined] 
+ * @param {string} key
+ * @param {*} [fallback=undefined]
  * @returns {Promise<*>}
  */
 export async function getStorageValue(key, fallback = undefined) {
@@ -120,8 +120,8 @@ export async function getStorageValue(key, fallback = undefined) {
 
 /**
  * Core storage persistence function that synchronizes value across available storage backends.
- * @param {string} key 
- * @param {*} value 
+ * @param {string} key
+ * @param {*} value
  * @returns {Promise<void>}
  */
 export async function setStorageValue(key, value) {

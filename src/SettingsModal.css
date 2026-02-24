@@ -150,7 +150,8 @@
         no-repeat right 10px center;
     color: var(--gem-sys-color--on-surface, #1f1f1f);
     font-size: 13px;
-    font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family:
+        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
     cursor: pointer;
     outline: none;
     min-width: 140px;

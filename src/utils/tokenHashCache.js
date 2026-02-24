@@ -90,7 +90,7 @@ export function sanitizeMessageText(text, role) {
 /**
  * Generates a stable, short cryptographic hash for a block of text.
  * Used as a cache key for token counts.
- * @param {string} text 
+ * @param {string} text
  * @returns {Promise<string>} Hexadecimal hash string.
  */
 export async function hashText(text) {
@@ -122,8 +122,8 @@ export async function getCachedTokenCount(hash) {
 
 /**
  * Store a token count in the cache for a given text hash.
- * @param {string} hash 
- * @param {number} count 
+ * @param {string} hash
+ * @param {number} count
  */
 export async function setCachedTokenCount(hash, count) {
     const cache = await loadCache();

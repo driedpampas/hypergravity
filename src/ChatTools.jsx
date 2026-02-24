@@ -46,9 +46,9 @@ export function ChatTools() {
                 </div>
                 {right.length > 0 && (
                     <div class="hg-chat-tools hg-chat-tools-right">
-                    {right.map(({ component: C }, i) => (
-                        <C key={i} />
-                    ))}
+                        {right.map(({ component: C }, i) => (
+                            <C key={i} />
+                        ))}
                     </div>
                 )}
             </div>

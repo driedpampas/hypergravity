@@ -42,7 +42,9 @@
     padding: 0;
     background: var(--gem-sys-color--outline-variant, #c9cdd4);
     cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
+    transition:
+        background 0.2s,
+        transform 0.2s;
 }
 
 .hg-welcome-dot.active {
@@ -329,17 +331,15 @@
     padding: 9px 14px;
     border-radius: 10px;
     border: 1px solid
-        color-mix(
-            in srgb,
-            var(--gem-sys-color--primary, #1a73e8) 72%,
-            #000 28%
-        );
+        color-mix(in srgb, var(--gem-sys-color--primary, #1a73e8) 72%, #000 28%);
     background: var(--gem-sys-color--primary, #1a73e8);
     color: var(--gem-sys-color--on-primary, #fff);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
+    transition:
+        background 0.15s,
+        opacity 0.15s;
 }
 
 .hg-welcome-save-btn:disabled {
@@ -394,7 +394,9 @@
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
+    transition:
+        background 0.15s,
+        opacity 0.15s;
     font-family: inherit;
 }
 
