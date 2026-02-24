@@ -13,8 +13,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     z-index: 10000;
 }
 
@@ -277,7 +276,7 @@
     padding: 1px 5px;
     font-size: 12.5px;
     color: var(--gem-sys-color--on-surface, #1f1f1f);
-    font-family: 'Google Sans Mono', 'Roboto Mono', monospace;
+    font-family: var(--hg-font-family-mono);
 }
 
 /* External link */
@@ -314,7 +313,7 @@
     background: var(--gem-sys-color--surface, #f0f4f8);
     color: var(--gem-sys-color--on-surface, #1f1f1f);
     font-size: 13px;
-    font-family: 'Google Sans Mono', 'Roboto Mono', monospace;
+    font-family: var(--hg-font-family-mono);
     outline: none;
     transition: border-color 0.15s;
 }

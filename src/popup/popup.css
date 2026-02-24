@@ -1,3 +1,9 @@
+:root {
+    --hg-font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue',
+        sans-serif;
+    --hg-font-family-mono: 'Google Sans Mono', 'Roboto Mono', monospace;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -6,8 +12,7 @@
 
 body {
     width: 300px;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     background: #f8f9fa;
     color: #1f1f1f;
 }

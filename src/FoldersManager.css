@@ -12,8 +12,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     z-index: 10000;
 }
 

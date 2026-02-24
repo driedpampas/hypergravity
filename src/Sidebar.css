@@ -1,8 +1,7 @@
 .hypergravity-sidebar-container {
     overflow: visible;
     transition: margin-top 0.2s ease;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
 
@@ -49,4 +48,9 @@
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    color: var(--gem-sys-color--on-surface-variant, #444746);
+}
+
+.hg-dropdown-item:hover .hg-dropdown-icon {
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
 }

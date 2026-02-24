@@ -118,6 +118,7 @@ export async function getStorageValue(key, fallback = undefined) {
     });
 }
 
+
 /**
  * Core storage persistence function that synchronizes value across available storage backends.
  * @param {string} key
@@ -135,6 +136,30 @@ export async function setStorageValue(key, value) {
 
     if (isUserscript() && typeof GM_setValue === 'function') {
         GM_setValue(key, value);
+        return Promise.resolve();
+    }
+
+    return Promise.resolve();
+}
+
+/**
+ * Core storage removal function that removes value from all available storage backends.
+ * @param {string} key
+ * @returns {Promise<void>}
+ */
+export async function removeStorageValue(key) {
+    try {
+        localStorage.removeItem(key);
+    } catch {}
+
+    if (hasChromeStorage()) {
+        return new Promise((resolve) => {
+            chrome.storage.local.remove([key], () => resolve());
+        });
+    }
+
+    if (isUserscript() && typeof GM_deleteValue === 'function') {
+        GM_deleteValue(key);
         return Promise.resolve();
     }
 

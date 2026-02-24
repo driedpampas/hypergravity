@@ -65,8 +65,7 @@
     display: inline-flex;
     align-items: baseline;
     gap: 4px;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     font-size: 11px;
     font-weight: 500;
     white-space: nowrap;
@@ -99,8 +98,7 @@
     flex-direction: column;
     gap: 10px;
     z-index: 100;
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     font-size: 13px;
     min-width: 160px;
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);

@@ -8,6 +8,7 @@
     max-width: 100%;
     box-sizing: border-box;
     grid-column: 1 / -1;
+    font-family: var(--hg-font-family);
 }
 
 .hg-chat-tools-shell {
@@ -51,8 +52,7 @@
     padding: 6px 12px;
     font-size: 11px;
     color: var(--gem-sys-color--on-surface-variant, #575a5a);
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
@@ -127,8 +127,7 @@
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
     border-radius: 20px;
     color: var(--gem-sys-color--on-surface-variant, #575a5a);
-    font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
+    font-family: var(--hg-font-family);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
