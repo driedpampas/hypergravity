@@ -1,16 +1,39 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import SvgComponent from './Icon';
 import './Sidebar.css';
 import { useChromeStorage } from './hooks/useChromeStorage';
 import { FoldersManager } from './FoldersManager';
 import { SettingsModal } from './SettingsModal';
+import { WelcomeModal } from './WelcomeModal';
+import { WELCOME_SEEN_KEY } from './utils/constants';
+import { readLocalStorageValue } from './utils/browserEnv';
 
 export function Sidebar() {
     const [isExpanded, setIsExpanded] = useChromeStorage(
         'hypergravitySectionExpanded',
         true
     );
+    // Use sync localStorage read as initial value to avoid flash-showing on reload
+    const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useChromeStorage(
+        WELCOME_SEEN_KEY,
+        readLocalStorageValue(WELCOME_SEEN_KEY, false)
+    );
+    const hasSeenWelcome = welcomeSeen === true;
     const [activeMenu, setActiveMenu] = useState(null); // 'folders', 'settings'
+    const [showWelcome, setShowWelcome] = useState(false);
+
+    useEffect(() => {
+        if (isWelcomeLoaded && !hasSeenWelcome) {
+            setShowWelcome(true);
+        }
+    }, [isWelcomeLoaded, hasSeenWelcome]);
+
+    // Auto-show welcome on first install
+    const handleWelcomeClose = () => {
+        setWelcomeSeen(true);
+        setShowWelcome(false);
+        setActiveMenu(null);
+    };
 
     const toggleSection = () => {
         setIsExpanded(!isExpanded);
@@ -78,6 +101,28 @@ export function Sidebar() {
                         <span>Folders</span>
                     </div>
 
+                    {isWelcomeLoaded && !hasSeenWelcome && (
+                        <div
+                            class="hg-dropdown-item"
+                            onClick={() => {
+                                setActiveMenu(null);
+                                setShowWelcome(true);
+                            }}
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                class="hg-dropdown-icon"
+                            >
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M12 7v5l3 3" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                            <span>Welcome & Setup</span>
+                        </div>
+                    )}
+
                     <div
                         class="hg-dropdown-item"
                         onClick={() => setActiveMenu('settings')}
@@ -110,6 +155,9 @@ export function Sidebar() {
             )}
             {activeMenu === 'settings' && (
                 <SettingsModal onClose={() => setActiveMenu(null)} />
+            )}
+            {showWelcome && (
+                <WelcomeModal onClose={handleWelcomeClose} />
             )}
         </div>
     );

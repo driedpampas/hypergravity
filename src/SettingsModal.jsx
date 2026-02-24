@@ -8,7 +8,49 @@ export function SettingsModal({ onClose }) {
         DEFAULT_SETTINGS
     );
 
+    // lightweight toast helper copied from content.jsx
+    const showToast = (message, type = 'info') => {
+        const existing = document.querySelector('#hg-toast');
+        if (existing) existing.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'hg-toast';
+        toast.className = `hg-toast hg-toast-${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 200);
+        }, 1900);
+    };
+
     const toggleSetting = (key) => {
+        // master switch needs a warning/reload because most features are
+        // initialized at page load and won't disappear immediately.
+        if (key === 'enabled') {
+            const currentlyOn = Boolean(settings.enabled);
+            const newVal = !currentlyOn;
+            const promptMsg = newVal
+                ? 'Hypergravity will be enabled, but features won\'t appear until you reload the page. Reload now?'
+                : 'Hypergravity will be disabled, but existing features remain until you reload. Reload now? The reload may interrupt open chats.';
+            const reloadNow = window.confirm(promptMsg);
+
+            setSettings({ ...settings, [key]: newVal });
+
+            if (reloadNow) {
+                window.location.reload();
+            } else {
+                const notice = newVal
+                    ? 'Hypergravity enabled. Please refresh the page for features to take effect.'
+                    : 'Hypergravity disabled. Please refresh the page for changes to take effect.';
+                showToast(notice, 'info');
+            }
+
+            return;
+        }
+
         setSettings({ ...settings, [key]: !settings[key] });
     };
 
@@ -28,6 +70,32 @@ export function SettingsModal({ onClose }) {
             >
                 <div class="hg-toggle-knob"></div>
             </div>
+        </div>
+    );
+
+    const SelectRow = ({ label, settingKey, description, options }) => (
+        <div class="hg-setting-row hg-setting-row-input">
+            <div class="hg-setting-info">
+                <span class="hg-setting-label">{label}</span>
+                {description && (
+                    <span class="hg-setting-desc">{description}</span>
+                )}
+            </div>
+            <select
+                class="hg-setting-select"
+                value={settings[settingKey]}
+                onChange={(e) => {
+                    e.stopPropagation();
+                    setSettings({ ...settings, [settingKey]: e.target.value });
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                    </option>
+                ))}
+            </select>
         </div>
     );
 
@@ -110,19 +178,20 @@ export function SettingsModal({ onClose }) {
                     settingKey="hideSidebarEnabled"
                     description="Collapse the native Gemini sidebar by default"
                 />
-                <ButtonGroupRow
+                <SelectRow
                     label="Token Counter Display"
                     settingKey="tokenCounterMode"
                     description="Choose how context usage is shown"
                     options={[
-                        { label: 'Hidden', value: 'hidden' },
-                        { label: 'Circle', value: 'circle' },
+                        { label: 'None', value: 'none' },
                         { label: 'Text', value: 'text' },
-                        { label: 'Both', value: ' উভয়' }, // Note: both will map to just string "both"
-                        { label: 'Both', value: 'both' },
-                    ]
-                        .slice(0, 3)
-                        .concat([{ label: 'Both', value: 'both' }])}
+                        { label: 'Percentage', value: 'percentage' },
+                        { label: 'Text + %', value: 'text_percentage' },
+                        { label: 'Ring', value: 'ring' },
+                        { label: 'Ring + Text', value: 'ring_text' },
+                        { label: 'Ring + %', value: 'ring_percentage' },
+                        { label: 'Ring + Text + %', value: 'ring_text_percentage' },
+                    ]}
                 />
                 <SettingRow
                     label="Show Scroll Buttons"

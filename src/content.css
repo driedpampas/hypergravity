@@ -439,10 +439,20 @@ body.hg-chatbox-compact-enabled .speech_dictation_mic_button div {
 
 body.hg-chatbox-compact-enabled .speech_dictation_mic_button mat-icon,
 body.hg-chatbox-compact-enabled .speech_dictation_mic_button .mat-icon,
-body.hg-chatbox-compact-enabled .send-button mat-icon,
-body.hg-chatbox-compact-enabled .send-button .mat-icon {
+body.hg-chatbox-compact-enabled .send-button mat-icon:not(.hidden),
+body.hg-chatbox-compact-enabled .send-button .mat-icon:not(.hidden) {
     line-height: 24px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+}
+
+body.hg-chatbox-compact-enabled .send-button .stop-icon,
+body.hg-chatbox-compact-enabled .send-button .blue-circle {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
 }

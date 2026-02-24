@@ -14,6 +14,53 @@ import './TokenCounter.css';
 
 const debugLog = (...args) => _debugLog('TokenCounter', ...args);
 
+function normalizeTokenCounterMode(mode) {
+    const normalized = String(mode || '').trim();
+
+    switch (normalized) {
+        case 'hidden':
+            return 'none';
+        case 'circle':
+            return 'ring';
+        case 'both':
+            return 'ring_text';
+        case 'text':
+        case 'none':
+        case 'percentage':
+        case 'text_percentage':
+        case 'ring':
+        case 'ring_text':
+        case 'ring_percentage':
+        case 'ring_text_percentage':
+            return normalized;
+        default:
+            return 'ring_text';
+    }
+}
+
+function getTokenCounterDisplayConfig(mode) {
+    switch (mode) {
+        case 'none':
+            return { showCircle: false, showText: false, showPercentage: false };
+        case 'text':
+            return { showCircle: false, showText: true, showPercentage: false };
+        case 'percentage':
+            return { showCircle: false, showText: false, showPercentage: true };
+        case 'text_percentage':
+            return { showCircle: false, showText: true, showPercentage: true };
+        case 'ring':
+            return { showCircle: true, showText: false, showPercentage: false };
+        case 'ring_text':
+            return { showCircle: true, showText: true, showPercentage: false };
+        case 'ring_percentage':
+            return { showCircle: true, showText: false, showPercentage: true };
+        case 'ring_text_percentage':
+            return { showCircle: true, showText: true, showPercentage: true };
+        default:
+            return { showCircle: true, showText: true, showPercentage: false };
+    }
+}
+
 function getChatHistoryRoot() {
     return (
         document.querySelector('[data-test-id="chat-history-container"]') ||
@@ -96,7 +143,7 @@ function collectMessageNodes(conversationContainer) {
 }
 
 async function countTokensWithGemini(text, apiKey, signal) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:countTokens?key=${encodeURIComponent(apiKey)}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:countTokens?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -382,12 +429,11 @@ export function TokenCounter() {
     }, [conversationId, geminiSettings?.geminiApiKey]);
 
     const MAX_TOKENS = geminiSettings?.tokenLimit || 1000000;
-    const mode = geminiSettings?.tokenCounterMode || 'both';
+    const mode = normalizeTokenCounterMode(geminiSettings?.tokenCounterMode);
+    const { showCircle, showText, showPercentage } =
+        getTokenCounterDisplayConfig(mode);
 
-    if (mode === 'hidden') return null;
-
-    const showCircle = mode === 'both' || mode === 'circle';
-    const showText = mode === 'both' || mode === 'text';
+    if (!showCircle && !showText && !showPercentage) return null;
 
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
@@ -405,13 +451,18 @@ export function TokenCounter() {
         return String(count);
     };
 
+    const hasLabel = showText || showPercentage;
+    const percentValue =
+        MAX_TOKENS > 0 ? ((totalTokens / MAX_TOKENS) * 100).toFixed(1) : '0.0';
+    const percentageLabel = `${percentValue}%`;
+
     const fillDeg = (fillPercentage / 100) * 360;
     const ringMask = `conic-gradient(#000 ${fillDeg}deg, transparent ${fillDeg}deg)`;
 
     return (
         <div class="hg-token-counter-wrapper" ref={popupRef}>
             <button
-                class={`hg-token-counter-btn${showText ? ' hg-token-counter-btn--labeled' : ''}`}
+                class={`hg-token-counter-btn${hasLabel ? ' hg-token-counter-btn--labeled' : ''}`}
                 onClick={() => setIsExpanded(!isExpanded)}
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
@@ -433,10 +484,24 @@ export function TokenCounter() {
                         />
                     </svg>
                 )}
-                {showText && (
+                {hasLabel && (
                     <span class="hg-token-label">
-                        {formatTokenCount(totalTokens)}/
-                        {formatTokenCount(MAX_TOKENS)}
+                        {showText && (
+                            <span class="hg-token-label-main">
+                                {formatTokenCount(totalTokens)}/
+                                {formatTokenCount(MAX_TOKENS)}
+                            </span>
+                        )}
+                        {showPercentage && showText ? (
+                            <span class="hg-token-label-percent">
+                                ({percentageLabel})
+                            </span>
+                        ) : null}
+                        {showPercentage && !showText ? (
+                            <span class="hg-token-label-main">
+                                {percentageLabel}
+                            </span>
+                        ) : null}
                     </span>
                 )}
             </button>

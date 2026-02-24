@@ -75,8 +75,23 @@ body {
 
 .hg-popup-actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
+}
+
+.hg-popup-actions .hg-popup-btn {
+    flex: 1;
+    width: auto;
+}
+
+.hg-popup-enable-row {
+    font-size: 13px;
+}
+.hg-popup-enable-row label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .hg-popup-btn {

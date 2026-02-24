@@ -113,4 +113,37 @@ document.addEventListener('DOMContentLoaded', () => {
             importInput.value = '';
         }
     });
+
+    // initialize enable/disable toggle
+    const enableToggle = document.getElementById('hg-enabled-toggle');
+    if (enableToggle) {
+        (async () => {
+            const settings = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
+            enableToggle.checked = Boolean(settings.enabled);
+        })();
+
+        enableToggle.addEventListener('change', async () => {
+            const current = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
+            const newSettings = { ...current, enabled: enableToggle.checked };
+            await setStorageValue(SETTINGS_KEY, newSettings);
+            showStatus(
+                `Hypergravity ${enableToggle.checked ? 'enabled' : 'disabled'}`,
+                'info'
+            );
+            // ask the user about reloading to apply change
+            const reload = window.confirm(
+                'Changes will take effect after reloading the current tab. Reload now?'
+            );
+            if (reload) {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    (tabs) => {
+                        if (tabs[0] && tabs[0].id) {
+                            chrome.tabs.reload(tabs[0].id);
+                        }
+                    }
+                );
+            }
+        });
+    }
 });

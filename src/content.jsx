@@ -17,6 +17,8 @@ let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
 let chatExportController = null;
 let topBarToolsManager = null;
+let hgEnabled = true; // mirror of settings.enabled to gate UI injection
+
 
 function applyChatboxHeaderStyleSetting(settings) {
     document.body.classList.toggle(
@@ -314,6 +316,8 @@ function injectAddToFolderOption(menuRoot) {
 }
 
 function initializeFeatureModules() {
+    if (!hgEnabled) return; // skip when master toggle off
+
     if (!chatExportController) {
         chatExportController = new ChatExportController({
             showToast,
@@ -397,6 +401,8 @@ let mutationDebounceTimer = null;
 const observer = new MutationObserver(() => {
     clearTimeout(mutationDebounceTimer);
     mutationDebounceTimer = setTimeout(() => {
+        if (!hgEnabled) return; // do nothing when disabled
+
         if (!document.querySelector('#hypergravity-root')) {
             insertHypergravitySidebar();
         }
@@ -422,18 +428,39 @@ observer.observe(document.body, {
 });
 
 // Try to insert on initial load
-initializeFeatureModules();
-insertHypergravitySidebar();
-insertChatTools();
-topBarToolsManager?.refresh();
-getSettings().then(applyChatboxHeaderStyleSetting);
+getSettings().then((settings) => {
+    hgEnabled = Boolean(settings.enabled);
+    applyChatboxHeaderStyleSetting(settings);
+    if (hgEnabled) {
+        initializeFeatureModules();
+        insertHypergravitySidebar();
+        insertChatTools();
+        topBarToolsManager?.refresh();
+    }
+});
 
 document.addEventListener('click', handleGlobalMenuButtonTracking, true);
 
 addStorageListener(SETTINGS_KEY, (newValue) => {
-    topBarToolsManager?.refresh();
-    applyChatboxHeaderStyleSetting({
+    const settings = {
         ...DEFAULT_SETTINGS,
         ...(newValue || {}),
-    });
+    };
+    hgEnabled = Boolean(settings.enabled);
+
+    topBarToolsManager?.refresh();
+    applyChatboxHeaderStyleSetting(settings);
+
+    if (!hgEnabled) {
+        // remove injected UI when toggle is off
+        const sidebarRoot = document.querySelector('#hypergravity-root');
+        if (sidebarRoot) sidebarRoot.remove();
+        const chatToolsRoot = document.querySelector('#hypergravity-chat-tools-root');
+        if (chatToolsRoot) chatToolsRoot.remove();
+    } else {
+        // if it was turned back on without reloading, re-insert
+        insertHypergravitySidebar();
+        insertChatTools();
+        topBarToolsManager?.refresh();
+    }
 });

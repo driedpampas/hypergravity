@@ -1,5 +1,6 @@
 export const SETTINGS_KEY = 'hypergravityGeminiSettings';
 export const FOLDERS_KEY = 'hypergravityGeminiFolders';
+export const WELCOME_SEEN_KEY = 'hypergravityWelcomeSeen';
 
 export const DEFAULT_SETTINGS = {
     enabled: true,
@@ -10,7 +11,7 @@ export const DEFAULT_SETTINGS = {
     showExportButton: true,
     chatboxStyleEnabled: false,
     chatboxCompactEnabled: false,
-    tokenCounterMode: 'both',
+    tokenCounterMode: 'ring_text',
     showScrollButtons: true,
     geminiApiKey: '',
     tokenLimit: 1048576,
