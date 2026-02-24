@@ -1,9 +1,22 @@
 const TOP_BAR_SELECTOR = 'top-bar-actions';
 
+/**
+ * Finds the Gemini top bar container for tool injection.
+ * @returns {HTMLElement|null}
+ */
 function getTopBar() {
     return document.querySelector(TOP_BAR_SELECTOR) || null;
 }
 
+/**
+ * Ensures a button exists in the top bar, creating it if necessary.
+ * @param {Object} options - Button configuration.
+ * @param {string} options.id - Button ID.
+ * @param {string} options.title - Tooltip title.
+ * @param {string} options.svg - SVG markup for the icon.
+ * @param {Function} options.onClick - Click handler.
+ * @returns {HTMLElement|null} The button element.
+ */
 function ensureButton({ id, title, svg, onClick }) {
     const topBar = getTopBar();
     if (!topBar) return null;
@@ -31,6 +44,14 @@ function ensureButton({ id, title, svg, onClick }) {
     return button;
 }
 
+/**
+ * Injects a tool into the top bar container at a specified position.
+ * @param {string} id - Tool identifier.
+ * @param {HTMLElement} element - Tool element.
+ * @param {Object} options - Injection options.
+ * @param {'start'|'end'} [options.position='end'] - Side of the bar.
+ * @returns {boolean}
+ */
 function addTool(id, element, { position = 'end' } = {}) {
     const topBar = getTopBar();
     if (!topBar || !element) return false;
@@ -48,6 +69,11 @@ function addTool(id, element, { position = 'end' } = {}) {
     return true;
 }
 
+/**
+ * Removes a tool by ID from the top bar.
+ * @param {string} id - The tool identifier.
+ * @returns {boolean}
+ */
 function removeTool(id) {
     const topBar = getTopBar();
     if (!topBar) return false;
@@ -60,6 +86,11 @@ function removeTool(id) {
     return false;
 }
 
+/**
+ * Checks if a tool exists in the top bar.
+ * @param {string} id 
+ * @returns {boolean}
+ */
 function hasTool(id) {
     const topBar = getTopBar();
     if (!topBar) return false;

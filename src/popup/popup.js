@@ -3,6 +3,7 @@ import {
     setStorageValue,
     getVersion,
 } from '../utils/browserEnv';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 
 const CACHE_KEY = 'hg_token_hash_cache';
 
@@ -116,34 +117,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // initialize enable/disable toggle
     const enableToggle = document.getElementById('hg-enabled-toggle');
-    if (enableToggle) {
+    const toggleUi = document.getElementById('hg-toggle-ui');
+    const enabledRow = document.getElementById('hg-enabled-row');
+
+    if (enableToggle && toggleUi) {
         (async () => {
             const settings = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
             enableToggle.checked = Boolean(settings.enabled);
+            toggleUi.classList.toggle('active', enableToggle.checked);
         })();
 
-        enableToggle.addEventListener('change', async () => {
+        const onChange = async () => {
             const current = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
-            const newSettings = { ...current, enabled: enableToggle.checked };
+            const isChecked = !current.enabled; // toggle state
+            
+            enableToggle.checked = isChecked;
+            toggleUi.classList.toggle('active', isChecked);
+
+            const newSettings = { ...current, enabled: isChecked };
             await setStorageValue(SETTINGS_KEY, newSettings);
+            
             showStatus(
-                `Hypergravity ${enableToggle.checked ? 'enabled' : 'disabled'}`,
+                `Hypergravity ${isChecked ? 'enabled' : 'disabled'}`,
                 'info'
             );
-            // ask the user about reloading to apply change
-            const reload = window.confirm(
-                'Changes will take effect after reloading the current tab. Reload now?'
-            );
-            if (reload) {
-                chrome.tabs.query(
-                    { active: true, currentWindow: true },
-                    (tabs) => {
-                        if (tabs[0] && tabs[0].id) {
-                            chrome.tabs.reload(tabs[0].id);
+
+            // show custom modal instead of window.confirm
+            const overlay = document.getElementById('hg-modal-overlay');
+            const cancelBtn = document.getElementById('hg-modal-cancel');
+            const confirmBtn = document.getElementById('hg-modal-confirm');
+
+            if (overlay && cancelBtn && confirmBtn) {
+                overlay.classList.add('active');
+
+                const close = () => {
+                    overlay.classList.remove('active');
+                    // clean up listeners
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                };
+
+                const onCancel = () => close();
+                const onConfirm = () => {
+                    chrome.tabs.query(
+                        { active: true, currentWindow: true },
+                        (tabs) => {
+                            if (tabs[0] && tabs[0].id) {
+                                chrome.tabs.reload(tabs[0].id);
+                            }
                         }
-                    }
-                );
+                    );
+                    close();
+                };
+
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
             }
+        };
+
+        // Clicking the row or the toggle UI should flip it
+        enabledRow.addEventListener('click', (e) => {
+            // prevent double-triggering if we clicked a child
+            e.preventDefault();
+            onChange();
         });
     }
 });

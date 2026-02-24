@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { countText } from '../utils/textStats';
-import { useChromeStorage } from '../hooks/useChromeStorage';
+import { useStorage } from '../hooks/useStorage';
 import {
     sanitizeMessageText,
     hashText,
@@ -166,7 +166,7 @@ async function countTokensWithGemini(text, apiKey, signal) {
 
 export function TokenCounter() {
     const [stats, setStats] = useState({ inputTokens: 0, outputTokens: 0 });
-    const [geminiSettings] = useChromeStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
+    const [geminiSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const [conversationId, setConversationId] = useState(null);
     const [isExpanded, setIsExpanded] = useState(false);
     const currentIdRef = useRef(null);

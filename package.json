@@ -11,7 +11,7 @@
     "devDependencies": {
         "@crxjs/vite-plugin": "latest",
         "@preact/preset-vite": "^2.10.3",
-        "prettier": "^3.8.1",
+        "prettier": "3.8.1",
         "vite": "^7.3.1",
         "vite-plugin-monkey": "^7.1.9"
     },

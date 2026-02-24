@@ -17,7 +17,7 @@
 - Token counting in `src/tools/TokenCounter.jsx` parses DOM by selector priority and uses `src/utils/tokenHashCache.js` for hashed cache + delayed flush.
 
 ## Storage rules (important)
-- Use `useChromeStorage` (`src/hooks/useChromeStorage.js`) for Preact state persisted to `chrome.storage.local` with localStorage fallback.
+- Use `useStorage` (`src/hooks/useStorage.js`) for Preact state persisted to `chrome.storage.local` with localStorage fallback.
 - Keep key names stable: `hypergravityGeminiSettings`, `hypergravityGeminiFolders`, `quickActions`, `hypergravitySectionExpanded`, `hg_token_hash_cache`, `hypergravityWelcomeSeen`.
 - For non-hook code, follow the same chrome-storage-first + localStorage fallback pattern via `src/utils/browserEnv.js`.
 
@@ -42,4 +42,4 @@
   - New chat-box tool → implement as a component in `src/tools/`, add to `TOOLS` array in `ChatTools.jsx` with `align` (left/right) and `weight` (ordering), use `chatBoxManager` for input interactions.
   - New scroll feature → add/extend `src/managers/scrollManager.js`, then wire into `ScrollButtons` tool or create new tool that calls `createScrollManager()`.
   - New top-bar button → implement in `createTopBarToolsManager()` and ensure `refresh()` path from `content.jsx` observer.
-  - New setting → merge with existing settings defaults and persist via `useChromeStorage`.
+  - New setting → merge with existing settings defaults and persist via `useStorage`.

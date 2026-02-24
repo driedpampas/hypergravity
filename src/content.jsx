@@ -20,6 +20,12 @@ let topBarToolsManager = null;
 let hgEnabled = true; // mirror of settings.enabled to gate UI injection
 
 
+/**
+ * Applies CSS classes to the document body based on chatbox style settings.
+ * @param {Object} settings - The user settings.
+ * @param {boolean} [settings.chatboxStyleEnabled] - Whether custom chatbox styling is enabled.
+ * @param {boolean} [settings.chatboxCompactEnabled] - Whether compact chatbox styling is enabled.
+ */
 function applyChatboxHeaderStyleSetting(settings) {
     document.body.classList.toggle(
         'hg-chatbox-header-style-enabled',
@@ -31,11 +37,20 @@ function applyChatboxHeaderStyleSetting(settings) {
     );
 }
 
+/**
+ * Retrieves the current settings from storage, merging with default values.
+ * @returns {Promise<Object>} The combined settings object.
+ */
 async function getSettings() {
     const settings = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
     return { ...DEFAULT_SETTINGS, ...(settings || {}) };
 }
 
+/**
+ * Updates settings by patching current values and persisting back to storage.
+ * @param {Object} patch - The settings properties to update.
+ * @returns {Promise<Object>} The updated settings object.
+ */
 async function updateSettings(patch) {
     const current = await getSettings();
     const next = { ...current, ...patch };
@@ -43,12 +58,21 @@ async function updateSettings(patch) {
     return next;
 }
 
+/**
+ * Generates an absolute Gemini URL for a given chat ID, preserving account context (e.g. /u/1/).
+ * @param {string} [chatId=''] - The ID of the chat.
+ * @returns {string} The full Gemin URL.
+ */
 function getAccountAwareUrl(chatId = '') {
     const match = window.location.pathname.match(/^\/u\/(\d+)\//);
     const accountPath = match ? `/u/${match[1]}/app` : '/app';
     return `https://gemini.google.com${chatId ? `${accountPath}/${chatId}` : accountPath}`;
 }
 
+/**
+ * Inspects DOIM and URL to find metadata for the currently active chat.
+ * @returns {Object|null} Chat info object containing id, title, and url, or null if not found.
+ */
 function findActiveChatInfo() {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const appIndex = pathParts.indexOf('app');
@@ -77,6 +101,11 @@ function findActiveChatInfo() {
     };
 }
 
+/**
+ * Displays a non-intrusive toast notification to the user.
+ * @param {string} message - The message text to display.
+ * @param {'info'|'success'|'error'} [type='info'] - The toast type for styling.
+ */
 function showToast(message, type = 'info') {
     const existing = document.querySelector('#hg-toast');
     if (existing) existing.remove();
@@ -94,6 +123,11 @@ function showToast(message, type = 'info') {
     }, 1900);
 }
 
+/**
+ * Attempts to extract chat metadata from a conversation sidebar entry row.
+ * @param {HTMLElement} row - The DOM element representing the conversation row.
+ * @returns {Object|null} Chat info object or null.
+ */
 function inferChatInfoFromConversationRow(row) {
     if (!row) return null;
     const link = row.querySelector('a[href*="/app/"]');
@@ -116,6 +150,10 @@ function inferChatInfoFromConversationRow(row) {
     return { id, title: title.slice(0, 100), url: href };
 }
 
+/**
+ * Captures which chat button was clicked to prepopulate folder operations.
+ * @param {MouseEvent} event 
+ */
 function handleGlobalMenuButtonTracking(event) {
     const button = event.target.closest(
         'button[data-test-id="side-nav-menu-button"]'
@@ -129,6 +167,9 @@ function handleGlobalMenuButtonTracking(event) {
     if (info) lastClickedChatInfo = info;
 }
 
+/**
+ * Preact component for selecting folders to assign a chat to.
+ */
 function FolderSelectModal({
     chatInfo,
     folders,
@@ -201,6 +242,10 @@ function FolderSelectModal({
     );
 }
 
+/**
+ * Initializes and displays the "Add to Folder" modal.
+ * @param {Object} chatInfo - Metadata for the chat to be added.
+ */
 async function showAddToFolderMenu(chatInfo) {
     const folders = await getStorageValue(FOLDERS_KEY, []);
 
@@ -271,6 +316,10 @@ async function showAddToFolderMenu(chatInfo) {
     );
 }
 
+/**
+ * Injects a custom menu item into the Gemini chat menu for folder management.
+ * @param {HTMLElement} menuRoot - The menu container element.
+ */
 function injectAddToFolderOption(menuRoot) {
     if (!menuRoot || menuRoot.querySelector('.hg-add-to-folder-btn')) return;
     const nativeItems = menuRoot.querySelectorAll('button, [role="menuitem"]');
@@ -315,6 +364,9 @@ function injectAddToFolderOption(menuRoot) {
     last.parentNode?.insertBefore(button, last.nextSibling);
 }
 
+/**
+ * Bootstraps feature modules that depend on DOM or storage.
+ */
 function initializeFeatureModules() {
     if (!hgEnabled) return; // skip when master toggle off
 
@@ -333,6 +385,10 @@ function initializeFeatureModules() {
         });
     }
 }
+
+/**
+ * Identifies the sidebar injection point and inserts the Hypergravity sidebar root.
+ */
 function insertHypergravitySidebar() {
     if (document.querySelector('#hypergravity-root')) return;
 
@@ -376,6 +432,9 @@ function insertHypergravitySidebar() {
     render(<Sidebar />, rootElement);
 }
 
+/**
+ * Identifies the message input area and injects the ChatTools component.
+ */
 function insertChatTools() {
     // Find the chat box container. We can try to attach it above the leading actions.
     const chatContainer =

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { useChromeStorage } from '../hooks/useChromeStorage';
+import { useStorage } from '../hooks/useStorage';
 import { createScrollManager } from '../managers/scrollManager';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
 
 export function ScrollButtons() {
-    const [settings] = useChromeStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
+    const [settings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const managerRef = useRef(null);
     const [state, setState] = useState({
         isAutoscrollActive: false,

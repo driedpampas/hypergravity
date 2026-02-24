@@ -1,3 +1,8 @@
+/**
+ * Analyzes a string of text to provide various readability and sizing statistics.
+ * @param {string} text - The input text to analyze.
+ * @returns {Object} An object containing word, character, line, sentence, paragraph, and estimated token counts.
+ */
 export function countText(text) {
     if (!text)
         return {

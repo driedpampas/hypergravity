@@ -20,11 +20,12 @@
                 </div>
             </div>
 
-            <div class="hg-popup-enable-row">
-                <label>
-                    <input type="checkbox" id="hg-enabled-toggle" />
-                    Enable Hypergravity
-                </label>
+            <div class="hg-popup-enable-row" id="hg-enabled-row">
+                <span class="hg-popup-enable-label">Enable Hypergravity</span>
+                <div class="hg-toggle" id="hg-toggle-ui">
+                    <input type="checkbox" id="hg-enabled-toggle" hidden />
+                    <div class="hg-toggle-knob"></div>
+                </div>
             </div>
 
             <div class="hg-popup-stats">
@@ -77,6 +78,28 @@
 
             <div class="hg-popup-status" id="hg-status"></div>
         </div>
+
+        <!-- Custom confirmation modal for the popup -->
+        <div class="hg-popup-modal-overlay" id="hg-modal-overlay">
+            <div class="hg-popup-modal">
+                <div class="hg-popup-modal-title">Reload Required</div>
+                <div class="hg-popup-modal-body" id="hg-modal-body">
+                    Changes will take effect after reloading the current tab.
+                </div>
+                <div class="hg-popup-modal-actions">
+                    <button class="hg-popup-modal-btn" id="hg-modal-cancel">
+                        Later
+                    </button>
+                    <button
+                        class="hg-popup-modal-btn hg-popup-modal-btn--primary"
+                        id="hg-modal-confirm"
+                    >
+                        Reload Now
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <script src="popup.js" type="module"></script>
     </body>
 </html>

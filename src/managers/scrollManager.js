@@ -1,5 +1,10 @@
 import { chatBoxManager } from './chatBoxManager';
 
+/**
+ * Perform a smooth scroll to a target position.
+ * @param {HTMLElement} element - The scrollable element.
+ * @param {number} targetTop - The target scroll position.
+ */
 function fastSmoothScroll(element, targetTop) {
     if (!element) return;
 
@@ -20,14 +25,28 @@ function fastSmoothScroll(element, targetTop) {
     });
 }
 
+/**
+ * Returns the scrollable element of the current document.
+ * @returns {HTMLElement}
+ */
 function getScrollableFallback() {
     return document.scrollingElement || document.documentElement;
 }
 
+/**
+ * Determines if a DOMRect is valid for anchoring scroll operations.
+ * @param {DOMRect} rect 
+ * @returns {boolean}
+ */
 function isValidAnchorRect(rect) {
     return !!rect && rect.width > 0 && rect.height > 0;
 }
 
+/**
+ * Factory function creating a scroll manager state object.
+ * Manages autoscroll state and manual scroll interactions.
+ * @returns {Object} Scroll manager interface.
+ */
 export function createScrollManager() {
     let isAutoscrollActive = false;
     let autoscrollRafId = null;

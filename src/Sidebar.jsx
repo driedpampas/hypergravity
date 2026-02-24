@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import SvgComponent from './Icon';
 import './Sidebar.css';
-import { useChromeStorage } from './hooks/useChromeStorage';
+import { useStorage } from './hooks/useStorage';
 import { FoldersManager } from './FoldersManager';
 import { SettingsModal } from './SettingsModal';
 import { WelcomeModal } from './WelcomeModal';
@@ -9,12 +9,12 @@ import { WELCOME_SEEN_KEY } from './utils/constants';
 import { readLocalStorageValue } from './utils/browserEnv';
 
 export function Sidebar() {
-    const [isExpanded, setIsExpanded] = useChromeStorage(
+    const [isExpanded, setIsExpanded] = useStorage(
         'hypergravitySectionExpanded',
         true
     );
     // Use sync localStorage read as initial value to avoid flash-showing on reload
-    const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useChromeStorage(
+    const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useStorage(
         WELCOME_SEEN_KEY,
         readLocalStorageValue(WELCOME_SEEN_KEY, false)
     );

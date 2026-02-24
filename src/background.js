@@ -3,10 +3,20 @@ const OPTIMIZATION_SYSTEM_PROMPT =
 
 let currentOptimizationTabId = null;
 
+/**
+ * Native-style sleep function using Promises.
+ * @param {number} ms - Milliseconds to wait.
+ * @returns {Promise<void>}
+ */
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Removes boilerplate prefixes (e.g., "Optimized prompt:") and normalizing formatting.
+ * @param {string} text - The raw text from Gemini's response.
+ * @returns {string} The cleaned prompt text.
+ */
 function cleanOptimizedPrompt(text) {
     if (!text) return text;
     const prefixes = [
@@ -40,6 +50,11 @@ function cleanOptimizedPrompt(text) {
     return result.trim();
 }
 
+/**
+ * Injects text into the Gemini chat box DOM via manual DOM manipulation.
+ * @param {string} text - The text to enter.
+ * @returns {boolean} True if successful.
+ */
 function enterPrompt(text) {
     const selectors = [
         'rich-textarea .ql-editor',
@@ -76,6 +91,10 @@ function enterPrompt(text) {
     return true;
 }
 
+/**
+ * Locates and clicks the "Send" button in the Gemini UI.
+ * @returns {boolean} True if button found and clicked.
+ */
 function clickSubmit() {
     const selectors = [
         'button[aria-label*="Send"]',
@@ -107,6 +126,10 @@ function clickSubmit() {
     return false;
 }
 
+/**
+ * Locates and clicks the "Temporary Chat" button to ensure session isn't saved.
+ * @returns {boolean} True if successful.
+ */
 function clickTemporaryChatButton() {
     const btn =
         document.querySelector('[data-test-id="temp-chat-button"]') ||
@@ -127,6 +150,10 @@ function clickTemporaryChatButton() {
     return false;
 }
 
+/**
+ * Ensures the Gemini side navigation is open.
+ * @returns {string} Status of the operation ('ALREADY_OPEN', 'OPENED', 'NOT_FOUND').
+ */
 function openSidebarIfClosed() {
     const app = document.querySelector('chat-app#app-root, chat-app');
     if (app) {
@@ -139,6 +166,11 @@ function openSidebarIfClosed() {
     return 'NOT_FOUND';
 }
 
+/**
+ * Switches the active Gemini model/mode (e.g., Flash, Thinking, Pro).
+ * @param {string} mode - The target mode.
+ * @returns {string} Operation status.
+ */
 function clickOptimizationModeButton(mode) {
     const modeButton = document.querySelector(
         '[data-test-id="bard-mode-menu-button"]'
@@ -187,6 +219,11 @@ function clickOptimizationModeButton(mode) {
     return 'MENU_OPENED';
 }
 
+/**
+ * Checks the current chat state to see if Gemini is still generating or if a response is ready.
+ * @param {string} promptText - The prompt that was sent.
+ * @returns {Object} { isGenerating: boolean, response: string|null }
+ */
 function checkResponseStatus(promptText) {
     const isGenerating = (() => {
         const stopBtn = document.querySelector(
@@ -264,6 +301,11 @@ function checkResponseStatus(promptText) {
     return { isGenerating, response };
 }
 
+/**
+ * Promise-based wait for a Chrome tab to finish loading its document.
+ * @param {number} tabId - The ID of the tab to watch.
+ * @returns {Promise<void>} Resolves when status is 'complete'.
+ */
 async function waitForTabLoad(tabId) {
     return new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
@@ -282,6 +324,13 @@ async function waitForTabLoad(tabId) {
     });
 }
 
+/**
+ * Periodically polls a background tab to extract the AI response after submission.
+ * @param {number} tabId - The ID of the tab to check.
+ * @param {number} timeout - Max time to wait.
+ * @param {string} promptText - The original prompt (used for comparison if needed).
+ * @returns {Promise<string>} The extracted response text.
+ */
 async function pollForResponse(tabId, timeout, promptText) {
     const start = Date.now();
     let lastLength = 0;
@@ -315,6 +364,16 @@ async function pollForResponse(tabId, timeout, promptText) {
     throw new Error('Optimization timeout');
 }
 
+/**
+ * Orchestrates the full prompt optimization flow:
+ * 1. Creates a hidden/background Gemini tab.
+ * 2. Prepares the UI (sidebar, temporary chat, flash mode).
+ * 3. Injects the meta-prompt and user input.
+ * 4. Submits and polls for the result.
+ * 5. Cleans and returns the result, then closes the tab.
+ * @param {Object} request - The message request containing the prompt.
+ * @returns {Promise<Object>} Success status and the optimized prompt or error.
+ */
 async function handleOptimizePrompt(request) {
     const { prompt } = request;
     let tabId = null;

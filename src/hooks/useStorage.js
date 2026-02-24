@@ -6,6 +6,12 @@ import {
     writeLocalStorageValue,
 } from '../utils/browserEnv';
 
+/**
+ * Deep merge a stored object with default object values.
+ * @param {Object} stored - The values retrieved from storage.
+ * @param {Object} defaults - The fallback/default values.
+ * @returns {Object}
+ */
 function mergeWithDefaults(stored, defaults) {
     if (
         defaults &&
@@ -20,7 +26,14 @@ function mergeWithDefaults(stored, defaults) {
     return stored;
 }
 
-export function useChromeStorage(key, initialValue) {
+/**
+ * Preact/React hook for persisting state to Chrome Storage with localStorage fallback.
+ * Automatically synchronizes state changes across different tabs or extension components.
+ * @param {string} key - The storage key.
+ * @param {*} initialValue - The initial/default value.
+ * @returns {[*, Function, boolean]} State value, setter function, and loaded status.
+ */
+export function useStorage(key, initialValue) {
     const [value, setValue] = useState(initialValue);
     const [isLoaded, setIsLoaded] = useState(false);
     const defaultsRef = useRef(initialValue);

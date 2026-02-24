@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { useChromeStorage } from './hooks/useChromeStorage';
+import { useStorage } from './hooks/useStorage';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './WelcomeModal.css';
 
@@ -7,7 +7,7 @@ const TOTAL_STEPS = 2;
 
 export function WelcomeModal({ onClose }) {
     const [step, setStep] = useState(0);
-    const [settings, setSettings] = useChromeStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
+    const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const [apiKeyDraft, setApiKeyDraft] = useState('');
     const [keyCopied, setKeyCopied] = useState(false);
     const [wantsApiKey, setWantsApiKey] = useState(null);

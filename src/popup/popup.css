@@ -86,12 +86,58 @@ body {
 }
 
 .hg-popup-enable-row {
-    font-size: 13px;
-}
-.hg-popup-enable-row label {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    padding: 10px 14px;
+    background: #fff;
+    border: 1px solid #dadce0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.hg-popup-enable-row:hover {
+    background: #f1f3f4;
+}
+
+.hg-popup-enable-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Toggle Switch Styles (matched with SettingsModal) */
+.hg-toggle {
+    width: 44px;
+    height: 24px;
+    background: #727676;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.2s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.hg-toggle.active {
+    background: #4285f4;
+}
+
+.hg-toggle-knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.hg-toggle.active .hg-toggle-knob {
+    transform: translateX(20px);
 }
 
 .hg-popup-btn {
@@ -145,6 +191,99 @@ body {
     color: #d93025;
 }
 
+/* Custom Popup Modal */
+.hg-popup-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: none; /* hidden by default */
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.hg-popup-modal-overlay.active {
+    display: flex; /* only show when active */
+    animation: hgFadeIn 0.2s ease;
+}
+
+.hg-popup-modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 260px;
+    padding: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: hgScaleIn 0.2s ease;
+}
+
+.hg-popup-modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.hg-popup-modal-body {
+    font-size: 13px;
+    color: #5f6368;
+    line-height: 1.4;
+    margin-bottom: 20px;
+}
+
+.hg-popup-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.hg-popup-modal-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #dadce0;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.hg-popup-modal-btn:hover {
+    background: #f1f3f4;
+}
+
+.hg-popup-modal-btn--primary {
+    background: #4285f4;
+    color: #fff;
+    border-color: #4285f4;
+}
+
+.hg-popup-modal-btn--primary:hover {
+    background: #3367d6;
+}
+
+@keyframes hgFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes hgScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
 @media (prefers-color-scheme: dark) {
     body {
         background: #1e1e1e;
@@ -178,8 +317,25 @@ body {
         background: #444;
     }
 
+    .hg-popup-enable-row {
+        background: #2d2d2d;
+        border-color: #444;
+    }
+
+    .hg-popup-enable-row:hover {
+        background: #383838;
+    }
+
     .hg-popup-btn svg {
         color: #9aa0a6;
+    }
+
+    .hg-toggle {
+        background: #5f6368;
+    }
+
+    .hg-toggle.active {
+        background: #4285f4;
     }
 
     .hg-popup-status {
@@ -192,5 +348,28 @@ body {
 
     .hg-popup-status.error {
         color: #f28b82;
+    }
+
+    .hg-popup-modal-overlay {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .hg-popup-modal {
+        background: #2d2d2d;
+        color: #e3e3e3;
+    }
+
+    .hg-popup-modal-body {
+        color: #9aa0a6;
+    }
+
+    .hg-popup-modal-btn {
+        background: #383838;
+        border-color: #444;
+        color: #e3e3e3;
+    }
+
+    .hg-popup-modal-btn:hover {
+        background: #444;
     }
 }

@@ -1,10 +1,17 @@
 import { topBarManager } from '../managers/topBarManager';
 
+/**
+ * Factory for the Wide Layout engine which allows Gemini chat content to span the full width of the screen.
+ * @returns {Object} Engine control interface.
+ */
 function createWideLayoutEngine() {
     let enabled = false;
     const markedTargets = new Set();
     const styleId = 'hg-wide-dynamic-style';
 
+    /**
+     * Injects custom CSS for wide mode if not already present.
+     */
     function ensureDynamicStyle() {
         if (document.getElementById(styleId)) return;
 
@@ -22,6 +29,9 @@ function createWideLayoutEngine() {
         document.head.appendChild(style);
     }
 
+    /**
+     * Cleans up custom width attributes from previously marked elements.
+     */
     function clearMarkedTargets() {
         markedTargets.forEach((element) => {
             if (!element?.isConnected) return;
@@ -30,6 +40,9 @@ function createWideLayoutEngine() {
         markedTargets.clear();
     }
 
+    /**
+     * Locates the primary scrollable containers for chat content.
+     */
     function getChatRoots() {
         return [
             document.querySelector('infinite-scroller.chat-history'),
@@ -37,6 +50,9 @@ function createWideLayoutEngine() {
         ].filter((node) => node instanceof HTMLElement);
     }
 
+    /**
+     * Returns a list of selectors for common Gemini UI components that need resizing in wide mode.
+     */
     function getMessageSelectors() {
         return [
             '.conversation-container',

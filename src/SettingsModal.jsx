@@ -1,9 +1,9 @@
-import { useChromeStorage } from './hooks/useChromeStorage';
+import { useStorage } from './hooks/useStorage';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './SettingsModal.css';
 
 export function SettingsModal({ onClose }) {
-    const [settings, setSettings] = useChromeStorage(
+    const [settings, setSettings] = useStorage(
         SETTINGS_KEY,
         DEFAULT_SETTINGS
     );

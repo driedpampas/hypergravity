@@ -13,6 +13,10 @@ const CHAT_HISTORY_SELECTORS = [
 
 const TOOLS_ROOT_ID = 'hypergravity-chat-tools-root';
 
+/**
+ * Finds the Gemini chat input element using a series of fallbacks.
+ * @returns {HTMLElement|null}
+ */
 function getInputElement() {
     for (const sel of INPUT_SELECTORS) {
         const el = document.querySelector(sel);
@@ -21,11 +25,20 @@ function getInputElement() {
     return null;
 }
 
+/**
+ * Returns the current text content of the Gemini chat input.
+ * @returns {string}
+ */
 function getInputText() {
     const el = getInputElement();
     return (el && (el.innerText || el.textContent || el.value)) || '';
 }
 
+/**
+ * Checks if the provided element belongs to a Gemini "Gem" instruction field rather than the main chat.
+ * @param {HTMLElement} element - The element to check.
+ * @returns {boolean}
+ */
 function isGemInstructionsField(element) {
     if (!element) return false;
 
@@ -37,6 +50,10 @@ function isGemInstructionsField(element) {
     );
 }
 
+/**
+ * Finds the wrapping container for the chat input field, useful for UI injection.
+ * @returns {HTMLElement|null}
+ */
 function getInputAnchorElement() {
     const input = getInputElement();
     if (!input) return null;
@@ -50,6 +67,10 @@ function getInputAnchorElement() {
     );
 }
 
+/**
+ * Returns the main scrollable container for chat history.
+ * @returns {HTMLElement|null}
+ */
 function getChatHistoryContainer() {
     for (const selector of CHAT_HISTORY_SELECTORS) {
         const el = document.querySelector(selector);
@@ -59,6 +80,10 @@ function getChatHistoryContainer() {
     return null;
 }
 
+/**
+ * Programmatically updates Gemini chat input text, handling both contenteditable and textarea modes.
+ * @param {string} text - The text to set.
+ */
 function setInputText(text) {
     const el = getInputElement();
     if (!el) return;
@@ -102,10 +127,23 @@ function setInputText(text) {
     }
 }
 
+/**
+ * Gets the Hypergravity root for chat tools.
+ * @returns {HTMLElement|null}
+ */
 function getToolsContainer() {
     return document.getElementById(TOOLS_ROOT_ID) || null;
 }
 
+/**
+ * Inserts a tool into the chat tools bar with alignment and weighted ordering.
+ * @param {string} id - Unique tool ID.
+ * @param {HTMLElement} element - Tool element to insert.
+ * @param {Object} options - Tool properties.
+ * @param {'left'|'right'} [options.align='left'] - Which side to align to.
+ * @param {number} [options.weight=50] - Ordering weight (lower is first).
+ * @returns {boolean} True if successfully added.
+ */
 function addTool(id, element, { align = 'left', weight = 50 } = {}) {
     const root = getToolsContainer();
     if (!root || !element) return false;
@@ -146,6 +184,11 @@ function addTool(id, element, { align = 'left', weight = 50 } = {}) {
     return true;
 }
 
+/**
+ * Removes a tool by ID from the chat tools bar.
+ * @param {string} id - The tool ID.
+ * @returns {boolean} True if element was found and removed.
+ */
 function removeTool(id) {
     const container = getToolsContainer();
     if (!container) return false;
@@ -158,6 +201,11 @@ function removeTool(id) {
     return false;
 }
 
+/**
+ * Checks if a tool is currently present in the chat tools bar.
+ * @param {string} id - The tool ID.
+ * @returns {boolean}
+ */
 function hasTool(id) {
     const container = getToolsContainer();
     if (!container) return false;

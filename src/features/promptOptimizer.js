@@ -4,25 +4,43 @@ import { optimizePrompt, cancelOptimization } from '../utils/browserEnv';
 const getPromptText = () => chatBoxManager.getInputText();
 const setPromptText = (text) => chatBoxManager.setInputText(text);
 
+/**
+ * Factory function for creating a Prompt Optimizer instance.
+ * @param {Object} options - Optimizer options.
+ * @param {Function} options.showToast - Callback to display notifications to the user.
+ * @returns {Object} Public API for optimization control.
+ */
 export function createPromptOptimizer({ showToast }) {
     let isOptimizing = false;
     let preOptimizationPrompt = '';
     let onStateChange = null;
 
+    /**
+     * Registers a callback that is fired whenever the optimizer's internal state reaches a milestone.
+     */
     function setStateChangeCallback(cb) {
         onStateChange = cb;
     }
 
+    /**
+     * Notifies the state change callback of a new status.
+     */
     function emitState(state) {
         if (typeof onStateChange === 'function') onStateChange(state);
     }
 
+    /**
+     * Finalizes the optimization process by accepting the new prompt text.
+     */
     function acceptChanges() {
         preOptimizationPrompt = '';
         emitState('idle');
         showToast('Changes accepted', 'success');
     }
 
+    /**
+     * Reverts the prompt input to the state before optimization began.
+     */
     function rejectChanges() {
         if (preOptimizationPrompt) {
             setPromptText(preOptimizationPrompt);
@@ -32,6 +50,9 @@ export function createPromptOptimizer({ showToast }) {
         emitState('idle');
     }
 
+    /**
+     * Triggers the asynchronous optimization flow via the background worker.
+     */
     async function handleOptimizeClick() {
         if (isOptimizing) {
             isOptimizing = false;

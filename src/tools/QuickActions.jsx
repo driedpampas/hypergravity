@@ -1,8 +1,8 @@
-import { useChromeStorage } from '../hooks/useChromeStorage';
+import { useStorage } from '../hooks/useStorage';
 import { chatBoxManager } from '../managers/chatBoxManager';
 
 export function QuickActions() {
-    const [quickActions] = useChromeStorage('quickActions', []);
+    const [quickActions] = useStorage('quickActions', []);
 
     if (!quickActions.length) return null;
 

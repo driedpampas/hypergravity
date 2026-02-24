@@ -1,5 +1,10 @@
 import { render } from 'preact';
 
+/**
+ * Normalizes a string for use as a filename by removing non-alphanumeric characters.
+ * @param {string} value - The input string.
+ * @returns {string} The sanitized filename.
+ */
 function sanitizeFilename(value) {
     return (value || 'Gemini_Chat')
         .replace(/[^a-z0-9]/gi, '_')
@@ -7,6 +12,11 @@ function sanitizeFilename(value) {
         .slice(0, 60);
 }
 
+/**
+ * Triggers a file download in the browser using a Blob and a temporary anchor element.
+ * @param {Blob} blob - The file content blob.
+ * @param {string} filename - The name of the file to save as.
+ */
 function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -18,12 +28,19 @@ function downloadBlob(blob, filename) {
     setTimeout(() => URL.revokeObjectURL(url), 200);
 }
 
+/**
+ * Controller class managing the extraction and export of Gemini chat history in various formats.
+ */
 export class ChatExportController {
     constructor({ showToast, findActiveChatInfo }) {
         this.showToast = showToast;
         this.findActiveChatInfo = findActiveChatInfo;
     }
 
+    /**
+     * Scrapes the current page DOM to extract a structured list of chat messages.
+     * @returns {Array<{role: 'User'|'Gemini', text: string, timestamp: string}>}
+     */
     getChatHistory() {
         const userSelectors = [
             'user-query',
@@ -69,6 +86,12 @@ export class ChatExportController {
             .filter(Boolean);
     }
 
+    /**
+     * Formats a list of messages into a single plain-text string with header information.
+     * @param {Array} messages - List of message objects.
+     * @param {string} title - Chat title.
+     * @returns {string}
+     */
     formatTextExport(messages, title) {
         let output = `${title}\nExported using hypergravity on: ${new Date().toLocaleString()}\n\n`;
         messages.forEach((msg) => {
@@ -77,6 +100,9 @@ export class ChatExportController {
         return output;
     }
 
+    /**
+     * Main entry point for TXT export.
+     */
     exportAsText() {
         const messages = this.getChatHistory();
         if (!messages.length) {

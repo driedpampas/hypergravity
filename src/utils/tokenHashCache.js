@@ -11,6 +11,10 @@ let dirty = false;
 
 const debugLog = (...args) => _debugLog('Cache', ...args);
 
+/**
+ * Ensures the in-memory cache is populated from persistent storage.
+ * @returns {Promise<Object>} The cache data object.
+ */
 function loadCache() {
     if (loadPromise) return loadPromise;
 
@@ -29,6 +33,9 @@ function loadCache() {
     return loadPromise;
 }
 
+/**
+ * Persists the current in-memory cache state back to storage.
+ */
 function flushToStorage() {
     if (!memoryCache || !dirty) return;
     dirty = false;
@@ -39,6 +46,9 @@ function flushToStorage() {
     setStorageValue(CACHE_KEY, data);
 }
 
+/**
+ * Debounces cache writes to storage to prevent excessive API calls.
+ */
 function scheduleFlush() {
     dirty = true;
     clearTimeout(flushTimer);
@@ -60,6 +70,12 @@ const MODEL_PREFIXES = [
     /^Gemini said\n/,
 ];
 
+/**
+ * Strips Gemini's UI boilerplate text from message content to improve token counting accuracy.
+ * @param {string} text - Raw message text.
+ * @param {'input'|'output'} role - The source of the message.
+ * @returns {string} Cleaned text.
+ */
 export function sanitizeMessageText(text, role) {
     if (!text) return '';
     let cleaned = text;
@@ -71,6 +87,12 @@ export function sanitizeMessageText(text, role) {
     return cleaned.trim();
 }
 
+/**
+ * Generates a stable, short cryptographic hash for a block of text.
+ * Used as a cache key for token counts.
+ * @param {string} text 
+ * @returns {Promise<string>} Hexadecimal hash string.
+ */
 export async function hashText(text) {
     const normalized = (text || '').replace(/\s+/g, ' ').trim();
     const encoded = new TextEncoder().encode(normalized);
@@ -83,6 +105,11 @@ export async function hashText(text) {
     return hex;
 }
 
+/**
+ * Look up a cached token count by its text hash.
+ * @param {string} hash - The SHA-256 hash of the text.
+ * @returns {Promise<number|null>}
+ */
 export async function getCachedTokenCount(hash) {
     const cache = await loadCache();
     const value = cache[hash];
@@ -93,6 +120,11 @@ export async function getCachedTokenCount(hash) {
     return result;
 }
 
+/**
+ * Store a token count in the cache for a given text hash.
+ * @param {string} hash 
+ * @param {number} count 
+ */
 export async function setCachedTokenCount(hash, count) {
     const cache = await loadCache();
     cache[hash] = count;

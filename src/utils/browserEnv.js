@@ -1,15 +1,27 @@
 import { debugLog } from './debug';
 
+/**
+ * Checks if the current environment is a Chrome/Web Extension.
+ * @returns {boolean}
+ */
 export function isExtension() {
     return (
         typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id
     );
 }
 
+/**
+ * Checks if the current environment is a Userscript manager (e.g. Tampermonkey).
+ * @returns {boolean}
+ */
 export function isUserscript() {
     return typeof GM_info !== 'undefined';
 }
 
+/**
+ * Verifies if the Chrome storage API is available and usable.
+ * @returns {boolean}
+ */
 export function hasChromeStorage() {
     return (
         typeof chrome !== 'undefined' &&
@@ -20,6 +32,10 @@ export function hasChromeStorage() {
     );
 }
 
+/**
+ * Retrieves the version string from the manifest or userscript metadata.
+ * @returns {string}
+ */
 export function getVersion() {
     if (isExtension() && chrome.runtime.getManifest) {
         return chrome.runtime.getManifest().version;
@@ -30,6 +46,12 @@ export function getVersion() {
     return '1.0.0';
 }
 
+/**
+ * Reads a value from the synchronous localStorage, with fallback.
+ * @param {string} key 
+ * @param {*} [fallback=undefined] 
+ * @returns {*}
+ */
 export function readLocalStorageValue(key, fallback = undefined) {
     try {
         const raw = localStorage.getItem(key);
@@ -40,6 +62,11 @@ export function readLocalStorageValue(key, fallback = undefined) {
     }
 }
 
+/**
+ * Persists a value to localStorage, handling potential quota errors.
+ * @param {string} key 
+ * @param {*} value 
+ */
 export function writeLocalStorageValue(key, value) {
     try {
         localStorage.setItem(key, JSON.stringify(value));
@@ -48,6 +75,13 @@ export function writeLocalStorageValue(key, value) {
     }
 }
 
+/**
+ * Core storage retrieval function that abstracts over chrome.storage, userscript storage, and localStorage.
+ * Prioritizes chrome.storage and keeps localStorage in sync as a backup.
+ * @param {string} key 
+ * @param {*} [fallback=undefined] 
+ * @returns {Promise<*>}
+ */
 export async function getStorageValue(key, fallback = undefined) {
     return new Promise((resolve) => {
         if (hasChromeStorage()) {
@@ -84,6 +118,12 @@ export async function getStorageValue(key, fallback = undefined) {
     });
 }
 
+/**
+ * Core storage persistence function that synchronizes value across available storage backends.
+ * @param {string} key 
+ * @param {*} value 
+ * @returns {Promise<void>}
+ */
 export async function setStorageValue(key, value) {
     writeLocalStorageValue(key, value);
 
