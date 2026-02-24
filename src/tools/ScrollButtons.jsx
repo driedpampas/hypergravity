@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { useChromeStorage } from '../hooks/useChromeStorage';
 import { createScrollManager } from '../managers/scrollManager';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
@@ -80,9 +80,9 @@ export function ScrollButtons() {
     if (!state.canShowButtons) return null;
 
     return (
-        <div className="hg-scroll-controls">
+        <div class="hg-scroll-controls">
             <button
-                className="hg-scroll-btn"
+            class="hg-scroll-btn"
                 title="Scroll to top"
                 aria-label="Scroll to top"
                 onClick={managerRef.current.scrollToTop}
@@ -101,7 +101,7 @@ export function ScrollButtons() {
                 </svg>
             </button>
             <button
-                className={`hg-scroll-btn ${state.isAutoscrollActive ? 'active' : ''}`}
+                class={`hg-scroll-btn ${state.isAutoscrollActive ? 'active' : ''}`}
                 title="Scroll to bottom (double-click to auto-follow)"
                 aria-label="Scroll to bottom"
                 onClick={managerRef.current.scrollToBottom}

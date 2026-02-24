@@ -1,4 +1,3 @@
-import React from 'react';
 import './ChatTools.css';
 import { WordCounter } from './tools/WordCounter';
 import { OptimizeButton } from './tools/OptimizeButton';
@@ -38,15 +37,15 @@ export function ChatTools() {
     const right = SORTED_TOOLS.filter((t) => t.align === 'right');
 
     return (
-        <div className="hg-chat-tools-shell">
-            <div className="hg-chat-tools-rail">
-                <div className="hg-chat-tools hg-chat-tools-left">
+        <div class="hg-chat-tools-shell">
+            <div class="hg-chat-tools-rail">
+                <div class="hg-chat-tools hg-chat-tools-left">
                     {left.map(({ component: C }, i) => (
                         <C key={i} />
                     ))}
                 </div>
                 {right.length > 0 && (
-                    <div className="hg-chat-tools hg-chat-tools-right">
+                    <div class="hg-chat-tools hg-chat-tools-right">
                     {right.map(({ component: C }, i) => (
                         <C key={i} />
                     ))}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { render } from 'preact';
+import { useState } from 'preact/hooks';
 import { Sidebar } from './Sidebar';
 import { ChatTools } from './ChatTools';
 import './content.css';
@@ -19,7 +19,7 @@ let chatExportController = null;
 let topBarToolsManager = null;
 
 function applyChatboxHeaderStyleSetting(settings) {
-    const isEnabled = Boolean(settings?.chatboxHeaderStyleEnabled);
+    const isEnabled = Boolean(settings?.chatboxStyleEnabled);
     document.body.classList.toggle(
         'hg-chatbox-header-style-enabled',
         isEnabled
@@ -131,7 +131,7 @@ function FolderSelectModal({
     onClose,
     onSave,
 }) {
-    const [selected, setSelected] = React.useState(new Set(initiallySelected));
+    const [selected, setSelected] = useState(new Set(initiallySelected));
 
     const toggle = (id) => {
         const next = new Set(selected);
@@ -141,11 +141,11 @@ function FolderSelectModal({
     };
 
     return (
-        <div className="hg-folder-select-modal">
-            <div className="hg-folder-select-header">
+        <div class="hg-folder-select-modal">
+            <div class="hg-folder-select-header">
                 <h3>Add to Folder</h3>
                 <button
-                    className="hg-folder-select-close"
+                    class="hg-folder-select-close"
                     type="button"
                     aria-label="Close"
                     onClick={onClose}
@@ -160,32 +160,32 @@ function FolderSelectModal({
                     </svg>
                 </button>
             </div>
-            <div className="hg-folder-select-subtitle">
+            <div class="hg-folder-select-subtitle">
                 Manage folders for: <strong>{chatInfo.title}</strong>
             </div>
-            <div className="hg-folder-select-list">
+            <div class="hg-folder-select-list">
                 {folders.map((folder) => (
                     <button
                         key={folder.id}
-                        className="hg-folder-select-item"
+                        class="hg-folder-select-item"
                         onClick={() => toggle(folder.id)}
                         type="button"
                     >
-                        <span className="hg-folder-select-check">
+                        <span class="hg-folder-select-check">
                             {selected.has(folder.id) ? '✓' : ''}
                         </span>
-                        <span className="hg-folder-select-name">
+                        <span class="hg-folder-select-name">
                             {folder.name}
                         </span>
-                        <span className="hg-folder-select-count">
+                        <span class="hg-folder-select-count">
                             {(folder.chats || []).length}
                         </span>
                     </button>
                 ))}
             </div>
-            <div className="hg-folder-select-footer">
+            <div class="hg-folder-select-footer">
                 <button
-                    className="hg-folder-select-save"
+                    class="hg-folder-select-save"
                     type="button"
                     onClick={() => onSave(selected)}
                 >
@@ -254,14 +254,15 @@ async function showAddToFolderMenu(chatInfo) {
 
     document.body.appendChild(overlay);
 
-    createRoot(overlay).render(
+    render(
         <FolderSelectModal
             chatInfo={chatInfo}
             folders={folders}
             initiallySelected={initiallySelected}
             onClose={close}
             onSave={save}
-        />
+        />,
+        overlay
     );
 }
 
@@ -275,7 +276,7 @@ function injectAddToFolderOption(menuRoot) {
     button.setAttribute('role', 'menuitem');
     button.type = 'button';
 
-    createRoot(button).render(
+    render(
         <>
             <svg
                 viewBox="0 0 24 24"
@@ -288,7 +289,8 @@ function injectAddToFolderOption(menuRoot) {
                 <line x1="9" y1="14" x2="15" y2="14" />
             </svg>
             <span>Add chat to folder</span>
-        </>
+        </>,
+        button
     );
 
     button.addEventListener('click', async (event) => {
@@ -364,7 +366,7 @@ function insertHypergravitySidebar() {
         target.prepend(rootElement);
     }
 
-    createRoot(rootElement).render(<Sidebar />);
+    render(<Sidebar />, rootElement);
 }
 
 function insertChatTools() {
@@ -379,7 +381,7 @@ function insertChatTools() {
         toolsRoot = document.createElement('div');
         toolsRoot.id = 'hypergravity-chat-tools-root';
         toolsRoot.className = 'hg-chat-tools-container';
-        createRoot(toolsRoot).render(<ChatTools />);
+        render(<ChatTools />, toolsRoot);
     }
 
     // Attach or move it if needed

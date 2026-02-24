@@ -1,4 +1,3 @@
-import React from 'react';
 import { useChromeStorage } from './hooks/useChromeStorage';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './SettingsModal.css';
@@ -15,36 +14,36 @@ export function SettingsModal({ onClose }) {
 
     const SettingRow = ({ label, settingKey, description }) => (
         <div
-            className="hg-setting-row"
+            class="hg-setting-row"
             onClick={() => toggleSetting(settingKey)}
         >
-            <div className="hg-setting-info">
-                <span className="hg-setting-label">{label}</span>
+            <div class="hg-setting-info">
+                <span class="hg-setting-label">{label}</span>
                 {description && (
-                    <span className="hg-setting-desc">{description}</span>
+                    <span class="hg-setting-desc">{description}</span>
                 )}
             </div>
             <div
-                className={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}
+                class={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}
             >
-                <div className="hg-toggle-knob"></div>
+                <div class="hg-toggle-knob"></div>
             </div>
         </div>
     );
 
     const ButtonGroupRow = ({ label, settingKey, description, options }) => (
-        <div className="hg-setting-row hg-setting-row-group">
-            <div className="hg-setting-info" style={{ flex: 1 }}>
-                <span className="hg-setting-label">{label}</span>
+        <div class="hg-setting-row hg-setting-row-group">
+            <div class="hg-setting-info" style={{ flex: 1 }}>
+                <span class="hg-setting-label">{label}</span>
                 {description && (
-                    <span className="hg-setting-desc">{description}</span>
+                    <span class="hg-setting-desc">{description}</span>
                 )}
             </div>
-            <div className="hg-button-group">
+            <div class="hg-button-group">
                 {options.map((opt) => (
                     <button
                         key={opt.value}
-                        className={`hg-group-btn ${settings[settingKey] === opt.value ? 'active' : ''}`}
+                        class={`hg-group-btn ${settings[settingKey] === opt.value ? 'active' : ''}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             setSettings({
@@ -61,10 +60,10 @@ export function SettingsModal({ onClose }) {
     );
 
     return (
-        <div className="hg-settings-modal">
-            <div className="hg-settings-header">
-                <div className="hg-settings-header-left">
-                    <button className="hg-back-btn" onClick={onClose}>
+        <div class="hg-settings-modal">
+            <div class="hg-settings-header">
+                <div class="hg-settings-header-left">
+                    <button class="hg-back-btn" onClick={onClose}>
                         <svg
                             viewBox="0 0 24 24"
                             fill="none"
@@ -80,7 +79,7 @@ export function SettingsModal({ onClose }) {
                 </div>
             </div>
 
-            <div className="hg-settings-list">
+            <div class="hg-settings-list">
                 <SettingRow
                     label="Enable Hypergravity"
                     settingKey="enabled"
@@ -131,23 +130,23 @@ export function SettingsModal({ onClose }) {
                     description="Add scroll up/down controls in the chat tools"
                 />
                 <SettingRow
-                    label="New Chatbox Header Style"
-                    settingKey="chatboxHeaderStyleEnabled"
-                    description="Show tools in a raised strip and tighten input-area button spacing"
+                    label="New Chatbox Style"
+                    settingKey="chatboxStyleEnabled"
+                    description="Show tools in a raised strip and tighten spacing"
                 />
-                <div className="hg-setting-row hg-setting-row-input">
-                    <div className="hg-setting-info">
-                        <span className="hg-setting-label">Gemini API Key</span>
-                        <span className="hg-setting-desc">
+                <div class="hg-setting-row hg-setting-row-input">
+                    <div class="hg-setting-info">
+                        <span class="hg-setting-label">Gemini API Key</span>
+                        <span class="hg-setting-desc">
                             Used for exact token counts via Gemini countTokens
                             API
                         </span>
                     </div>
                     <input
                         type="text"
-                        className="hg-setting-input"
+                        class="hg-setting-input"
                         value={settings.geminiApiKey || ''}
-                        onChange={(event) =>
+                        onInput={(event) =>
                             setSettings({
                                 ...settings,
                                 geminiApiKey: event.target.value,
@@ -160,19 +159,19 @@ export function SettingsModal({ onClose }) {
                     />
                 </div>
 
-                <div className="hg-setting-row hg-setting-row-input">
-                    <div className="hg-setting-info">
-                        <span className="hg-setting-label">Token Limit</span>
-                        <span className="hg-setting-desc">
+                <div class="hg-setting-row hg-setting-row-input">
+                    <div class="hg-setting-info">
+                        <span class="hg-setting-label">Token Limit</span>
+                        <span class="hg-setting-desc">
                             The context size used for the progress ring
                             calculation
                         </span>
                     </div>
                     <input
                         type="number"
-                        className="hg-setting-input hg-setting-input-number"
+                        class="hg-setting-input hg-setting-input-number"
                         value={settings.tokenLimit || 1000000}
-                        onChange={(event) =>
+                        onInput={(event) =>
                             setSettings({
                                 ...settings,
                                 tokenLimit:

@@ -1,5 +1,4 @@
-import React from 'react';
-import { createRoot } from 'react-dom/client';
+import { render } from 'preact';
 
 function sanitizeFilename(value) {
     return (value || 'Gemini_Chat')
@@ -326,11 +325,11 @@ export class ChatExportController {
         };
 
         const ExportModal = () => (
-            <div className="hg-export-popup">
-                <div className="hg-export-header">
+            <div class="hg-export-popup">
+                <div class="hg-export-header">
                     <h3>Export Chat</h3>
                     <button
-                        className="hg-export-close"
+                        class="hg-export-close"
                         type="button"
                         aria-label="Close"
                         onClick={close}
@@ -345,34 +344,34 @@ export class ChatExportController {
                         </svg>
                     </button>
                 </div>
-                <div className="hg-export-actions">
+                <div class="hg-export-actions">
                     <button
                         onClick={() => handleAction('copy')}
-                        className="hg-export-action"
+                        class="hg-export-action"
                     >
                         Copy to Clipboard
                     </button>
                     <button
                         onClick={() => handleAction('txt')}
-                        className="hg-export-action"
+                        class="hg-export-action"
                     >
                         Export as .txt
                     </button>
                     <button
                         onClick={() => handleAction('pdf')}
-                        className="hg-export-action"
+                        class="hg-export-action"
                     >
                         Export as .pdf
                     </button>
                     <button
                         onClick={() => handleAction('docx')}
-                        className="hg-export-action"
+                        class="hg-export-action"
                     >
                         Export as .docx
                     </button>
                     <button
                         onClick={() => handleAction('print')}
-                        className="hg-export-action"
+                        class="hg-export-action"
                     >
                         Print Chat
                     </button>
@@ -385,6 +384,6 @@ export class ChatExportController {
         });
 
         document.body.appendChild(overlay);
-        createRoot(overlay).render(<ExportModal />);
+        render(<ExportModal />, overlay);
     }
 }

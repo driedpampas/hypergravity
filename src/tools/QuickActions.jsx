@@ -1,4 +1,3 @@
-import React from 'react';
 import { useChromeStorage } from '../hooks/useChromeStorage';
 import { chatBoxManager } from '../managers/chatBoxManager';
 
@@ -20,7 +19,7 @@ export function QuickActions() {
             {quickActions.map((action, idx) => (
                 <button
                     key={idx}
-                    className="hg-optimize-btn"
+                    class="hg-optimize-btn"
                     style={{
                         backgroundColor:
                             action.color ||
@@ -32,9 +31,9 @@ export function QuickActions() {
                     }}
                 >
                     {action.icon && (
-                        <span className="hg-quick-action-icon">{action.icon}</span>
+                        <span class="hg-quick-action-icon">{action.icon}</span>
                     )}
-                    <span className="hg-optimize-label">{action.name}</span>
+                    <span class="hg-optimize-label">{action.name}</span>
                 </button>
             ))}
         </div>

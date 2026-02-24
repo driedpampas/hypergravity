@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'preact/hooks';
 import { createPromptOptimizer } from '../features/promptOptimizer';
 
 function showToast(message, type = 'info') {
@@ -29,9 +29,9 @@ export function OptimizeButton() {
 
     if (optimizeState === 'confirmation') {
         return (
-            <div className="hg-optimize-confirmation">
+            <div class="hg-optimize-confirmation">
                 <button
-                    className="hg-confirm-btn hg-confirm-reject"
+                    class="hg-confirm-btn hg-confirm-reject"
                     title="Undo changes (Escape)"
                     onClick={optimizer.rejectChanges}
                 >
@@ -47,7 +47,7 @@ export function OptimizeButton() {
                     </svg>
                 </button>
                 <button
-                    className="hg-confirm-btn hg-confirm-accept"
+                    class="hg-confirm-btn hg-confirm-accept"
                     title="Accept changes (Enter)"
                     onClick={optimizer.acceptChanges}
                 >
@@ -69,17 +69,17 @@ export function OptimizeButton() {
     return (
         <button
             id="hg-optimize-prompt-btn"
-            className={`hg-optimize-btn ${optimizeState === 'loading' ? 'loading' : ''}`}
+            class={`hg-optimize-btn ${optimizeState === 'loading' ? 'loading' : ''}`}
             title="Optimize prompt with AI"
             aria-label="Optimize prompt with AI"
             onClick={optimizer.handleOptimizeClick}
         >
             {optimizeState === 'loading' ? (
-                <span className="hg-optimize-label">Stop</span>
+                <span class="hg-optimize-label">Stop</span>
             ) : (
                 <>
                     <svg
-                        className="hg-optimize-icon"
+                        class="hg-optimize-icon"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -95,7 +95,7 @@ export function OptimizeButton() {
                         <path d="M4 17v2" />
                         <path d="M5 18H3" />
                     </svg>
-                    <span className="hg-optimize-label">Optimize</span>
+                    <span class="hg-optimize-label">Optimize</span>
                 </>
             )}
         </button>

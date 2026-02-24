@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { crx } from '@crxjs/vite-plugin';
-import react from '@vitejs/plugin-react';
+import preact from '@preact/preset-vite';
 import manifest from './manifest.json';
 import monkey from 'vite-plugin-monkey';
 
@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         plugins: [
-            react(),
+            preact(),
             isUserscript
                 ? monkey({
                       entry: 'src/content.jsx',

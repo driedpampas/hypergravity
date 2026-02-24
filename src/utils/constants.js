@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS = {
     wideModeEnabled: false,
     hideSidebarEnabled: false,
     showExportButton: true,
-    chatboxHeaderStyleEnabled: false,
+    chatboxStyleEnabled: false,
     tokenCounterMode: 'both',
     showScrollButtons: true,
     geminiApiKey: '',

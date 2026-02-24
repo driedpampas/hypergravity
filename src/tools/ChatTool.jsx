@@ -1,5 +1,3 @@
-import React from 'react';
-
 export function ChatTool({
     id,
     align = 'left',
@@ -14,7 +12,7 @@ export function ChatTool({
         <div
             data-hg-tool-id={id}
             data-hg-align={align}
-            className={`hg-chat-tool ${className}`}
+            class={`hg-chat-tool ${className}`}
             style={style}
         >
             {children}

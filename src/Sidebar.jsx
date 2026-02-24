@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'preact/hooks';
 import SvgComponent from './Icon';
 import './Sidebar.css';
 import { useChromeStorage } from './hooks/useChromeStorage';
@@ -19,20 +19,20 @@ export function Sidebar() {
     return (
         <div
             id="hg-hypergravity-section"
-            className="hypergravity-sidebar-container"
+            class="hypergravity-sidebar-container"
         >
             {/* Header section (Toggle) */}
             <div
-                className="hg-section-header"
+                class="hg-section-header"
                 onClick={toggleSection}
                 role="button"
                 tabIndex={0}
             >
-                <div className="hg-section-header-left">
-                    <span className="hg-section-title">hypergravity</span>
+                <div class="hg-section-header-left">
+                    <span class="hg-section-title">hypergravity</span>
                 </div>
                 <svg
-                    className="hg-section-chevron"
+                    class="hg-section-chevron"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -54,16 +54,16 @@ export function Sidebar() {
 
             {/* Expanded Content View (Menu) */}
             <div
-                className="hg-section-content"
+                class="hg-section-content"
                 style={{
                     maxHeight: isExpanded ? '200px' : '0',
                     overflow: 'hidden',
                     transition: 'max-height 0.2s ease',
                 }}
             >
-                <div className="hg-dropdown-menu">
+                <div class="hg-dropdown-menu">
                     <div
-                        className="hg-dropdown-item"
+                        class="hg-dropdown-item"
                         onClick={() => setActiveMenu('folders')}
                     >
                         <svg
@@ -71,7 +71,7 @@ export function Sidebar() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="1.5"
-                            className="hg-dropdown-icon"
+                            class="hg-dropdown-icon"
                         >
                             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
                         </svg>
@@ -79,7 +79,7 @@ export function Sidebar() {
                     </div>
 
                     <div
-                        className="hg-dropdown-item"
+                        class="hg-dropdown-item"
                         onClick={() => setActiveMenu('settings')}
                     >
                         <svg
@@ -87,7 +87,7 @@ export function Sidebar() {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="1.5"
-                            className="hg-dropdown-icon"
+                            class="hg-dropdown-icon"
                         >
                             <path
                                 strokeLinecap="round"

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { countText } from '../utils/textStats';
 import { useChromeStorage } from '../hooks/useChromeStorage';
 import {
@@ -409,23 +409,23 @@ export function TokenCounter() {
     const ringMask = `conic-gradient(#000 ${fillDeg}deg, transparent ${fillDeg}deg)`;
 
     return (
-        <div className="hg-token-counter-wrapper" ref={popupRef}>
+        <div class="hg-token-counter-wrapper" ref={popupRef}>
             <button
-                className={`hg-token-counter-btn${showText ? ' hg-token-counter-btn--labeled' : ''}`}
+                class={`hg-token-counter-btn${showText ? ' hg-token-counter-btn--labeled' : ''}`}
                 onClick={() => setIsExpanded(!isExpanded)}
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
             >
                 {showCircle && (
-                    <svg className="hg-token-ring" viewBox="0 0 20 20">
+                    <svg class="hg-token-ring" viewBox="0 0 20 20">
                         <circle
-                            className="hg-token-ring-bg"
+                            class="hg-token-ring-bg"
                             cx="10"
                             cy="10"
                             r="9"
                         />
                         <circle
-                            className="hg-token-ring-fill"
+                            class="hg-token-ring-fill"
                             cx="10"
                             cy="10"
                             r="9"
@@ -434,7 +434,7 @@ export function TokenCounter() {
                     </svg>
                 )}
                 {showText && (
-                    <span className="hg-token-label">
+                    <span class="hg-token-label">
                         {formatTokenCount(totalTokens)}/
                         {formatTokenCount(MAX_TOKENS)}
                     </span>
@@ -442,11 +442,11 @@ export function TokenCounter() {
             </button>
 
             {isExpanded && (
-                <div className="hg-token-popup">
-                    <div className="hg-token-popup-title">Token Usage</div>
+                <div class="hg-token-popup">
+                    <div class="hg-token-popup-title">Token Usage</div>
 
-                    <div className="hg-token-popup-row">
-                        <div className="hg-token-popup-label">
+                    <div class="hg-token-popup-row">
+                        <div class="hg-token-popup-label">
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -459,13 +459,13 @@ export function TokenCounter() {
                             </svg>
                             <span>Input</span>
                         </div>
-                        <div className="hg-token-popup-value">
+                        <div class="hg-token-popup-value">
                             {stats.inputTokens.toLocaleString()}
                         </div>
                     </div>
 
-                    <div className="hg-token-popup-row">
-                        <div className="hg-token-popup-label">
+                    <div class="hg-token-popup-row">
+                        <div class="hg-token-popup-label">
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -478,13 +478,13 @@ export function TokenCounter() {
                             </svg>
                             <span>Output</span>
                         </div>
-                        <div className="hg-token-popup-value">
+                        <div class="hg-token-popup-value">
                             {stats.outputTokens.toLocaleString()}
                         </div>
                     </div>
 
-                    <div className="hg-token-popup-row hg-token-popup-total">
-                        <div className="hg-token-popup-label">
+                    <div class="hg-token-popup-row hg-token-popup-total">
+                        <div class="hg-token-popup-label">
                             <svg
                                 viewBox="0 0 24 24"
                                 fill="none"
@@ -498,7 +498,7 @@ export function TokenCounter() {
                             <span>Total</span>
                         </div>
                         <div
-                            className="hg-token-popup-value"
+                            class="hg-token-popup-value"
                             style={{
                                 display: 'flex',
                                 alignItems: 'baseline',
