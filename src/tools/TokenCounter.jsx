@@ -78,7 +78,19 @@ function getChatHistoryRoot() {
 function getConversationContainers() {
     const root = getChatHistoryRoot();
     if (!root) return [];
-    return Array.from(root.querySelectorAll('.conversation-container'));
+    const containers = Array.from(
+        root.querySelectorAll('.conversation-container')
+    );
+    return containers.length > 0 ? containers : [root];
+}
+
+function getCurrentConversationId() {
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const appIndex = pathParts.indexOf('app');
+    const id = appIndex >= 0 ? pathParts[appIndex + 1] : null;
+
+    if (!id || id.length < 6) return null;
+    return id;
 }
 
 const USER_SELECTOR_GROUPS = [
@@ -95,6 +107,22 @@ const MODEL_SELECTOR_GROUPS = [
     'message-content .markdown-main-panel',
 ];
 
+const USER_SELECTORS = [
+    'user-query',
+    '[data-message-author="user"]',
+    '.user-message',
+    '.query-content',
+];
+
+const MODEL_SELECTORS = [
+    'model-response',
+    'generative-ui-response',
+    '[data-message-author="model"]',
+    '.model-response',
+    'response-container',
+    'message-content .markdown-main-panel',
+];
+
 function uniqueTopLevelNodes(nodes) {
     return nodes.filter(
         (node, index, arr) =>
@@ -107,6 +135,26 @@ function uniqueTopLevelNodes(nodes) {
 
 function getNodeText(node) {
     return (node?.innerText || node?.textContent || '').trim();
+}
+
+function getNodeTextExcludingThoughts(node) {
+    if (!node) return '';
+
+    if (
+        node.tagName?.toLowerCase() === 'model-thoughts' ||
+        node.matches?.('model-thoughts')
+    ) {
+        return '';
+    }
+
+    const clone = node.cloneNode(true);
+    clone
+        .querySelectorAll(
+            'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts'
+        )
+        .forEach((el) => el.remove());
+
+    return getNodeText(clone);
 }
 
 function resolveNodesByPriority(conversationContainer, selectorGroups) {
@@ -190,20 +238,14 @@ export function TokenCounter() {
 
     useEffect(() => {
         const checkUrl = () => {
-            const urlParts = window.location.pathname.split('/');
-            const id = urlParts[urlParts.length - 1];
-
-            let newId = null;
-            if (id && id !== 'app' && id.length > 5) {
-                newId = id;
-            }
+            const newId = getCurrentConversationId();
 
             if (newId !== currentIdRef.current) {
                 currentIdRef.current = newId;
                 setConversationId(newId);
                 debugLog('Conversation changed', {
                     pathname: window.location.pathname,
-                    parsedId: id,
+                    parsedId: newId,
                     conversationId: newId,
                 });
 
@@ -244,8 +286,6 @@ export function TokenCounter() {
     }, []);
 
     useEffect(() => {
-        if (!conversationId) return;
-
         let debounceTimeout;
         let observer;
         let interval;
@@ -255,130 +295,240 @@ export function TokenCounter() {
         let exactController = null;
 
         const updateTokens = async () => {
-            const conversationContainers = getConversationContainers();
-            if (conversationContainers.length === 0) return;
+            try {
+                const conversationContainers = getConversationContainers();
+                const allMessages = [];
 
-            const allMessages = [];
+                for (const container of conversationContainers) {
+                    const { userNodes, modelNodes } =
+                        collectMessageNodes(container);
 
-            for (const container of conversationContainers) {
-                const { userNodes, modelNodes } =
-                    collectMessageNodes(container);
-
-                for (const node of userNodes) {
-                    const rawText = getNodeText(node);
-                    const cleanText = sanitizeMessageText(rawText, 'input');
-                    allMessages.push({
-                        text: cleanText,
-                        role: 'input',
-                        estimatedTokens: countText(cleanText).tokens,
-                    });
-                }
-
-                for (const node of modelNodes) {
-                    const rawText = getNodeText(node);
-                    const cleanText = sanitizeMessageText(rawText, 'output');
-                    allMessages.push({
-                        text: cleanText,
-                        role: 'output',
-                        estimatedTokens: countText(cleanText).tokens,
-                    });
-                }
-            }
-
-            // Hash all messages and look up cache
-            const resolved = await Promise.all(
-                allMessages.map(async (msg) => {
-                    const hash = await hashText(msg.text);
-                    const cached = await getCachedTokenCount(hash);
-                    return { ...msg, hash, cachedTokens: cached };
-                })
-            );
-
-            // Priority: cached API count > estimated (initial render)
-            const computeStats = () => {
-                let inTok = 0;
-                let outTok = 0;
-                for (const m of resolved) {
-                    const tokens =
-                        m.cachedTokens !== null
-                            ? m.cachedTokens
-                            : m.estimatedTokens;
-                    if (m.role === 'input') inTok += tokens;
-                    else outTok += tokens;
-                }
-                return { inputTokens: inTok, outputTokens: outTok };
-            };
-
-            const applyStats = (label) => {
-                const next = computeStats();
-                setStats((prev) => {
-                    if (
-                        prev.inputTokens === next.inputTokens &&
-                        prev.outputTokens === next.outputTokens
-                    )
-                        return prev;
-                    debugLog(`Tokens updated (${label}):`, next);
-                    return next;
-                });
-            };
-
-            applyStats('cached+estimated');
-
-            // Only contact the API if a key is configured
-            const apiKey = (geminiSettings?.geminiApiKey || '').trim();
-            if (!apiKey) return;
-
-            const pending = resolved.filter((m) => m.cachedTokens === null);
-            if (pending.length === 0) return;
-
-            // Debounce API calls to avoid spamming during rapid DOM changes
-            clearTimeout(exactDebounceTimeout);
-            exactDebounceTimeout = setTimeout(async () => {
-                try {
-                    exactRequestSeq += 1;
-                    const requestId = exactRequestSeq;
-
-                    debugLog(
-                        `Fetching exact counts for ${pending.length} messages`
-                    );
-
-                    if (exactController) exactController.abort();
-                    exactController = new AbortController();
-
-                    const BATCH_SIZE = 3;
-                    for (let i = 0; i < pending.length; i += BATCH_SIZE) {
-                        const batch = pending.slice(i, i + BATCH_SIZE);
-                        await Promise.all(
-                            batch.map(async (msg) => {
-                                const exactTokens = await countTokensWithGemini(
-                                    msg.text,
-                                    apiKey,
-                                    exactController.signal
-                                );
-                                await setCachedTokenCount(
-                                    msg.hash,
-                                    exactTokens
-                                );
-                                msg.cachedTokens = exactTokens;
-                            })
-                        );
+                    for (const node of userNodes) {
+                        const rawText = getNodeTextExcludingThoughts(node);
+                        const cleanText = sanitizeMessageText(rawText, 'input');
+                        if (!cleanText) continue;
+                        allMessages.push({
+                            text: cleanText,
+                            role: 'input',
+                            estimatedTokens: countText(cleanText).tokens,
+                        });
                     }
 
-                    forceFlush();
-
-                    if (requestId !== exactRequestSeq) return;
-
-                    applyStats('exact');
-                } catch (error) {
-                    if (error?.name === 'AbortError') return;
-                    debugLog('Gemini countTokens error:', error);
+                    for (const node of modelNodes) {
+                        const rawText = getNodeTextExcludingThoughts(node);
+                        const cleanText = sanitizeMessageText(
+                            rawText,
+                            'output'
+                        );
+                        if (!cleanText) continue;
+                        allMessages.push({
+                            text: cleanText,
+                            role: 'output',
+                            estimatedTokens: countText(cleanText).tokens,
+                        });
+                    }
                 }
-            }, 700);
+
+                if (allMessages.length === 0) {
+                    const root = getChatHistoryRoot() || document;
+                    const userNodes = uniqueTopLevelNodes(
+                        Array.from(
+                            root.querySelectorAll(USER_SELECTORS.join(', '))
+                        )
+                    ).filter((node) => getNodeText(node).length > 0);
+
+                    const modelNodes = uniqueTopLevelNodes(
+                        Array.from(
+                            root.querySelectorAll(MODEL_SELECTORS.join(', '))
+                        )
+                    ).filter(
+                        (node) =>
+                            getNodeText(node).length > 0 &&
+                            !userNodes.some((userNode) =>
+                                userNode.contains(node)
+                            )
+                    );
+
+                    for (const node of userNodes) {
+                        const cleanText = sanitizeMessageText(
+                            getNodeTextExcludingThoughts(node),
+                            'input'
+                        );
+                        if (!cleanText) continue;
+                        allMessages.push({
+                            text: cleanText,
+                            role: 'input',
+                            estimatedTokens: countText(cleanText).tokens,
+                        });
+                    }
+
+                    for (const node of modelNodes) {
+                        const cleanText = sanitizeMessageText(
+                            getNodeTextExcludingThoughts(node),
+                            'output'
+                        );
+                        if (!cleanText) continue;
+                        allMessages.push({
+                            text: cleanText,
+                            role: 'output',
+                            estimatedTokens: countText(cleanText).tokens,
+                        });
+                    }
+                }
+
+                if (allMessages.length === 0) {
+                    setStats({ inputTokens: 0, outputTokens: 0 });
+                    return;
+                }
+
+                // Hash all messages and look up cache
+                const resolved = await Promise.all(
+                    allMessages.map(async (msg) => {
+                        const hash = await hashText(msg.text);
+                        const cached = await getCachedTokenCount(hash);
+                        return { ...msg, hash, cachedTokens: cached };
+                    })
+                );
+
+                // Priority: cached API count > estimated (initial render)
+                const computeStats = () => {
+                    let inTok = 0;
+                    let outTok = 0;
+                    for (const m of resolved) {
+                        const tokens =
+                            m.cachedTokens !== null
+                                ? m.cachedTokens
+                                : m.estimatedTokens;
+                        if (m.role === 'input') inTok += tokens;
+                        else outTok += tokens;
+                    }
+                    return { inputTokens: inTok, outputTokens: outTok };
+                };
+
+                const applyStats = (label) => {
+                    const next = computeStats();
+                    setStats((prev) => {
+                        if (
+                            prev.inputTokens === next.inputTokens &&
+                            prev.outputTokens === next.outputTokens
+                        )
+                            return prev;
+                        debugLog(`Tokens updated (${label}):`, next);
+                        return next;
+                    });
+                };
+
+                applyStats('cached+estimated');
+
+                // Only contact the API if a key is configured
+                const apiKey = (geminiSettings?.geminiApiKey || '').trim();
+                if (!apiKey) return;
+
+                const pending = resolved.filter((m) => m.cachedTokens === null);
+                if (pending.length === 0) return;
+
+                // Debounce API calls to avoid spamming during rapid DOM changes
+                clearTimeout(exactDebounceTimeout);
+                exactDebounceTimeout = setTimeout(async () => {
+                    try {
+                        exactRequestSeq += 1;
+                        const requestId = exactRequestSeq;
+
+                        debugLog(
+                            `Fetching exact counts for ${pending.length} messages`
+                        );
+
+                        if (exactController) exactController.abort();
+                        exactController = new AbortController();
+
+                        const BATCH_SIZE = 3;
+                        for (let i = 0; i < pending.length; i += BATCH_SIZE) {
+                            const batch = pending.slice(i, i + BATCH_SIZE);
+                            await Promise.all(
+                                batch.map(async (msg) => {
+                                    const exactTokens =
+                                        await countTokensWithGemini(
+                                            msg.text,
+                                            apiKey,
+                                            exactController.signal
+                                        );
+                                    await setCachedTokenCount(
+                                        msg.hash,
+                                        exactTokens
+                                    );
+                                    msg.cachedTokens = exactTokens;
+                                })
+                            );
+                        }
+
+                        forceFlush();
+
+                        if (requestId !== exactRequestSeq) return;
+
+                        applyStats('exact');
+                    } catch (error) {
+                        if (error?.name === 'AbortError') return;
+                        debugLog('Gemini countTokens error:', error);
+                    }
+                }, 700);
+            } catch (error) {
+                debugLog('Token update failed:', error);
+                setStats({ inputTokens: 0, outputTokens: 0 });
+            }
         };
 
         const scheduleUpdate = () => {
             clearTimeout(debounceTimeout);
             debounceTimeout = setTimeout(updateTokens, 500);
+        };
+
+        const scheduleSendTriggeredUpdates = () => {
+            scheduleUpdate();
+            setTimeout(scheduleUpdate, 120);
+            setTimeout(scheduleUpdate, 450);
+            setTimeout(scheduleUpdate, 900);
+        };
+
+        const isSendButton = (target) => {
+            const button = target?.closest?.('button, [role="button"]');
+            if (!button) return false;
+
+            if (
+                button.matches?.(
+                    '.send-button, button.send-button, button[data-test-id="send-button"]'
+                )
+            ) {
+                return true;
+            }
+
+            const ariaLabel = (
+                button.getAttribute('aria-label') ||
+                button.getAttribute('title') ||
+                ''
+            ).toLowerCase();
+            return ariaLabel.includes('send');
+        };
+
+        const onClick = (event) => {
+            if (isSendButton(event.target)) {
+                scheduleSendTriggeredUpdates();
+            }
+        };
+
+        const onKeyDown = (event) => {
+            if (event.key !== 'Enter') return;
+            if (
+                event.shiftKey ||
+                event.altKey ||
+                event.ctrlKey ||
+                event.metaKey
+            )
+                return;
+            scheduleSendTriggeredUpdates();
+        };
+
+        const onSubmit = () => {
+            scheduleSendTriggeredUpdates();
         };
 
         const attachObserverToConversation = () => {
@@ -423,6 +573,10 @@ export function TokenCounter() {
 
         attachContainerObserver();
 
+        document.addEventListener('click', onClick, true);
+        document.addEventListener('keydown', onKeyDown, true);
+        document.addEventListener('submit', onSubmit, true);
+
         return () => {
             if (observer) observer.disconnect();
             if (containerObserver) containerObserver.disconnect();
@@ -430,6 +584,9 @@ export function TokenCounter() {
             clearTimeout(debounceTimeout);
             clearTimeout(exactDebounceTimeout);
             if (exactController) exactController.abort();
+            document.removeEventListener('click', onClick, true);
+            document.removeEventListener('keydown', onKeyDown, true);
+            document.removeEventListener('submit', onSubmit, true);
         };
     }, [conversationId, geminiSettings?.geminiApiKey]);
 

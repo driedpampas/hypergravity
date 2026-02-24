@@ -381,7 +381,7 @@ body.hg-chatbox-compact-enabled .upload-card-button {
     width: 32px !important;
     /* MDC default is padding:12px; reduce so icon (24px) fits: 4+24+4=32 */
     padding: 4px !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
@@ -422,7 +422,7 @@ body.hg-chatbox-compact-enabled .send-button {
     min-height: 32px !important;
     /* Same padding fix as upload button */
     padding: 4px !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
@@ -436,20 +436,56 @@ body.hg-chatbox-compact-enabled .speech_dictation_mic_button div {
 
 body.hg-chatbox-compact-enabled .speech_dictation_mic_button mat-icon,
 body.hg-chatbox-compact-enabled .speech_dictation_mic_button .mat-icon,
-body.hg-chatbox-compact-enabled .send-button mat-icon:not(.hidden),
-body.hg-chatbox-compact-enabled .send-button .mat-icon:not(.hidden) {
+body.hg-chatbox-compact-enabled .send-button .send-button-icon:not(.hidden) {
     line-height: 24px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-body.hg-chatbox-compact-enabled .send-button .stop-icon,
-body.hg-chatbox-compact-enabled .send-button .blue-circle {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0;
+body.hg-chatbox-compact-enabled .send-button.stop {
+    padding: 2px !important;
+}
+
+body.hg-chatbox-compact-enabled .send-button.stop .stop-icon,
+body.hg-chatbox-compact-enabled .send-button.stop .blue-circle {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box;
+    border-radius: 50%;
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.hg-chatbox-compact-enabled .send-button.stop .stop-icon mat-icon,
+body.hg-chatbox-compact-enabled .send-button.stop .blue-circle mat-icon,
+body.hg-chatbox-compact-enabled .send-button.stop .stop-icon .mat-icon,
+body.hg-chatbox-compact-enabled .send-button.stop .blue-circle .mat-icon {
+    line-height: normal !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+}
+
+body.hg-chatbox-compact-enabled .leading-actions-wrapper {
+    gap: 0px !important;
+}
+
+body.hg-chatbox-compact-enabled .input-buttons-wrapper-bottom {
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.hg-chatbox-compact-enabled bard-mode-switcher > button {
+    margin: 0px !important;
+    padding: 8px 0px !important;
 }
