@@ -19,10 +19,13 @@ let chatExportController = null;
 let topBarToolsManager = null;
 
 function applyChatboxHeaderStyleSetting(settings) {
-    const isEnabled = Boolean(settings?.chatboxStyleEnabled);
     document.body.classList.toggle(
         'hg-chatbox-header-style-enabled',
-        isEnabled
+        Boolean(settings?.chatboxStyleEnabled)
+    );
+    document.body.classList.toggle(
+        'hg-chatbox-compact-enabled',
+        Boolean(settings?.chatboxCompactEnabled)
     );
 }
 

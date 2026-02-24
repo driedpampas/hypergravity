@@ -351,11 +351,11 @@ body.hg-chatbox-header-style-enabled input-area-v2 {
     margin-top: 10px !important;
 }
 
-body.hg-chatbox-header-style-enabled .text-input-field_textarea-wrapper {
+body.hg-chatbox-compact-enabled .text-input-field_textarea-wrapper {
     margin: 0 !important;
     padding: 6px 8px !important;
 }
 
-body.hg-chatbox-header-style-enabled .text-input-field {
+body.hg-chatbox-compact-enabled .text-input-field {
     padding: 8px;
 }

@@ -369,7 +369,7 @@ body.hg-chatbox-header-style-enabled .text-input-field.with-toolbox-drawer {
     position: relative !important;
 }
 
-/* ── Native bottom-row button size reduction ──────────────────────────
+/* ── Native bottom-row button size reduction (Compact Chatbox) ─────────
  *
  * Targets from the live HTML:
  *   .upload-card-button          → the "+" icon button
@@ -378,26 +378,39 @@ body.hg-chatbox-header-style-enabled .text-input-field.with-toolbox-drawer {
  *   .speech_dictation_mic_button → microphone icon button
  *   .send-button                 → send arrow icon button
  */
-body.hg-chatbox-header-style-enabled .upload-card-button {
+body.hg-chatbox-compact-enabled .upload-card-button {
     height: 32px !important;
     min-height: 32px !important;
     width: 32px !important;
+    /* MDC default is padding:12px; reduce so icon (24px) fits: 4+24+4=32 */
+    padding: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
-body.hg-chatbox-header-style-enabled .toolbox-drawer-button {
+body.hg-chatbox-compact-enabled .upload-card-button mat-icon,
+body.hg-chatbox-compact-enabled .upload-card-button .mat-icon {
+    line-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.hg-chatbox-compact-enabled .toolbox-drawer-button {
     height: 32px !important;
     min-height: 32px !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
 }
 
-body.hg-chatbox-header-style-enabled
+body.hg-chatbox-compact-enabled
     .toolbox-drawer-button-with-label
     .mdc-button__label {
     line-height: 32px;
 }
 
-body.hg-chatbox-header-style-enabled .input-area-switch {
+body.hg-chatbox-compact-enabled .input-area-switch {
     height: 32px !important;
     min-height: 32px !important;
     padding-top: 0 !important;
@@ -405,9 +418,31 @@ body.hg-chatbox-header-style-enabled .input-area-switch {
     line-height: 32px !important;
 }
 
-body.hg-chatbox-header-style-enabled .speech_dictation_mic_button,
-body.hg-chatbox-header-style-enabled .send-button {
+body.hg-chatbox-compact-enabled .speech_dictation_mic_button,
+body.hg-chatbox-compact-enabled .send-button {
     height: 32px !important;
     width: 32px !important;
     min-height: 32px !important;
+    /* Same padding fix as upload button */
+    padding: 4px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* The mic mat-icon is wrapped in an extra anonymous div — center that too */
+body.hg-chatbox-compact-enabled .speech_dictation_mic_button div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.hg-chatbox-compact-enabled .speech_dictation_mic_button mat-icon,
+body.hg-chatbox-compact-enabled .speech_dictation_mic_button .mat-icon,
+body.hg-chatbox-compact-enabled .send-button mat-icon,
+body.hg-chatbox-compact-enabled .send-button .mat-icon {
+    line-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }

@@ -130,9 +130,14 @@ export function SettingsModal({ onClose }) {
                     description="Add scroll up/down controls in the chat tools"
                 />
                 <SettingRow
-                    label="New Chatbox Style"
+                    label="Chatbox Header Strip"
                     settingKey="chatboxStyleEnabled"
-                    description="Show tools in a raised strip and tighten spacing"
+                    description="Show tools in a raised strip above the input area"
+                />
+                <SettingRow
+                    label="Compact Chatbox"
+                    settingKey="chatboxCompactEnabled"
+                    description="Tighten input-area padding and shrink native action buttons"
                 />
                 <div class="hg-setting-row hg-setting-row-input">
                     <div class="hg-setting-info">
