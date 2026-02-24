@@ -53,9 +53,22 @@ function enterPrompt(text) {
         if (input) break;
     }
     if (!input) return false;
-    input.innerHTML = '';
+
+    while (input.firstChild) {
+        input.removeChild(input.firstChild);
+    }
+
     const lines = text.split('\n');
-    input.innerHTML = lines.map((l) => `<p>${l || '<br>'}</p>`).join('');
+    lines.forEach((l) => {
+        const p = document.createElement('p');
+        if (l) {
+            p.textContent = l;
+        } else {
+            p.appendChild(document.createElement('br'));
+        }
+        input.appendChild(p);
+    });
+
     input.classList.remove('ql-blank');
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));

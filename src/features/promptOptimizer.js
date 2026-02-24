@@ -1,4 +1,5 @@
 import { chatBoxManager } from '../managers/chatBoxManager';
+import { optimizePrompt, cancelOptimization } from '../utils/browserEnv';
 
 const getPromptText = () => chatBoxManager.getInputText();
 const setPromptText = (text) => chatBoxManager.setInputText(text);
@@ -37,7 +38,7 @@ export function createPromptOptimizer({ showToast }) {
             emitState('idle');
             showToast('Optimization cancelled', 'info');
             try {
-                chrome.runtime.sendMessage({ type: 'CANCEL_OPTIMIZATION' });
+                await cancelOptimization();
             } catch {}
             return;
         }
@@ -53,10 +54,7 @@ export function createPromptOptimizer({ showToast }) {
         emitState('loading');
 
         try {
-            const response = await chrome.runtime.sendMessage({
-                type: 'OPTIMIZE_PROMPT',
-                prompt: promptText,
-            });
+            const response = await optimizePrompt(promptText);
 
             if (!isOptimizing) return;
 

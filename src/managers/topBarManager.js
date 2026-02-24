@@ -14,7 +14,12 @@ function ensureButton({ id, title, svg, onClick }) {
         button.id = id;
         button.className = 'hg-header-btn';
         button.title = title;
-        button.innerHTML = svg;
+        const parser = new DOMParser();
+        const docHtml = parser.parseFromString(svg, 'text/html');
+        Array.from(docHtml.body.childNodes).forEach((node) => {
+            button.appendChild(node);
+        });
+
         button.addEventListener('click', onClick);
         topBar.appendChild(button);
     }

@@ -1,4 +1,4 @@
-import { hasChromeStorage } from './storage';
+import { getStorageValue, setStorageValue } from './browserEnv';
 import { debugLog as _debugLog } from './debug';
 
 const CACHE_KEY = 'hg_token_hash_cache';
@@ -15,21 +15,10 @@ function loadCache() {
     if (loadPromise) return loadPromise;
 
     loadPromise = new Promise((resolve) => {
-        if (!hasChromeStorage()) {
-            try {
-                const raw = localStorage.getItem(CACHE_KEY);
-                memoryCache = raw ? JSON.parse(raw) : {};
-            } catch {
-                memoryCache = {};
-            }
-            resolve(memoryCache);
-            return;
-        }
-
-        chrome.storage.local.get([CACHE_KEY], (result) => {
-            memoryCache = result[CACHE_KEY] || {};
+        getStorageValue(CACHE_KEY, {}).then((data) => {
+            memoryCache = data || {};
             debugLog(
-                'Cache loaded from chrome.storage,',
+                'Cache loaded,',
                 Object.keys(memoryCache).length,
                 'entries'
             );
@@ -47,15 +36,7 @@ function flushToStorage() {
     const data = { ...memoryCache };
     debugLog('Flushing', Object.keys(data).length, 'entries to storage');
 
-    if (hasChromeStorage()) {
-        chrome.storage.local.set({ [CACHE_KEY]: data });
-    }
-
-    try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-    } catch {
-        // quota exceeded
-    }
+    setStorageValue(CACHE_KEY, data);
 }
 
 function scheduleFlush() {

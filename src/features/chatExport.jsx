@@ -1,3 +1,6 @@
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
 function sanitizeFilename(value) {
     return (value || 'Gemini_Chat')
         .replace(/[^a-z0-9]/gi, '_')
@@ -311,47 +314,77 @@ export class ChatExportController {
         overlay.id = 'hg-export-popup-overlay';
         overlay.className = 'hg-export-overlay';
 
-        const popup = document.createElement('div');
-        popup.className = 'hg-export-popup';
-        popup.innerHTML = `
-            <div class="hg-export-header">
-                <h3>Export Chat</h3>
-                <button class="hg-export-close" type="button" aria-label="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+        const close = () => this.closePopup();
+
+        const handleAction = async (format) => {
+            if (format === 'copy') this.copyToClipboard();
+            if (format === 'txt') this.exportAsText();
+            if (format === 'pdf') await this.exportAsPdf();
+            if (format === 'docx') await this.exportAsDocx();
+            if (format === 'print') this.printChat();
+            close();
+        };
+
+        const ExportModal = () => (
+            <div className="hg-export-popup">
+                <div className="hg-export-header">
+                    <h3>Export Chat</h3>
+                    <button
+                        className="hg-export-close"
+                        type="button"
+                        aria-label="Close"
+                        onClick={close}
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="hg-export-actions">
+                    <button
+                        onClick={() => handleAction('copy')}
+                        className="hg-export-action"
+                    >
+                        Copy to Clipboard
+                    </button>
+                    <button
+                        onClick={() => handleAction('txt')}
+                        className="hg-export-action"
+                    >
+                        Export as .txt
+                    </button>
+                    <button
+                        onClick={() => handleAction('pdf')}
+                        className="hg-export-action"
+                    >
+                        Export as .pdf
+                    </button>
+                    <button
+                        onClick={() => handleAction('docx')}
+                        className="hg-export-action"
+                    >
+                        Export as .docx
+                    </button>
+                    <button
+                        onClick={() => handleAction('print')}
+                        className="hg-export-action"
+                    >
+                        Print Chat
+                    </button>
+                </div>
             </div>
-            <div class="hg-export-actions">
-                <button data-format="copy" class="hg-export-action">Copy to Clipboard</button>
-                <button data-format="txt" class="hg-export-action">Export as .txt</button>
-                <button data-format="pdf" class="hg-export-action">Export as .pdf</button>
-                <button data-format="docx" class="hg-export-action">Export as .docx</button>
-                <button data-format="print" class="hg-export-action">Print Chat</button>
-            </div>
-        `;
-
-        popup
-            .querySelector('.hg-export-close')
-            ?.addEventListener('click', () => this.closePopup());
-
-        popup.querySelectorAll('.hg-export-action').forEach((button) => {
-            button.addEventListener('click', async () => {
-                const format = button.getAttribute('data-format');
-
-                if (format === 'copy') this.copyToClipboard();
-                if (format === 'txt') this.exportAsText();
-                if (format === 'pdf') await this.exportAsPdf();
-                if (format === 'docx') await this.exportAsDocx();
-                if (format === 'print') this.printChat();
-
-                this.closePopup();
-            });
-        });
+        );
 
         overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) this.closePopup();
+            if (event.target === overlay) close();
         });
 
-        overlay.appendChild(popup);
         document.body.appendChild(overlay);
+        createRoot(overlay).render(<ExportModal />);
     }
 }

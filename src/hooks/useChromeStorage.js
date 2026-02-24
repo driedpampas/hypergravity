@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import {
-    hasChromeStorage,
-    readLocalStorageValue,
+    getStorageValue,
+    setStorageValue,
+    addStorageListener,
     writeLocalStorageValue,
-} from '../utils/storage';
+} from '../utils/browserEnv';
 
 function mergeWithDefaults(stored, defaults) {
     if (
@@ -25,62 +26,39 @@ export function useChromeStorage(key, initialValue) {
     const defaultsRef = useRef(initialValue);
 
     useEffect(() => {
-        if (hasChromeStorage()) {
-            chrome.storage.local.get([key], (result) => {
-                if (result[key] !== undefined) {
-                    const merged = mergeWithDefaults(
-                        result[key],
-                        defaultsRef.current
-                    );
-                    setValue(merged);
-                    writeLocalStorageValue(key, merged);
-                } else {
-                    const localValue = readLocalStorageValue(key);
-                    if (localValue !== undefined) {
-                        const merged = mergeWithDefaults(
-                            localValue,
-                            defaultsRef.current
-                        );
-                        setValue(merged);
-                        chrome.storage.local.set({ [key]: merged });
-                    }
-                }
-                setIsLoaded(true);
-            });
+        let isMounted = true;
+        let unsubscribe = null;
 
-            const handleChange = (changes, areaName) => {
-                if (areaName !== 'local') return;
-                if (changes[key] && changes[key].newValue !== undefined) {
-                    const merged = mergeWithDefaults(
-                        changes[key].newValue,
-                        defaultsRef.current
-                    );
-                    setValue(merged);
-                    writeLocalStorageValue(key, merged);
-                }
-            };
-
-            chrome.storage.onChanged.addListener(handleChange);
-            return () => chrome.storage.onChanged.removeListener(handleChange);
-        } else {
-            const localValue = readLocalStorageValue(key);
-            if (localValue !== undefined) {
-                const merged = mergeWithDefaults(
-                    localValue,
-                    defaultsRef.current
-                );
-                setValue(merged);
-            }
+        getStorageValue(key).then((storedValue) => {
+            if (!isMounted) return;
+            const merged = mergeWithDefaults(
+                storedValue !== undefined ? storedValue : initialValue,
+                defaultsRef.current
+            );
+            setValue(merged);
             setIsLoaded(true);
-        }
-    }, [key]);
+        });
+
+        // Listen for external changes
+        unsubscribe = addStorageListener(key, (newValue) => {
+            if (!isMounted) return;
+            if (newValue !== undefined) {
+                const merged = mergeWithDefaults(newValue, defaultsRef.current);
+                setValue(merged);
+                // keep local storage in sync as fallback
+                writeLocalStorageValue(key, merged);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+            if (unsubscribe) unsubscribe();
+        };
+    }, [key, initialValue]);
 
     const setStoredValue = (newValue) => {
         setValue(newValue);
-        if (hasChromeStorage()) {
-            chrome.storage.local.set({ [key]: newValue });
-        }
-        writeLocalStorageValue(key, newValue);
+        setStorageValue(key, newValue);
     };
 
     return [value, setStoredValue, isLoaded];

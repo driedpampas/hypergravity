@@ -1,3 +1,4 @@
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Sidebar } from './Sidebar';
 import { ChatTools } from './ChatTools';
@@ -5,10 +6,11 @@ import './content.css';
 import { ChatExportController } from './features/chatExport';
 import { createTopBarToolsManager } from './features/topBarToolsManager';
 import {
-    hasChromeStorage,
-    readLocalStorageValue,
-    writeLocalStorageValue,
-} from './utils/storage';
+    getStorageValue,
+    setStorageValue,
+    addStorageListener,
+    isUserscript,
+} from './utils/browserEnv';
 import { SETTINGS_KEY, FOLDERS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 
 let lastClickedChatInfo = null;
@@ -22,56 +24,6 @@ function applyChatboxHeaderStyleSetting(settings) {
         'hg-chatbox-header-style-enabled',
         isEnabled
     );
-}
-
-function getStorageValue(key, fallback) {
-    return new Promise((resolve) => {
-        if (!hasChromeStorage()) {
-            const localValue = readLocalStorageValue(key);
-            resolve(localValue !== undefined ? localValue : fallback);
-            return;
-        }
-
-        chrome.storage.local.get([key], (result) => {
-            if (chrome.runtime?.lastError) {
-                const localValue = readLocalStorageValue(key);
-                resolve(localValue !== undefined ? localValue : fallback);
-                return;
-            }
-
-            if (result[key] !== undefined) {
-                writeLocalStorageValue(key, result[key]);
-                resolve(result[key]);
-                return;
-            }
-
-            const localValue = readLocalStorageValue(key);
-            if (localValue !== undefined) {
-                chrome.storage.local.set({ [key]: localValue }, () => {
-                    resolve(localValue);
-                });
-                return;
-            }
-
-            resolve(fallback);
-        });
-    });
-}
-
-function setStorageValue(key, value) {
-    writeLocalStorageValue(key, value);
-
-    if (!hasChromeStorage()) return Promise.resolve();
-
-    return new Promise((resolve) => {
-        chrome.storage.local.set({ [key]: value }, () => {
-            if (chrome.runtime?.lastError) {
-                resolve();
-                return;
-            }
-            resolve();
-        });
-    });
 }
 
 async function getSettings() {
@@ -172,6 +124,78 @@ function handleGlobalMenuButtonTracking(event) {
     if (info) lastClickedChatInfo = info;
 }
 
+function FolderSelectModal({
+    chatInfo,
+    folders,
+    initiallySelected,
+    onClose,
+    onSave,
+}) {
+    const [selected, setSelected] = React.useState(new Set(initiallySelected));
+
+    const toggle = (id) => {
+        const next = new Set(selected);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelected(next);
+    };
+
+    return (
+        <div className="hg-folder-select-modal">
+            <div className="hg-folder-select-header">
+                <h3>Add to Folder</h3>
+                <button
+                    className="hg-folder-select-close"
+                    type="button"
+                    aria-label="Close"
+                    onClick={onClose}
+                >
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                    >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div className="hg-folder-select-subtitle">
+                Manage folders for: <strong>{chatInfo.title}</strong>
+            </div>
+            <div className="hg-folder-select-list">
+                {folders.map((folder) => (
+                    <button
+                        key={folder.id}
+                        className="hg-folder-select-item"
+                        onClick={() => toggle(folder.id)}
+                        type="button"
+                    >
+                        <span className="hg-folder-select-check">
+                            {selected.has(folder.id) ? '✓' : ''}
+                        </span>
+                        <span className="hg-folder-select-name">
+                            {folder.name}
+                        </span>
+                        <span className="hg-folder-select-count">
+                            {(folder.chats || []).length}
+                        </span>
+                    </button>
+                ))}
+            </div>
+            <div className="hg-folder-select-footer">
+                <button
+                    className="hg-folder-select-save"
+                    type="button"
+                    onClick={() => onSave(selected)}
+                >
+                    Done
+                </button>
+            </div>
+        </div>
+    );
+}
+
 async function showAddToFolderMenu(chatInfo) {
     const folders = await getStorageValue(FOLDERS_KEY, []);
 
@@ -188,107 +212,57 @@ async function showAddToFolderMenu(chatInfo) {
             initiallySelected.add(folder.id);
         }
     });
-    const selected = new Set(initiallySelected);
 
     const overlay = document.createElement('div');
     overlay.id = 'hg-folder-select-overlay';
     overlay.className = 'hg-folder-select-overlay';
 
-    const modal = document.createElement('div');
-    modal.className = 'hg-folder-select-modal';
-
-    const renderRows = () =>
-        folders
-            .map((folder) => {
-                const inFolder = selected.has(folder.id);
-                return `
-                    <button class="hg-folder-select-item" data-folder-id="${folder.id}" type="button">
-                        <span class="hg-folder-select-check">${inFolder ? '✓' : ''}</span>
-                        <span class="hg-folder-select-name">${folder.name}</span>
-                        <span class="hg-folder-select-count">${(folder.chats || []).length}</span>
-                    </button>
-                `;
-            })
-            .join('');
-
-    modal.innerHTML = `
-        <div class="hg-folder-select-header">
-            <h3>Add to Folder</h3>
-            <button class="hg-folder-select-close" type="button" aria-label="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-        </div>
-        <div class="hg-folder-select-subtitle">Manage folders for: <strong>${chatInfo.title}</strong></div>
-        <div class="hg-folder-select-list">${renderRows()}</div>
-        <div class="hg-folder-select-footer">
-            <button class="hg-folder-select-save" type="button">Done</button>
-        </div>
-    `;
-
     const close = () => overlay.remove();
 
-    const attachRowHandlers = () => {
-        modal
-            .querySelectorAll('.hg-folder-select-item')
-            .forEach((rowButton) => {
-                rowButton.addEventListener('click', () => {
-                    const folderId = rowButton.getAttribute('data-folder-id');
-                    if (!folderId) return;
+    const save = async (selected) => {
+        const updatedFolders = folders.map((folder) => {
+            const chats = Array.isArray(folder.chats) ? [...folder.chats] : [];
+            const existingIndex = chats.findIndex(
+                (chat) => chat.id === chatInfo.id
+            );
+            const shouldContain = selected.has(folder.id);
 
-                    if (selected.has(folderId)) selected.delete(folderId);
-                    else selected.add(folderId);
-
-                    modal.querySelector('.hg-folder-select-list').innerHTML =
-                        renderRows();
-                    attachRowHandlers();
+            if (shouldContain && existingIndex === -1) {
+                chats.push({
+                    id: chatInfo.id,
+                    title: chatInfo.title,
+                    url: chatInfo.url || getAccountAwareUrl(chatInfo.id),
+                    pinned: false,
                 });
-            });
-    };
+            }
 
-    attachRowHandlers();
+            if (!shouldContain && existingIndex >= 0) {
+                chats.splice(existingIndex, 1);
+            }
 
-    modal
-        .querySelector('.hg-folder-select-close')
-        ?.addEventListener('click', close);
-    modal
-        .querySelector('.hg-folder-select-save')
-        ?.addEventListener('click', async () => {
-            const updatedFolders = folders.map((folder) => {
-                const chats = Array.isArray(folder.chats)
-                    ? [...folder.chats]
-                    : [];
-                const existingIndex = chats.findIndex(
-                    (chat) => chat.id === chatInfo.id
-                );
-                const shouldContain = selected.has(folder.id);
-
-                if (shouldContain && existingIndex === -1) {
-                    chats.push({
-                        id: chatInfo.id,
-                        title: chatInfo.title,
-                        url: chatInfo.url || getAccountAwareUrl(chatInfo.id),
-                        pinned: false,
-                    });
-                }
-
-                if (!shouldContain && existingIndex >= 0) {
-                    chats.splice(existingIndex, 1);
-                }
-
-                return { ...folder, chats };
-            });
-
-            await setStorageValue(FOLDERS_KEY, updatedFolders);
-            showToast('Folder changes saved', 'success');
-            close();
+            return { ...folder, chats };
         });
+
+        await setStorageValue(FOLDERS_KEY, updatedFolders);
+        showToast('Folder changes saved', 'success');
+        close();
+    };
 
     overlay.addEventListener('click', (event) => {
         if (event.target === overlay) close();
     });
 
-    overlay.appendChild(modal);
     document.body.appendChild(overlay);
+
+    createRoot(overlay).render(
+        <FolderSelectModal
+            chatInfo={chatInfo}
+            folders={folders}
+            initiallySelected={initiallySelected}
+            onClose={close}
+            onSave={save}
+        />
+    );
 }
 
 function injectAddToFolderOption(menuRoot) {
@@ -300,14 +274,22 @@ function injectAddToFolderOption(menuRoot) {
     button.className = 'hg-add-to-folder-btn';
     button.setAttribute('role', 'menuitem');
     button.type = 'button';
-    button.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            <line x1="12" y1="11" x2="12" y2="17"/>
-            <line x1="9" y1="14" x2="15" y2="14"/>
-        </svg>
-        <span>Add chat to folder</span>
-    `;
+
+    createRoot(button).render(
+        <>
+            <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+            >
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                <line x1="12" y1="11" x2="12" y2="17" />
+                <line x1="9" y1="14" x2="15" y2="14" />
+            </svg>
+            <span>Add chat to folder</span>
+        </>
+    );
 
     button.addEventListener('click', async (event) => {
         event.preventDefault();
@@ -443,15 +425,10 @@ getSettings().then(applyChatboxHeaderStyleSetting);
 
 document.addEventListener('click', handleGlobalMenuButtonTracking, true);
 
-if (hasChromeStorage()) {
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-        if (areaName !== 'local') return;
-        if (changes[SETTINGS_KEY]) {
-            topBarToolsManager?.refresh();
-            applyChatboxHeaderStyleSetting({
-                ...DEFAULT_SETTINGS,
-                ...(changes[SETTINGS_KEY].newValue || {}),
-            });
-        }
+addStorageListener(SETTINGS_KEY, (newValue) => {
+    topBarToolsManager?.refresh();
+    applyChatboxHeaderStyleSetting({
+        ...DEFAULT_SETTINGS,
+        ...(newValue || {}),
     });
-}
+});

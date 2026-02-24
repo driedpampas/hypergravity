@@ -1,3 +1,9 @@
+import {
+    getStorageValue,
+    setStorageValue,
+    getVersion,
+} from '../utils/browserEnv';
+
 const CACHE_KEY = 'hg_token_hash_cache';
 
 function showStatus(message, type = '') {
@@ -13,17 +19,11 @@ function showStatus(message, type = '') {
 }
 
 async function loadCacheData() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([CACHE_KEY], (result) => {
-            resolve(result[CACHE_KEY] || {});
-        });
-    });
+    return (await getStorageValue(CACHE_KEY)) || {};
 }
 
 async function saveCacheData(data) {
-    return new Promise((resolve) => {
-        chrome.storage.local.set({ [CACHE_KEY]: data }, resolve);
-    });
+    return await setStorageValue(CACHE_KEY, data);
 }
 
 async function refreshStats() {
@@ -93,8 +93,7 @@ async function handleImport(file) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const manifest = chrome.runtime.getManifest();
-    document.getElementById('hg-version').textContent = `v${manifest.version}`;
+    document.getElementById('hg-version').textContent = `v${getVersion()}`;
 
     refreshStats();
 

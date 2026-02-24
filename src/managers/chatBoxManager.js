@@ -64,11 +64,16 @@ function setInputText(text) {
     if (!el) return;
 
     if (el.getAttribute('contenteditable') === 'true') {
-        el.innerHTML = '';
+        while (el.firstChild) {
+            el.removeChild(el.firstChild);
+        }
         text.split('\n').forEach((line) => {
             const p = document.createElement('p');
-            p.textContent = line || '';
-            if (!line) p.innerHTML = '<br>';
+            if (line) {
+                p.textContent = line;
+            } else {
+                p.appendChild(document.createElement('br'));
+            }
             el.appendChild(p);
         });
         el.classList.remove('ql-blank');
