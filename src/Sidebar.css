@@ -5,6 +5,18 @@
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
 
+.hg-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: color-mix(
+        in srgb,
+        var(--gem-sys-color--scrim, #000000) 32%,
+        transparent
+    );
+    backdrop-filter: blur(1px);
+    z-index: 9999;
+}
+
 .hg-section-header {
     display: flex;
     align-items: center;

@@ -215,6 +215,11 @@
     border-color: var(--gem-sys-color--outline-variant, #dce1e9);
 }
 
+.hg-welcome-choice-btn--active {
+    box-shadow: 0 0 0 2px
+        color-mix(in srgb, var(--gem-sys-color--primary, #1a73e8) 35%, transparent);
+}
+
 /* ── Numbered steps (step 2) ─────────────────────────────────────────── */
 .hg-welcome-steps {
     list-style: none;

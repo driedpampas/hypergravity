@@ -42,11 +42,7 @@ function normalizeTokenCounterMode(mode) {
 function getTokenCounterDisplayConfig(mode) {
     switch (mode) {
         case 'none':
-            return {
-                showCircle: false,
-                showText: false,
-                showPercentage: false,
-            };
+            return { showCircle: false, showText: false, showPercentage: false };
         case 'text':
             return { showCircle: false, showText: true, showPercentage: false };
         case 'percentage':

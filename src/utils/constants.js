@@ -1,10 +1,12 @@
 export const SETTINGS_KEY = 'hypergravityGeminiSettings';
 export const FOLDERS_KEY = 'hypergravityGeminiFolders';
 export const WELCOME_SEEN_KEY = 'hypergravityWelcomeSeen';
+export const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
 
 export const DEFAULT_SETTINGS = {
     enabled: true,
     foldersEnabled: true,
+    chatMemoryEnabled: true,
     autoScrollEnabled: false,
     wideModeEnabled: false,
     hideSidebarEnabled: false,

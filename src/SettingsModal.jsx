@@ -121,128 +121,135 @@ export function SettingsModal({ onClose }) {
     );
 
     return (
-        <div class="hg-settings-modal">
-            <div class="hg-settings-header">
-                <div class="hg-settings-header-left">
-                    <button class="hg-back-btn" onClick={onClose}>
-                        <BackArrowIcon width="20" height="20" />
-                    </button>
-                    <h2>Settings</h2>
-                </div>
-            </div>
-
-            <div class="hg-settings-list">
-                <SettingRow
-                    label="Enable Hypergravity"
-                    settingKey="enabled"
-                    description="Master switch to toggle all features"
-                />
-                <SettingRow
-                    label="Enable Folders"
-                    settingKey="foldersEnabled"
-                    description="Organize your chats into custom folders"
-                />
-                <SettingRow
-                    label="Wide Mode"
-                    settingKey="wideModeEnabled"
-                    description="Expand chat width to utilize full screen space"
-                />
-                <SettingRow
-                    label="Show Export Button"
-                    settingKey="showExportButton"
-                    description="Add chat export button in the top action bar"
-                />
-                <SettingRow
-                    label="Auto-scroll"
-                    settingKey="autoScrollEnabled"
-                    description="Automatically scroll to bottom when generating"
-                />
-                <SettingRow
-                    label="Hide Sidebar"
-                    settingKey="hideSidebarEnabled"
-                    description="Collapse the native Gemini sidebar by default"
-                />
-                <SelectRow
-                    label="Token Counter Display"
-                    settingKey="tokenCounterMode"
-                    description="Choose how context usage is shown"
-                    options={[
-                        { label: 'None', value: 'none' },
-                        { label: 'Text', value: 'text' },
-                        { label: 'Percentage', value: 'percentage' },
-                        { label: 'Text + %', value: 'text_percentage' },
-                        { label: 'Ring', value: 'ring' },
-                        { label: 'Ring + Text', value: 'ring_text' },
-                        { label: 'Ring + %', value: 'ring_percentage' },
-                        {
-                            label: 'Ring + Text + %',
-                            value: 'ring_text_percentage',
-                        },
-                    ]}
-                />
-                <SettingRow
-                    label="Show Scroll Buttons"
-                    settingKey="showScrollButtons"
-                    description="Add scroll up/down controls in the chat tools"
-                />
-                <SettingRow
-                    label="Chatbox Header Strip"
-                    settingKey="chatboxStyleEnabled"
-                    description="Show tools in a raised strip above the input area"
-                />
-                <SettingRow
-                    label="Compact Chatbox"
-                    settingKey="chatboxCompactEnabled"
-                    description="Tighten input-area padding and shrink native action buttons"
-                />
-                <div class="hg-setting-row hg-setting-row-input">
-                    <div class="hg-setting-info">
-                        <span class="hg-setting-label">Gemini API Key</span>
-                        <span class="hg-setting-desc">
-                            Used for exact token counts via Gemini countTokens
-                            API
-                        </span>
+        <div class="hg-dialog-overlay" onClick={onClose}>
+            <div class="hg-settings-modal" onClick={(event) => event.stopPropagation()}>
+                <div class="hg-settings-header">
+                    <div class="hg-settings-header-left">
+                        <button class="hg-back-btn" onClick={onClose}>
+                            <BackArrowIcon width="20" height="20" />
+                        </button>
+                        <h2>Settings</h2>
                     </div>
-                    <input
-                        type="text"
-                        class="hg-setting-input"
-                        value={settings.geminiApiKey || ''}
-                        onInput={(event) =>
-                            setSettings({
-                                ...settings,
-                                geminiApiKey: event.target.value,
-                            })
-                        }
-                        onClick={(event) => event.stopPropagation()}
-                        placeholder="AIza..."
-                        spellCheck={false}
-                        autoComplete="off"
-                    />
                 </div>
 
-                <div class="hg-setting-row hg-setting-row-input">
-                    <div class="hg-setting-info">
-                        <span class="hg-setting-label">Token Limit</span>
-                        <span class="hg-setting-desc">
-                            The context size used for the progress ring
-                            calculation
-                        </span>
-                    </div>
-                    <input
-                        type="number"
-                        class="hg-setting-input hg-setting-input-number"
-                        value={settings.tokenLimit || 1000000}
-                        onInput={(event) =>
-                            setSettings({
-                                ...settings,
-                                tokenLimit:
-                                    parseInt(event.target.value, 10) || 0,
-                            })
-                        }
-                        onClick={(event) => event.stopPropagation()}
-                        step="100000"
-                        min="1000"
+                <div class="hg-settings-list">
+                    <SettingRow
+                        label="Enable Hypergravity"
+                        settingKey="enabled"
+                        description="Master switch to toggle all features"
                     />
+                    <SettingRow
+                        label="Enable Folders"
+                        settingKey="foldersEnabled"
+                        description="Organize your chats into custom folders"
+                    />
+                    <SettingRow
+                        label="Chat Memory Summaries"
+                        settingKey="chatMemoryEnabled"
+                        description="Use temporary Flash chats to summarize and save memory per conversation"
+                    />
+                    <SettingRow
+                        label="Wide Mode"
+                        settingKey="wideModeEnabled"
+                        description="Expand chat width to utilize full screen space"
+                    />
+                    <SettingRow
+                        label="Show Export Button"
+                        settingKey="showExportButton"
+                        description="Add chat export button in the top action bar"
+                    />
+                    <SettingRow
+                        label="Auto-scroll"
+                        settingKey="autoScrollEnabled"
+                        description="Automatically scroll to bottom when generating"
+                    />
+                    <SettingRow
+                        label="Hide Sidebar"
+                        settingKey="hideSidebarEnabled"
+                        description="Collapse the native Gemini sidebar by default"
+                    />
+                    <SelectRow
+                        label="Token Counter Display"
+                        settingKey="tokenCounterMode"
+                        description="Choose how context usage is shown"
+                        options={[
+                            { label: 'None', value: 'none' },
+                            { label: 'Text', value: 'text' },
+                            { label: 'Percentage', value: 'percentage' },
+                            { label: 'Text + %', value: 'text_percentage' },
+                            { label: 'Ring', value: 'ring' },
+                            { label: 'Ring + Text', value: 'ring_text' },
+                            { label: 'Ring + %', value: 'ring_percentage' },
+                            {
+                                label: 'Ring + Text + %',
+                                value: 'ring_text_percentage',
+                            },
+                        ]}
+                    />
+                    <SettingRow
+                        label="Show Scroll Buttons"
+                        settingKey="showScrollButtons"
+                        description="Add scroll up/down controls in the chat tools"
+                    />
+                    <SettingRow
+                        label="Chatbox Header Strip"
+                        settingKey="chatboxStyleEnabled"
+                        description="Show tools in a raised strip above the input area"
+                    />
+                    <SettingRow
+                        label="Compact Chatbox"
+                        settingKey="chatboxCompactEnabled"
+                        description="Tighten input-area padding and shrink native action buttons"
+                    />
+                    <div class="hg-setting-row hg-setting-row-input">
+                        <div class="hg-setting-info">
+                            <span class="hg-setting-label">Gemini API Key</span>
+                            <span class="hg-setting-desc">
+                                Used for exact token counts via Gemini
+                                countTokens API
+                            </span>
+                        </div>
+                        <input
+                            type="text"
+                            class="hg-setting-input"
+                            value={settings.geminiApiKey || ''}
+                            onInput={(event) =>
+                                setSettings({
+                                    ...settings,
+                                    geminiApiKey: event.target.value,
+                                })
+                            }
+                            onClick={(event) => event.stopPropagation()}
+                            placeholder="AIza..."
+                            spellCheck={false}
+                            autoComplete="off"
+                        />
+                    </div>
+
+                    <div class="hg-setting-row hg-setting-row-input">
+                        <div class="hg-setting-info">
+                            <span class="hg-setting-label">Token Limit</span>
+                            <span class="hg-setting-desc">
+                                The context size used for the progress ring
+                                calculation
+                            </span>
+                        </div>
+                        <input
+                            type="number"
+                            class="hg-setting-input hg-setting-input-number"
+                            value={settings.tokenLimit || 1000000}
+                            onInput={(event) =>
+                                setSettings({
+                                    ...settings,
+                                    tokenLimit:
+                                        parseInt(event.target.value, 10) || 0,
+                                })
+                            }
+                            onClick={(event) => event.stopPropagation()}
+                            step="100000"
+                            min="1000"
+                        />
+                    </div>
                 </div>
             </div>
         </div>

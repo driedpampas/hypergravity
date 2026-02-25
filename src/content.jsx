@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar';
 import { ChatTools } from './ChatTools';
 import './content.css';
 import { ChatExportController } from './features/chatExport';
+import { createChatMemoryManager } from './features/chatMemoryManager';
 import { createTopBarToolsManager } from './features/topBarToolsManager';
 import { CloseIcon, FolderAddIcon } from './icons';
 import {
@@ -20,6 +21,7 @@ let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
 let chatExportController = null;
 let topBarToolsManager = null;
+let chatMemoryManager = null;
 let hgEnabled = true; // mirror of settings.enabled to gate UI injection
 
 /**
@@ -258,7 +260,7 @@ async function showAddToFolderMenu(chatInfo) {
 
     const overlay = document.createElement('div');
     overlay.id = 'hg-folder-select-overlay';
-    overlay.className = 'hg-folder-select-overlay';
+    overlay.className = 'hg-folder-select-overlay hg-dialog-overlay';
 
     const close = () => overlay.remove();
 
@@ -368,6 +370,10 @@ function initializeFeatureModules() {
             onExportClick: () => chatExportController?.showPopup(),
         });
     }
+
+    if (!chatMemoryManager) {
+        chatMemoryManager = createChatMemoryManager();
+    }
 }
 
 /**
@@ -457,6 +463,7 @@ const observer = new MutationObserver(() => {
         }
         insertChatTools();
         topBarToolsManager?.refresh();
+        chatMemoryManager?.refresh();
 
         const menuRoots = document.querySelectorAll(
             '.cdk-overlay-pane, mat-menu-panel, .mat-mdc-menu-panel'
@@ -485,6 +492,7 @@ getSettings().then((settings) => {
         insertHypergravitySidebar();
         insertChatTools();
         topBarToolsManager?.refresh();
+        chatMemoryManager?.refresh();
     }
 });
 
@@ -513,5 +521,6 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
         insertHypergravitySidebar();
         insertChatTools();
         topBarToolsManager?.refresh();
+        chatMemoryManager?.refresh();
     }
 });

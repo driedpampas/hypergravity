@@ -314,3 +314,14 @@ export async function cancelOptimization() {
         chrome.runtime.sendMessage({ type: 'CANCEL_OPTIMIZATION' });
     }
 }
+
+export async function summarizeChatMemory(payload) {
+    if (isExtension()) {
+        return chrome.runtime.sendMessage({
+            type: 'SUMMARIZE_CHAT_MEMORY',
+            ...payload,
+        });
+    }
+
+    throw new Error('Chat memory summarization is not supported here');
+}

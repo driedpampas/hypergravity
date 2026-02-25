@@ -14,7 +14,7 @@ import {
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
 import './WelcomeModal.css';
 
-const TOTAL_STEPS = 2;
+const TOTAL_STEPS = 3;
 
 export function WelcomeModal({ onClose }) {
     const [step, setStep] = useState(0);
@@ -43,6 +43,10 @@ export function WelcomeModal({ onClose }) {
     };
 
     const currentApiKey = apiKeyDraft || settings.geminiApiKey || '';
+
+    const setChatMemoryEnabled = (enabled) => {
+        setSettings({ ...settings, chatMemoryEnabled: enabled });
+    };
 
     const Overview = () => (
         <div class="hg-welcome-step">
@@ -284,8 +288,56 @@ export function WelcomeModal({ onClose }) {
         </div>
     );
 
+    const ChatMemorySetup = () => (
+        <div class="hg-welcome-step">
+            <div class="hg-welcome-hero hg-welcome-hero--compact">
+                <div class="hg-welcome-icon-ring">
+                    <InfoAlertCircleIcon width="26" height="26" />
+                </div>
+                <h2 class="hg-welcome-title">Chat Memory Summaries</h2>
+                <p class="hg-welcome-subtitle">
+                    Hypergravity can summarize your current chat using a
+                    temporary Gemini Flash conversation and store memory by chat
+                    ID for later use.
+                </p>
+            </div>
+
+            <div class="hg-welcome-choice-card">
+                <p class="hg-welcome-choice-text">
+                    Enable chat memory summarization now?
+                </p>
+                <div class="hg-welcome-choice-actions">
+                    <button
+                        class={`hg-welcome-choice-btn hg-welcome-choice-btn--secondary ${settings.chatMemoryEnabled === false ? 'hg-welcome-choice-btn--active' : ''}`}
+                        onClick={() => setChatMemoryEnabled(false)}
+                    >
+                        Keep it off
+                    </button>
+                    <button
+                        class={`hg-welcome-choice-btn hg-welcome-choice-btn--primary ${settings.chatMemoryEnabled !== false ? 'hg-welcome-choice-btn--active' : ''}`}
+                        onClick={() => setChatMemoryEnabled(true)}
+                    >
+                        Enable memory
+                    </button>
+                </div>
+            </div>
+
+            <div class="hg-welcome-choice-card hg-welcome-choice-card--muted">
+                <p class="hg-welcome-choice-text">
+                    Stored memory is kept locally in your extension storage,
+                    grouped per conversation. You can turn this feature on or
+                    off any time in <strong>Settings</strong>.
+                </p>
+            </div>
+        </div>
+    );
+
     return (
-        <div class="hg-welcome-modal">
+        <div class="hg-dialog-overlay" onClick={saveAndClose}>
+            <div
+                class="hg-welcome-modal"
+                onClick={(event) => event.stopPropagation()}
+            >
             {/* Header */}
             <div class="hg-welcome-header">
                 <button
@@ -312,7 +364,8 @@ export function WelcomeModal({ onClose }) {
             {/* Content */}
             <div class="hg-welcome-body">
                 {step === 0 && <Overview />}
-                {step === 1 && <ApiKeySetup />}
+                {step === 1 && <ChatMemorySetup />}
+                {step === 2 && <ApiKeySetup />}
             </div>
 
             {/* Footer nav */}
@@ -344,6 +397,7 @@ export function WelcomeModal({ onClose }) {
                         <CheckIcon width="14" height="14" />
                     </button>
                 )}
+            </div>
             </div>
         </div>
     );

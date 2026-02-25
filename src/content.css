@@ -149,13 +149,16 @@ body.hg-wide-chat input-container.input-gradient::before {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
     z-index: 100000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
     box-sizing: border-box;
+}
+
+.hg-export-overlay {
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .hg-export-popup,
