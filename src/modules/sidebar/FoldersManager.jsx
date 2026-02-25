@@ -1,12 +1,13 @@
 import { useState } from 'preact/hooks';
-import { useStorage } from './hooks/useStorage';
+
+import { useStorage } from '../../hooks/useStorage';
 import {
     FolderBackIcon,
     FolderAddIcon,
     FolderEmptyIcon,
     FolderFilledIcon,
     FolderDeleteIcon,
-} from './icons';
+} from '../../icons';
 import './FoldersManager.css';
 
 export function FoldersManager({ onClose }) {

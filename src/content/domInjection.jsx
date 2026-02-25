@@ -1,6 +1,6 @@
 import { render } from 'preact';
 
-import { Sidebar } from '../Sidebar';
+import { Sidebar } from '../modules/sidebar';
 import { ChatTools } from '../ChatTools';
 
 /**

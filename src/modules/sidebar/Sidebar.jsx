@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'preact/hooks';
-import './Sidebar.css';
-import { useStorage } from './hooks/useStorage';
-import { FoldersManager } from './FoldersManager';
-import { SettingsModal } from './SettingsModal';
-import { WelcomeModal } from './WelcomeModal';
+
+import { useStorage } from '../../hooks/useStorage';
+import { SettingsModal } from '../../SettingsModal';
+import { WelcomeModal } from '../../WelcomeModal';
 import {
     ChevronRightIcon,
     WelcomeHandIcon,
     FolderEmptyIcon,
     SettingsGearIcon,
-} from './icons';
-import { WELCOME_SEEN_KEY } from './utils/constants';
+} from '../../icons';
+import { WELCOME_SEEN_KEY } from '../../utils/constants';
+import { FoldersManager } from './FoldersManager';
+import './Sidebar.css';
 
 export function Sidebar() {
     const [isExpanded, setIsExpanded] = useStorage(
@@ -22,7 +23,7 @@ export function Sidebar() {
         false
     );
     const hasSeenWelcome = welcomeSeen === true;
-    const [activeMenu, setActiveMenu] = useState(null); // 'folders', 'settings'
+    const [activeMenu, setActiveMenu] = useState(null);
     const [showWelcome, setShowWelcome] = useState(false);
 
     useEffect(() => {
@@ -31,7 +32,6 @@ export function Sidebar() {
         }
     }, [isWelcomeLoaded, hasSeenWelcome]);
 
-    // Auto-show welcome on first install
     const handleWelcomeClose = () => {
         setWelcomeSeen(true);
         setShowWelcome(false);
@@ -47,7 +47,6 @@ export function Sidebar() {
             id="hg-hypergravity-section"
             class="hypergravity-sidebar-container"
         >
-            {/* Header section (Toggle) */}
             <div
                 class="hg-section-header"
                 onClick={toggleSection}
@@ -72,7 +71,6 @@ export function Sidebar() {
                 />
             </div>
 
-            {/* Expanded Content View (Menu) */}
             <div
                 class="hg-section-content"
                 style={{
