@@ -38,6 +38,7 @@ export function ChatTools() {
 
     return (
         <div class="hg-chat-tools-shell">
+            <div class="hg-chat-tools-theme" aria-hidden="true" />
             <div class="hg-chat-tools-rail">
                 <div class="hg-chat-tools hg-chat-tools-left">
                     {left.map(({ component: C }, i) => (

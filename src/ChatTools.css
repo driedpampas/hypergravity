@@ -8,12 +8,19 @@
     max-width: 100%;
     box-sizing: border-box;
     grid-column: 1 / -1;
+    grid-row: 1;
+    align-self: end;
+    justify-self: stretch;
     font-family: var(--hg-font-family);
 }
 
 .hg-chat-tools-shell {
     width: 100%;
     box-sizing: border-box;
+}
+
+.hg-chat-tools-theme {
+    display: none;
 }
 
 .hg-chat-tools-rail {
@@ -256,16 +263,34 @@ body.hg-chatbox-header-style-enabled .hg-chat-tools-container {
     left: 0;
     right: 0;
     margin: 0;
+    grid-row: auto;
+    align-self: auto;
+    justify-self: auto;
     pointer-events: none;
-    z-index: -1;
 }
 
 body.hg-chatbox-header-style-enabled .hg-chat-tools-shell {
+    position: relative;
     width: 100%;
     pointer-events: none;
 }
 
+body.hg-chatbox-header-style-enabled .hg-chat-tools-theme {
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: 24px 24px 0 0;
+    background: var(--gem-sys-color--surface, #131314);
+    border: 1px solid var(--gem-sys-color--outline-variant, #3c4043);
+    border-bottom: none;
+    box-shadow: none;
+    pointer-events: none;
+    z-index: -1;
+}
+
 body.hg-chatbox-header-style-enabled .hg-chat-tools-rail {
+    position: relative;
+    z-index: 2;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -276,11 +301,8 @@ body.hg-chatbox-header-style-enabled .hg-chat-tools-rail {
        the strip visually merges into the chatbox top edge */
     border-radius: 24px 24px 0 0;
     padding: 3px 14px 13px;
-    /* Darker than the chatbox (--surface < --surface-container) */
-    background: var(--gem-sys-color--surface, #131314);
-    border: 1px solid var(--gem-sys-color--outline-variant, #3c4043);
-    border-bottom: none;
-    box-shadow: none;
+    background: transparent;
+    border: none;
     pointer-events: auto;
 }
 

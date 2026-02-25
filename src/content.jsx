@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
+
 import { Sidebar } from './Sidebar';
 import { ChatTools } from './ChatTools';
 import './content.css';
@@ -433,8 +434,14 @@ function insertChatTools() {
         render(<ChatTools />, toolsRoot);
     }
 
-    // Attach or move it if needed
-    if (toolsRoot.parentElement !== chatContainer) {
+    // Attach or move it if needed.
+    // Gemini can inject attachment chips and reorder children inside
+    // .text-input-field; keep tools pinned as the first child so
+    // the original (non-header) style does not get pushed down.
+    if (
+        toolsRoot.parentElement !== chatContainer ||
+        chatContainer.firstElementChild !== toolsRoot
+    ) {
         chatContainer.prepend(toolsRoot);
     }
 }

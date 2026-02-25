@@ -1,12 +1,14 @@
 {
     "name": "hypergravity",
-    "version": "1.0.0",
+    "version": "36",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build:ext": "vite build",
         "build:user": "BUILD_TARGET=userscript vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "version:commits": "bun scripts/update-version-from-commits.mjs",
+        "prepare": "bun scripts/setup-git-hooks.mjs"
     },
     "devDependencies": {
         "@crxjs/vite-plugin": "latest",
@@ -20,6 +22,7 @@
         "idb": "^8.0.3",
         "jspdf": "^4.2.0",
         "preact": "^10.28.4",
+        "rawproto": "^1.0.3",
         "sharp": "^0.34.5"
     }
 }
