@@ -1,10 +1,10 @@
 import {
     getStorageValue,
-    setStorageValue,
     summarizeChatMemory,
     isExtension,
 } from '../utils/browserEnv';
-import { CHAT_MEMORIES_KEY, SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
+import { getIdbValue, setIdbValue } from '../utils/idbStorage';
 import { sanitizeMessageText, hashText } from '../utils/tokenHashCache';
 import { debugLog as _debugLog } from '../utils/debug';
 
@@ -27,6 +27,11 @@ const MODEL_MESSAGE_SELECTORS = [
 ].join(', ');
 
 const MESSAGE_SELECTORS = `${USER_MESSAGE_SELECTORS}, ${MODEL_MESSAGE_SELECTORS}`;
+const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';
+
+function getChatMemoryKey(chatId) {
+    return `${CHAT_MEMORY_PREFIX}${chatId}`;
+}
 
 function getCurrentConversationId() {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
@@ -121,6 +126,7 @@ function serializeTranscript(messages) {
 export function createChatMemoryManager() {
     let debounceTimer = null;
     let inFlightChatId = null;
+    const latestSourceHashByChatId = new Map();
 
     async function summarizeCurrentChat() {
         if (!isExtension()) return;
@@ -141,9 +147,12 @@ export function createChatMemoryManager() {
         if (!transcript) return;
 
         const sourceHash = await hashText(transcript);
-        const memories = await getStorageValue(CHAT_MEMORIES_KEY, {});
-        const existing = memories?.[chatId];
-        if (existing?.sourceHash && existing.sourceHash === sourceHash) {
+        const storedMemory = await getIdbValue(getChatMemoryKey(chatId), null);
+        if (storedMemory?.sourceHash === sourceHash) {
+            latestSourceHashByChatId.set(chatId, sourceHash);
+            return;
+        }
+        if (latestSourceHashByChatId.get(chatId) === sourceHash) {
             return;
         }
 
@@ -163,11 +172,11 @@ export function createChatMemoryManager() {
                 return;
             }
 
-            const nextMemories = {
-                ...(memories || {}),
-                [chatId]: result.memory,
-            };
-            await setStorageValue(CHAT_MEMORIES_KEY, nextMemories);
+            latestSourceHashByChatId.set(
+                chatId,
+                result.memory?.sourceHash || sourceHash
+            );
+            await setIdbValue(getChatMemoryKey(chatId), result.memory);
         } catch (error) {
             debugLog('Memory summarization error', { chatId, error });
         } finally {

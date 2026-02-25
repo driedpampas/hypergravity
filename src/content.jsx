@@ -16,6 +16,12 @@ import {
     isUserscript,
 } from './utils/browserEnv';
 import { SETTINGS_KEY, FOLDERS_KEY, DEFAULT_SETTINGS } from './utils/constants';
+import {
+    getCacheStats,
+    getAllCacheData,
+    importCacheData,
+    clearCacheData,
+} from './utils/tokenHashCache';
 
 let lastClickedChatInfo = null;
 let lastWideChatUrl = window.location.href;
@@ -327,7 +333,7 @@ function injectAddToFolderOption(menuRoot) {
 
     render(
         <>
-            <FolderAddIcon width="24" height="24" />
+            <FolderAddIcon width="24" height="24"/>
             <span>Add chat to folder</span>
         </>,
         button
@@ -426,11 +432,15 @@ function insertHypergravitySidebar() {
  * Identifies the message input area and injects the ChatTools component.
  */
 function insertChatTools() {
-    // Find the chat box container. We can try to attach it above the leading actions.
+    // Find the chat box container.
     const chatContainer =
         document.querySelector('.text-input-field') ||
         document.querySelector('.leading-actions-wrapper');
     if (!chatContainer) return;
+
+    if (window.getComputedStyle(chatContainer).position === 'static') {
+        chatContainer.style.position = 'relative';
+    }
 
     let toolsRoot = document.querySelector('#hypergravity-chat-tools-root');
     if (!toolsRoot) {
@@ -440,15 +450,27 @@ function insertChatTools() {
         render(<ChatTools />, toolsRoot);
     }
 
-    // Attach or move it if needed.
-    // Gemini can inject attachment chips and reorder children inside
-    // .text-input-field; keep tools pinned as the first child so
-    // the original (non-header) style does not get pushed down.
-    if (
-        toolsRoot.parentElement !== chatContainer ||
-        chatContainer.firstElementChild !== toolsRoot
-    ) {
-        chatContainer.prepend(toolsRoot);
+    // Keep tools anchored directly above Gemini's native bottom controls
+    // so attachment previews above do not collide with the tools row.
+    const controlsRow = chatContainer.querySelector(
+        '.input-buttons-wrapper-bottom, .leading-actions-wrapper'
+    );
+
+    const targetParent = controlsRow?.parentElement || chatContainer;
+    const beforeNode = controlsRow || null;
+
+    const isAlreadyPlaced =
+        toolsRoot.parentElement === targetParent &&
+        (beforeNode
+            ? toolsRoot.nextElementSibling === beforeNode
+            : targetParent.firstElementChild === toolsRoot);
+
+    if (!isAlreadyPlaced) {
+        if (beforeNode) {
+            targetParent.insertBefore(toolsRoot, beforeNode);
+        } else {
+            targetParent.prepend(toolsRoot);
+        }
     }
 }
 
@@ -466,7 +488,7 @@ const observer = new MutationObserver(() => {
         chatMemoryManager?.refresh();
 
         const menuRoots = document.querySelectorAll(
-            '.cdk-overlay-pane, mat-menu-panel, .mat-mdc-menu-panel'
+            '.conversation-actions-menu'
         );
         menuRoots.forEach((menuRoot) => injectAddToFolderOption(menuRoot));
 
@@ -522,5 +544,55 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
         insertChatTools();
         topBarToolsManager?.refresh();
         chatMemoryManager?.refresh();
+    }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type === 'HG_TOKEN_CACHE_GET_STATS') {
+        getCacheStats()
+            .then((stats) => sendResponse({ success: true, ...stats }))
+            .catch((error) =>
+                sendResponse({
+                    success: false,
+                    error: error?.message || 'Unknown error',
+                })
+            );
+        return true;
+    }
+
+    if (message?.type === 'HG_TOKEN_CACHE_GET_ALL') {
+        getAllCacheData()
+            .then((data) => sendResponse({ success: true, data }))
+            .catch((error) =>
+                sendResponse({
+                    success: false,
+                    error: error?.message || 'Unknown error',
+                })
+            );
+        return true;
+    }
+
+    if (message?.type === 'HG_TOKEN_CACHE_IMPORT') {
+        importCacheData(message?.data)
+            .then((imported) => sendResponse({ success: true, imported }))
+            .catch((error) =>
+                sendResponse({
+                    success: false,
+                    error: error?.message || 'Unknown error',
+                })
+            );
+        return true;
+    }
+
+    if (message?.type === 'HG_TOKEN_CACHE_CLEAR') {
+        clearCacheData()
+            .then((cleared) => sendResponse({ success: true, cleared }))
+            .catch((error) =>
+                sendResponse({
+                    success: false,
+                    error: error?.message || 'Unknown error',
+                })
+            );
+        return true;
     }
 });

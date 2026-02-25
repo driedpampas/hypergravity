@@ -295,12 +295,12 @@ body.hg-wide-chat input-container.input-gradient::before {
 .hg-add-to-folder-btn {
     display: flex;
     align-items: center;
-    gap: 10px;
     width: 100%;
-    padding: 8px 16px;
+    padding-left: var(--mat-menu-item-with-icon-leading-spacing, 12px);
+    padding-right: var(--mat-menu-item-with-icon-trailing-spacing, 12px);
     background: transparent;
     border: none;
-    color: var(--gem-sys-color--on-surface, #e8eaed);
+    color: var(--mat-menu-item-label-text-color, var(--mat-sys-on-surface));
     font-size: 14px;
     font-family: var(--hg-font-family);
     cursor: pointer;
@@ -311,6 +311,7 @@ body.hg-wide-chat input-container.input-gradient::before {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    margin-right: 10px;
 }
 
 .hg-add-to-folder-btn:hover {

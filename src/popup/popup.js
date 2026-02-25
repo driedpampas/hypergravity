@@ -25,13 +25,45 @@ function showStatus(message, type = '') {
     }
 }
 
+async function sendCacheMessageToActiveGeminiTab(message) {
+    const [activeTab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+    });
+
+    if (!activeTab?.id) return null;
+    if (!activeTab.url?.startsWith('https://gemini.google.com/')) return null;
+
+    try {
+        return await chrome.tabs.sendMessage(activeTab.id, message);
+    } catch {
+        return null;
+    }
+}
+
+async function getSyncedCacheData() {
+    const localData = await getAllCacheData();
+    const tabResponse = await sendCacheMessageToActiveGeminiTab({
+        type: 'HG_TOKEN_CACHE_GET_ALL',
+    });
+    const tabData =
+        tabResponse?.success && tabResponse.data ? tabResponse.data : null;
+
+    if (tabData && typeof tabData === 'object') {
+        await importCacheData(tabData);
+    }
+
+    return { ...(localData || {}), ...(tabData || {}) };
+}
+
 async function loadCacheData() {
-    return await getAllCacheData();
+    return await getSyncedCacheData();
 }
 
 async function refreshStats() {
     try {
-        const { entries } = await getCacheStats();
+        const merged = await getSyncedCacheData();
+        const entries = Object.keys(merged).length;
         document.getElementById('hg-cache-entries').textContent =
             entries.toLocaleString();
     } catch {
@@ -76,6 +108,10 @@ async function handleImport(file) {
         }
 
         const imported = await importCacheData(importedData);
+        await sendCacheMessageToActiveGeminiTab({
+            type: 'HG_TOKEN_CACHE_IMPORT',
+            data: importedData,
+        });
         await refreshStats();
 
         showStatus(`Imported ${imported} entries`, 'success');
@@ -162,7 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document
         .getElementById('hg-clear-cache-btn')
         .addEventListener('click', async () => {
-            const { entries } = await getCacheStats();
+            const merged = await getSyncedCacheData();
+            const entries = Object.keys(merged).length;
             if (!entries) {
                 showStatus('Cache is already empty', 'info');
                 return;
@@ -180,6 +217,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             showStatus('Clearing cache…');
             const cleared = await clearCacheData();
+            await sendCacheMessageToActiveGeminiTab({
+                type: 'HG_TOKEN_CACHE_CLEAR',
+            });
             await refreshStats();
             showStatus(`Cleared ${cleared} entries`, 'success');
         });

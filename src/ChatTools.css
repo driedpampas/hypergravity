@@ -3,15 +3,31 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: -30px;
+    margin-top: 0;
+    margin-bottom: 0;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
     grid-column: 1 / -1;
-    grid-row: 1;
-    align-self: end;
-    justify-self: stretch;
     font-family: var(--hg-font-family);
+}
+
+body:not(.hg-chatbox-header-style-enabled) .hg-chat-tools-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin-top: -20px;
+    pointer-events: none;
+    z-index: 2;
+}
+
+body:not(.hg-chatbox-header-style-enabled) .hg-chat-tools-shell {
+    pointer-events: none;
+}
+
+body:not(.hg-chatbox-header-style-enabled) .hg-chat-tools-rail {
+    pointer-events: auto;
 }
 
 .hg-chat-tools-shell {
