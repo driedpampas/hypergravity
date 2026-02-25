@@ -31,6 +31,16 @@ const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';
 let currentOptimizationTabId = null;
 let chatMemoryMigrationDone = false;
 
+const DEFAULT_POLL_INTERVAL_MS = 200;
+const TAB_LOAD_TIMEOUT_MS = 30000;
+
+const FLASH_WORKFLOW_TIMEOUTS = {
+    sidebar: 5000,
+    temporaryChat: 10000,
+    modeSwitch: 5000,
+    enterPrompt: 15000,
+};
+
 /**
  * Native-style sleep function using Promises.
  * @param {number} ms - Milliseconds to wait.
@@ -38,6 +48,57 @@ let chatMemoryMigrationDone = false;
  */
 function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function executeInTab(tabId, func, args = []) {
+    const results = await chrome.scripting.executeScript({
+        target: { tabId },
+        func,
+        args,
+    });
+    return results?.[0]?.result;
+}
+
+async function retryWithTimeout({
+    task,
+    timeoutMs,
+    intervalMs = DEFAULT_POLL_INTERVAL_MS,
+    shouldStop = (value) => Boolean(value),
+    onSuccess,
+}) {
+    const endAt = Date.now() + timeoutMs;
+    while (Date.now() < endAt) {
+        try {
+            const value = await task();
+            if (shouldStop(value)) {
+                if (typeof onSuccess === 'function') {
+                    await onSuccess(value);
+                }
+                return { success: true, value };
+            }
+        } catch {}
+        await sleep(intervalMs);
+    }
+    return { success: false, value: null };
+}
+
+function getStorageObject(key) {
+    return new Promise((resolve) => {
+        chrome.storage.local.get([key], (result) => {
+            if (chrome.runtime?.lastError) {
+                resolve(null);
+                return;
+            }
+            const value = result?.[key];
+            resolve(value && typeof value === 'object' ? value : null);
+        });
+    });
+}
+
+function removeStorageKeys(keys) {
+    return new Promise((resolve) => {
+        chrome.storage.local.remove(keys, () => resolve());
+    });
 }
 
 /**
@@ -348,7 +409,7 @@ async function waitForTabLoad(tabId) {
         const timeout = setTimeout(() => {
             chrome.tabs.onUpdated.removeListener(listener);
             reject(new Error('Tab load timeout'));
-        }, 30000);
+        }, TAB_LOAD_TIMEOUT_MS);
 
         const listener = (id, changeInfo) => {
             if (id === tabId && changeInfo.status === 'complete') {
@@ -396,7 +457,7 @@ async function pollForResponse(tabId, timeout, promptText) {
         } catch (e) {
             console.error('[hypergravity] Poll error:', e);
         }
-        await sleep(200);
+        await sleep(DEFAULT_POLL_INTERVAL_MS);
     }
     throw new Error('Optimization timeout');
 }
@@ -420,82 +481,48 @@ async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
 
         await waitForTabLoad(tabId);
 
-        const sidebarEnd = Date.now() + 5000;
-        while (Date.now() < sidebarEnd) {
-            try {
-                const res = await chrome.scripting.executeScript({
-                    target: { tabId },
-                    func: openSidebarIfClosed,
-                });
-                const result = res?.[0]?.result;
-                if (result === 'ALREADY_OPEN' || result === 'OPENED') {
-                    if (result === 'OPENED') await sleep(200);
-                    break;
-                }
-            } catch {}
-            await sleep(150);
-        }
+        await retryWithTimeout({
+            task: () => executeInTab(tabId, openSidebarIfClosed),
+            timeoutMs: FLASH_WORKFLOW_TIMEOUTS.sidebar,
+            intervalMs: 150,
+            shouldStop: (status) =>
+                status === 'ALREADY_OPEN' || status === 'OPENED',
+            onSuccess: async (status) => {
+                if (status === 'OPENED') await sleep(200);
+            },
+        });
 
-        const tempEnd = Date.now() + 10000;
-        while (Date.now() < tempEnd) {
-            try {
-                const res = await chrome.scripting.executeScript({
-                    target: { tabId },
-                    func: clickTemporaryChatButton,
-                });
-                if (res?.[0]?.result === true) {
-                    await sleep(400);
-                    break;
-                }
-            } catch {}
-            await sleep(200);
-        }
+        await retryWithTimeout({
+            task: () => executeInTab(tabId, clickTemporaryChatButton),
+            timeoutMs: FLASH_WORKFLOW_TIMEOUTS.temporaryChat,
+            shouldStop: (clicked) => clicked === true,
+            onSuccess: async () => {
+                await sleep(400);
+            },
+        });
 
-        const modeEnd = Date.now() + 5000;
-        while (Date.now() < modeEnd) {
-            try {
-                const res = await chrome.scripting.executeScript({
-                    target: { tabId },
-                    func: setTargetModel,
-                    args: ['flash'],
-                });
-                const result = res?.[0]?.result;
-                if (result === 'CLICKED') {
-                    await sleep(200);
-                    break;
-                }
-                if (result === 'ALREADY_SELECTED') break;
-                if (result === 'MENU_OPENED') {
-                    await sleep(150);
-                    continue;
-                }
-            } catch {}
-            await sleep(150);
-        }
+        await retryWithTimeout({
+            task: () => executeInTab(tabId, setTargetModel, ['flash']),
+            timeoutMs: FLASH_WORKFLOW_TIMEOUTS.modeSwitch,
+            intervalMs: 150,
+            shouldStop: (status) =>
+                status === 'CLICKED' || status === 'ALREADY_SELECTED',
+            onSuccess: async (status) => {
+                if (status === 'CLICKED') await sleep(200);
+            },
+        });
 
-        const enterEnd = Date.now() + 15000;
-        let entered = false;
-        while (Date.now() < enterEnd) {
-            try {
-                const res = await chrome.scripting.executeScript({
-                    target: { tabId },
-                    func: enterPrompt,
-                    args: [fullPrompt],
-                });
-                if (res?.[0]?.result === true) {
-                    entered = true;
-                    break;
-                }
-            } catch {}
-            await sleep(200);
+        const enterResult = await retryWithTimeout({
+            task: () => executeInTab(tabId, enterPrompt, [fullPrompt]),
+            timeoutMs: FLASH_WORKFLOW_TIMEOUTS.enterPrompt,
+            shouldStop: (entered) => entered === true,
+        });
+        if (!enterResult.success) {
+            throw new Error('Failed to enter prompt (timeout)');
         }
-        if (!entered) throw new Error('Failed to enter prompt (timeout)');
 
         await sleep(200);
-        await chrome.scripting.executeScript({
-            target: { tabId },
-            func: clickSubmit,
-        });
+        await executeInTab(tabId, clickSubmit);
 
         return await pollForResponse(tabId, pollTimeout, fullPrompt);
     } finally {
@@ -526,16 +553,7 @@ function getChatMemoryKey(chatId) {
 async function migrateLegacyChatMemoriesToIdb() {
     if (chatMemoryMigrationDone) return;
 
-    const legacyMemories = await new Promise((resolve) => {
-        chrome.storage.local.get([CHAT_MEMORIES_KEY], (result) => {
-            if (chrome.runtime?.lastError) {
-                resolve(null);
-                return;
-            }
-            const value = result?.[CHAT_MEMORIES_KEY];
-            resolve(value && typeof value === 'object' ? value : null);
-        });
-    });
+    const legacyMemories = await getStorageObject(CHAT_MEMORIES_KEY);
 
     if (legacyMemories && Object.keys(legacyMemories).length > 0) {
         const batch = {};
@@ -562,11 +580,7 @@ async function setChatMemory(chatId, memory) {
 }
 
 async function removeLegacyChatMemoryBlob() {
-    return new Promise((resolve) => {
-        chrome.storage.local.remove([CHAT_MEMORIES_KEY], () => {
-            resolve();
-        });
-    });
+    return removeStorageKeys([CHAT_MEMORIES_KEY]);
 }
 
 async function handleSummarizeChatMemory(request) {
@@ -646,15 +660,18 @@ async function handleOptimizePrompt(request) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === 'OPTIMIZE_PROMPT') {
-        handleOptimizePrompt(message).then(sendResponse);
+    const handlers = {
+        OPTIMIZE_PROMPT: handleOptimizePrompt,
+        SUMMARIZE_CHAT_MEMORY: handleSummarizeChatMemory,
+    };
+
+    const handler = handlers[message?.type];
+    if (handler) {
+        handler(message).then(sendResponse);
         return true;
     }
-    if (message.type === 'SUMMARIZE_CHAT_MEMORY') {
-        handleSummarizeChatMemory(message).then(sendResponse);
-        return true;
-    }
-    if (message.type === 'CANCEL_OPTIMIZATION') {
+
+    if (message?.type === 'CANCEL_OPTIMIZATION') {
         if (currentOptimizationTabId) {
             chrome.tabs.remove(currentOptimizationTabId).catch(() => {});
             currentOptimizationTabId = null;
