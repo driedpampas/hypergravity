@@ -11,17 +11,15 @@ import {
     SettingsGearIcon,
 } from './icons';
 import { WELCOME_SEEN_KEY } from './utils/constants';
-import { readLocalStorageValue } from './utils/browserEnv';
 
 export function Sidebar() {
     const [isExpanded, setIsExpanded] = useStorage(
         'hypergravitySectionExpanded',
         true
     );
-    // Use sync localStorage read as initial value to avoid flash-showing on reload
     const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useStorage(
         WELCOME_SEEN_KEY,
-        readLocalStorageValue(WELCOME_SEEN_KEY, false)
+        false
     );
     const hasSeenWelcome = welcomeSeen === true;
     const [activeMenu, setActiveMenu] = useState(null); // 'folders', 'settings'

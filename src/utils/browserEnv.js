@@ -1,4 +1,51 @@
-import { debugLog } from './debug';
+import {
+    getIdbValue,
+    setIdbValue,
+    removeIdbValue,
+    setIdbValues,
+    getIdbValues,
+    getAllIdbValues,
+} from './idbStorage';
+
+const localListeners = new Map();
+const storageContextId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const storageChannel =
+    typeof BroadcastChannel !== 'undefined'
+        ? new BroadcastChannel('hypergravity-storage-events')
+        : null;
+
+function emitToLocalListeners(key, value) {
+    const listeners = localListeners.get(key);
+    if (!listeners || listeners.size === 0) return;
+    listeners.forEach((listener) => {
+        try {
+            listener(value);
+        } catch {}
+    });
+}
+
+function notifyStorageChange(key, value) {
+    emitToLocalListeners(key, value);
+
+    if (storageChannel) {
+        try {
+            storageChannel.postMessage({
+                source: storageContextId,
+                key,
+                value,
+            });
+        } catch {}
+    }
+}
+
+if (storageChannel) {
+    storageChannel.onmessage = (event) => {
+        const payload = event?.data;
+        if (!payload || payload.source === storageContextId) return;
+        if (!payload.key) return;
+        emitToLocalListeners(payload.key, payload.value);
+    };
+}
 
 /**
  * Checks if the current environment is a Chrome/Web Extension.
@@ -47,75 +94,45 @@ export function getVersion() {
 }
 
 /**
- * Reads a value from the synchronous localStorage, with fallback.
- * @param {string} key
- * @param {*} [fallback=undefined]
- * @returns {*}
- */
-export function readLocalStorageValue(key, fallback = undefined) {
-    try {
-        const raw = localStorage.getItem(key);
-        if (raw === null) return fallback;
-        return JSON.parse(raw);
-    } catch {
-        return fallback;
-    }
-}
-
-/**
- * Persists a value to localStorage, handling potential quota errors.
- * @param {string} key
- * @param {*} value
- */
-export function writeLocalStorageValue(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-        // quota exceeded or private mode
-    }
-}
-
-/**
- * Core storage retrieval function that abstracts over chrome.storage, userscript storage, and localStorage.
- * Prioritizes chrome.storage and keeps localStorage in sync as a backup.
+ * Core storage retrieval function that abstracts over chrome.storage, userscript storage, and IndexedDB.
+ * Prioritizes chrome.storage and keeps IndexedDB in sync as a backup.
  * @param {string} key
  * @param {*} [fallback=undefined]
  * @returns {Promise<*>}
  */
 export async function getStorageValue(key, fallback = undefined) {
-    return new Promise((resolve) => {
-        if (hasChromeStorage()) {
+    if (hasChromeStorage()) {
+        const chromeValue = await new Promise((resolve) => {
             chrome.storage.local.get([key], (result) => {
                 if (chrome.runtime?.lastError) {
-                    resolve(readLocalStorageValue(key, fallback));
+                    resolve(undefined);
                     return;
                 }
-                if (result[key] !== undefined) {
-                    writeLocalStorageValue(key, result[key]); // keep local in sync
-                    resolve(result[key]);
-                    return;
-                }
-                const localValue = readLocalStorageValue(key);
-                if (localValue !== undefined) {
-                    chrome.storage.local.set({ [key]: localValue }, () => {
-                        resolve(localValue);
-                    });
-                    return;
-                }
-                resolve(fallback);
+                resolve(result[key]);
             });
-            return;
+        });
+
+        if (chromeValue !== undefined) {
+            await setIdbValue(key, chromeValue);
+            return chromeValue;
         }
 
-        if (isUserscript() && typeof GM_getValue === 'function') {
-            const val = GM_getValue(key, fallback);
-            writeLocalStorageValue(key, val);
-            resolve(val);
-            return;
+        const idbValue = await getIdbValue(key, undefined);
+        if (idbValue !== undefined) {
+            chrome.storage.local.set({ [key]: idbValue }, () => {});
+            return idbValue;
         }
 
-        resolve(readLocalStorageValue(key, fallback));
-    });
+        return fallback;
+    }
+
+    if (isUserscript() && typeof GM_getValue === 'function') {
+        const val = GM_getValue(key, fallback);
+        await setIdbValue(key, val);
+        return val;
+    }
+
+    return getIdbValue(key, fallback);
 }
 
 /**
@@ -125,7 +142,7 @@ export async function getStorageValue(key, fallback = undefined) {
  * @returns {Promise<void>}
  */
 export async function setStorageValue(key, value) {
-    writeLocalStorageValue(key, value);
+    await setIdbValue(key, value);
 
     if (hasChromeStorage()) {
         return new Promise((resolve) => {
@@ -138,6 +155,7 @@ export async function setStorageValue(key, value) {
         return Promise.resolve();
     }
 
+    notifyStorageChange(key, value);
     return Promise.resolve();
 }
 
@@ -147,9 +165,7 @@ export async function setStorageValue(key, value) {
  * @returns {Promise<void>}
  */
 export async function removeStorageValue(key) {
-    try {
-        localStorage.removeItem(key);
-    } catch {}
+    await removeIdbValue(key);
 
     if (hasChromeStorage()) {
         return new Promise((resolve) => {
@@ -162,6 +178,7 @@ export async function removeStorageValue(key) {
         return Promise.resolve();
     }
 
+    notifyStorageChange(key, undefined);
     return Promise.resolve();
 }
 
@@ -186,40 +203,64 @@ export function addStorageListener(key, callback) {
         return () => GM_removeValueChangeListener(listenerId);
     }
 
-    // Polling fallback for local storage if needed
-    const interval = setInterval(() => {
-        const val = readLocalStorageValue(key);
-        callback(val);
-    }, 1000);
-    return () => clearInterval(interval);
+    const listeners = localListeners.get(key) || new Set();
+    listeners.add(callback);
+    localListeners.set(key, listeners);
+
+    return () => {
+        const current = localListeners.get(key);
+        if (!current) return;
+        current.delete(callback);
+        if (current.size === 0) {
+            localListeners.delete(key);
+        }
+    };
 }
 
-export function getAllStorageData(keys) {
-    return new Promise((resolve) => {
-        if (hasChromeStorage()) {
-            chrome.storage.local.get(keys, resolve);
-            return;
-        }
-
-        let result = {};
-        if (isUserscript() && typeof GM_getValue === 'function') {
-            if (Array.isArray(keys)) {
-                keys.forEach((k) => (result[k] = GM_getValue(k)));
-            } else {
-                // Userscripts don't have a clean way to get ALL keys unless we polyfill `GM_listValues`
-                if (typeof GM_listValues === 'function') {
-                    GM_listValues().forEach(
-                        (k) => (result[k] = GM_getValue(k))
-                    );
+export async function getAllStorageData(keys) {
+    if (hasChromeStorage()) {
+        return new Promise((resolve) => {
+            chrome.storage.local.get(keys, async (result) => {
+                if (chrome.runtime?.lastError) {
+                    if (Array.isArray(keys)) {
+                        resolve(await getIdbValues(keys));
+                        return;
+                    }
+                    resolve(await getAllIdbValues());
+                    return;
                 }
+                if (result && typeof result === 'object') {
+                    await setIdbValues(result);
+                }
+                resolve(result || {});
+            });
+        });
+    }
+
+    if (isUserscript() && typeof GM_getValue === 'function') {
+        const result = {};
+        if (Array.isArray(keys)) {
+            for (const key of keys) {
+                result[key] = GM_getValue(key);
             }
-            resolve(result);
-            return;
+            await setIdbValues(result);
+            return result;
         }
 
-        // fallback to localStorage
-        resolve(result);
-    });
+        if (typeof GM_listValues === 'function') {
+            for (const key of GM_listValues()) {
+                result[key] = GM_getValue(key);
+            }
+            await setIdbValues(result);
+            return result;
+        }
+    }
+
+    if (Array.isArray(keys)) {
+        return getIdbValues(keys);
+    }
+
+    return getAllIdbValues();
 }
 
 // Prompt Optimizer

@@ -1,13 +1,19 @@
-import { getStorageValue, setStorageValue } from './browserEnv';
+import { getStorageValue, removeStorageValue } from './browserEnv';
+import { getAllIdbValues, setIdbValues, removeIdbValues } from './idbStorage';
 import { debugLog as _debugLog } from './debug';
 
 const CACHE_KEY = 'hg_token_hash_cache';
+const CACHE_PREFIX = `${CACHE_KEY}:`;
 const FLUSH_DELAY = 1500;
+const FLUSH_INTERVAL = 15000;
+const HASH_HEX_LENGTH = 20;
+const LEGACY_HASH_HEX_LENGTH = 16;
 
 let memoryCache = null;
 let flushTimer = null;
 let loadPromise = null;
-let dirty = false;
+let dirtyHashes = new Set();
+let migrationPromise = null;
 
 const debugLog = (...args) => _debugLog('Cache', ...args);
 
@@ -18,45 +24,138 @@ const debugLog = (...args) => _debugLog('Cache', ...args);
 function loadCache() {
     if (loadPromise) return loadPromise;
 
-    loadPromise = new Promise((resolve) => {
-        getStorageValue(CACHE_KEY, {}).then((data) => {
-            memoryCache = data || {};
-            debugLog(
-                'Cache loaded,',
-                Object.keys(memoryCache).length,
-                'entries'
-            );
-            resolve(memoryCache);
-        });
-    });
+    loadPromise = (async () => {
+        await ensureLegacyCacheMigration();
+
+        const allValues = await getAllIdbValues();
+        const hydrated = {};
+
+        for (const [fullKey, value] of Object.entries(allValues)) {
+            if (!fullKey.startsWith(CACHE_PREFIX)) continue;
+            const hash = fullKey.slice(CACHE_PREFIX.length);
+            if (!hash) continue;
+            if (Number.isFinite(value)) {
+                hydrated[hash] = value;
+            }
+        }
+
+        memoryCache = hydrated;
+        debugLog('Cache loaded,', Object.keys(memoryCache).length, 'entries');
+        return memoryCache;
+    })();
 
     return loadPromise;
+}
+
+function readLegacyLocalStorageMap() {
+    try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+function removeLegacyLocalStorageMap() {
+    try {
+        localStorage.removeItem(CACHE_KEY);
+    } catch {}
+}
+
+async function ensureLegacyCacheMigration() {
+    if (migrationPromise) return migrationPromise;
+
+    migrationPromise = (async () => {
+        const allValues = await getAllIdbValues();
+        const existingHashes = new Set();
+
+        for (const fullKey of Object.keys(allValues)) {
+            if (!fullKey.startsWith(CACHE_PREFIX)) continue;
+            const hash = fullKey.slice(CACHE_PREFIX.length);
+            if (hash) existingHashes.add(hash);
+        }
+
+        const legacyMaps = [
+            await getStorageValue(CACHE_KEY, null),
+            readLegacyLocalStorageMap(),
+        ];
+
+        const batch = {};
+        let migratedCount = 0;
+
+        for (const legacyMap of legacyMaps) {
+            if (!legacyMap || typeof legacyMap !== 'object') continue;
+
+            for (const [hash, count] of Object.entries(legacyMap)) {
+                if (typeof hash !== 'string' || !Number.isFinite(count)) {
+                    continue;
+                }
+
+                if (existingHashes.has(hash)) {
+                    continue;
+                }
+
+                batch[`${CACHE_PREFIX}${hash}`] = count;
+                existingHashes.add(hash);
+                migratedCount++;
+            }
+        }
+
+        if (migratedCount > 0) {
+            await setIdbValues(batch);
+            debugLog('Migrated', migratedCount, 'legacy cache entries to IDB');
+        }
+
+        await removeStorageValue(CACHE_KEY);
+        removeLegacyLocalStorageMap();
+    })();
+
+    return migrationPromise;
 }
 
 /**
  * Persists the current in-memory cache state back to storage.
  */
-function flushToStorage() {
-    if (!memoryCache || !dirty) return;
-    dirty = false;
+async function flushToStorage() {
+    if (!memoryCache || dirtyHashes.size === 0) return;
 
-    const data = { ...memoryCache };
-    debugLog('Flushing', Object.keys(data).length, 'entries to storage');
+    const hashes = Array.from(dirtyHashes);
+    dirtyHashes = new Set();
 
-    setStorageValue(CACHE_KEY, data);
+    const batch = {};
+    for (const hash of hashes) {
+        const value = memoryCache[hash];
+        if (Number.isFinite(value)) {
+            batch[`${CACHE_PREFIX}${hash}`] = value;
+        }
+    }
+
+    if (Object.keys(batch).length === 0) return;
+
+    debugLog('Flushing', Object.keys(batch).length, 'entries to storage');
+
+    await setIdbValues(batch);
 }
 
 /**
  * Debounces cache writes to storage to prevent excessive API calls.
  */
 function scheduleFlush() {
-    dirty = true;
     clearTimeout(flushTimer);
     flushTimer = setTimeout(flushToStorage, FLUSH_DELAY);
 }
 
 try {
     window.addEventListener('beforeunload', flushToStorage);
+    window.setInterval(() => {
+        void flushToStorage();
+    }, FLUSH_INTERVAL);
+
+    queueMicrotask(() => {
+        void ensureLegacyCacheMigration();
+    });
 } catch {
     // not in a window context
 }
@@ -99,7 +198,7 @@ export async function hashText(text) {
     const buffer = await crypto.subtle.digest('SHA-256', encoded);
     const bytes = new Uint8Array(buffer);
     let hex = '';
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < HASH_HEX_LENGTH / 2; i++) {
         hex += bytes[i].toString(16).padStart(2, '0');
     }
     return hex;
@@ -112,8 +211,20 @@ export async function hashText(text) {
  */
 export async function getCachedTokenCount(hash) {
     const cache = await loadCache();
-    const value = cache[hash];
-    const result = Number.isFinite(value) ? value : null;
+    const directValue = cache[hash];
+    let result = Number.isFinite(directValue) ? directValue : null;
+
+    if (result === null && hash.length > LEGACY_HASH_HEX_LENGTH) {
+        const legacyHash = hash.slice(0, LEGACY_HASH_HEX_LENGTH);
+        const legacyValue = cache[legacyHash];
+        if (Number.isFinite(legacyValue)) {
+            cache[hash] = legacyValue;
+            dirtyHashes.add(hash);
+            scheduleFlush();
+            result = legacyValue;
+        }
+    }
+
     debugLog(
         result !== null ? `Cache HIT ${hash} → ${result}` : `Cache MISS ${hash}`
     );
@@ -128,12 +239,13 @@ export async function getCachedTokenCount(hash) {
 export async function setCachedTokenCount(hash, count) {
     const cache = await loadCache();
     cache[hash] = count;
+    dirtyHashes.add(hash);
     debugLog(`Cache SET ${hash} → ${count}`);
     scheduleFlush();
 }
 
 export function forceFlush() {
-    flushToStorage();
+    void flushToStorage();
 }
 
 export async function getAllCacheData() {
@@ -148,11 +260,11 @@ export async function importCacheData(data) {
     for (const [hash, count] of Object.entries(data)) {
         if (typeof hash === 'string' && Number.isFinite(count)) {
             cache[hash] = count;
+            dirtyHashes.add(hash);
             imported++;
         }
     }
-    dirty = true;
-    flushToStorage();
+    await flushToStorage();
     return imported;
 }
 
@@ -160,4 +272,22 @@ export async function getCacheStats() {
     const cache = await loadCache();
     const entries = Object.keys(cache).length;
     return { entries };
+}
+
+export async function clearCacheData() {
+    const cache = await loadCache();
+    const hashes = Object.keys(cache);
+
+    clearTimeout(flushTimer);
+    dirtyHashes = new Set();
+
+    if (hashes.length > 0) {
+        const idbKeys = hashes.map((hash) => `${CACHE_PREFIX}${hash}`);
+        await removeIdbValues(idbKeys);
+    }
+
+    await removeStorageValue(CACHE_KEY);
+    memoryCache = {};
+
+    return hashes.length;
 }

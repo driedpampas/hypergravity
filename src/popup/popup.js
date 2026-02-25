@@ -6,8 +6,12 @@ import {
 } from '../utils/browserEnv';
 import { ExportDataIcon, ImportDataIcon } from '../icons';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
-
-const CACHE_KEY = 'hg_token_hash_cache';
+import {
+    getAllCacheData,
+    importCacheData,
+    getCacheStats,
+    clearCacheData,
+} from '../utils/tokenHashCache';
 
 function showStatus(message, type = '') {
     const el = document.getElementById('hg-status');
@@ -22,19 +26,14 @@ function showStatus(message, type = '') {
 }
 
 async function loadCacheData() {
-    return (await getStorageValue(CACHE_KEY)) || {};
-}
-
-async function saveCacheData(data) {
-    return await setStorageValue(CACHE_KEY, data);
+    return await getAllCacheData();
 }
 
 async function refreshStats() {
     try {
-        const data = await loadCacheData();
-        const count = Object.keys(data).length;
+        const { entries } = await getCacheStats();
         document.getElementById('hg-cache-entries').textContent =
-            count.toLocaleString();
+            entries.toLocaleString();
     } catch {
         document.getElementById('hg-cache-entries').textContent = 'error';
     }
@@ -76,17 +75,7 @@ async function handleImport(file) {
             throw new Error('Invalid data format');
         }
 
-        const existing = await loadCacheData();
-        let imported = 0;
-
-        for (const [hash, count] of Object.entries(importedData)) {
-            if (typeof hash === 'string' && Number.isFinite(count)) {
-                existing[hash] = count;
-                imported++;
-            }
-        }
-
-        await saveCacheData(existing);
+        const imported = await importCacheData(importedData);
         await refreshStats();
 
         showStatus(`Imported ${imported} entries`, 'success');
@@ -108,6 +97,53 @@ function mountIcons() {
     }
 }
 
+function showConfirmModal({
+    title,
+    body,
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    danger = false,
+}) {
+    const overlay = document.getElementById('hg-modal-overlay');
+    const titleEl = overlay?.querySelector('.hg-popup-modal-title');
+    const bodyEl = document.getElementById('hg-modal-body');
+    const cancelBtn = document.getElementById('hg-modal-cancel');
+    const confirmBtn = document.getElementById('hg-modal-confirm');
+
+    if (!overlay || !titleEl || !bodyEl || !cancelBtn || !confirmBtn) {
+        return Promise.resolve(false);
+    }
+
+    titleEl.textContent = title;
+    bodyEl.textContent = body;
+    cancelBtn.textContent = cancelText;
+    confirmBtn.textContent = confirmText;
+    confirmBtn.classList.toggle('hg-popup-modal-btn--danger', danger);
+    confirmBtn.classList.toggle('hg-popup-modal-btn--primary', !danger);
+
+    return new Promise((resolve) => {
+        overlay.classList.add('active');
+
+        const close = (confirmed) => {
+            overlay.classList.remove('active');
+            cancelBtn.removeEventListener('click', onCancel);
+            confirmBtn.removeEventListener('click', onConfirm);
+            overlay.removeEventListener('click', onOverlayClick);
+            resolve(confirmed);
+        };
+
+        const onCancel = () => close(false);
+        const onConfirm = () => close(true);
+        const onOverlayClick = (event) => {
+            if (event.target === overlay) close(false);
+        };
+
+        cancelBtn.addEventListener('click', onCancel);
+        confirmBtn.addEventListener('click', onConfirm);
+        overlay.addEventListener('click', onOverlayClick);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     mountIcons();
     document.getElementById('hg-version').textContent = `v${getVersion()}`;
@@ -122,6 +158,31 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('hg-import-btn').addEventListener('click', () => {
         importInput.click();
     });
+
+    document
+        .getElementById('hg-clear-cache-btn')
+        .addEventListener('click', async () => {
+            const { entries } = await getCacheStats();
+            if (!entries) {
+                showStatus('Cache is already empty', 'info');
+                return;
+            }
+
+            const confirmed = await showConfirmModal({
+                title: 'Clear Cached Token Counts?',
+                body: 'This permanently deletes all cached token counts and cannot be undone.',
+                confirmText: 'Clear Cache',
+                cancelText: 'Cancel',
+                danger: true,
+            });
+
+            if (!confirmed) return;
+
+            showStatus('Clearing cache…');
+            const cleared = await clearCacheData();
+            await refreshStats();
+            showStatus(`Cleared ${cleared} entries`, 'success');
+        });
 
     importInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -164,36 +225,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 'info'
             );
 
-            // show custom modal instead of window.confirm
-            const overlay = document.getElementById('hg-modal-overlay');
-            const cancelBtn = document.getElementById('hg-modal-cancel');
-            const confirmBtn = document.getElementById('hg-modal-confirm');
+            const confirmed = await showConfirmModal({
+                title: 'Reload Required',
+                body: 'Changes will take effect after reloading the current tab.',
+                confirmText: 'Reload Now',
+                cancelText: 'Later',
+            });
 
-            if (overlay && cancelBtn && confirmBtn) {
-                overlay.classList.add('active');
-
-                const close = () => {
-                    overlay.classList.remove('active');
-                    // clean up listeners
-                    cancelBtn.removeEventListener('click', onCancel);
-                    confirmBtn.removeEventListener('click', onConfirm);
-                };
-
-                const onCancel = () => close();
-                const onConfirm = () => {
-                    chrome.tabs.query(
-                        { active: true, currentWindow: true },
-                        (tabs) => {
-                            if (tabs[0] && tabs[0].id) {
-                                chrome.tabs.reload(tabs[0].id);
-                            }
+            if (confirmed) {
+                chrome.tabs.query(
+                    { active: true, currentWindow: true },
+                    (tabs) => {
+                        if (tabs[0] && tabs[0].id) {
+                            chrome.tabs.reload(tabs[0].id);
                         }
-                    );
-                    close();
-                };
-
-                cancelBtn.addEventListener('click', onCancel);
-                confirmBtn.addEventListener('click', onConfirm);
+                    }
+                );
             }
         };
 

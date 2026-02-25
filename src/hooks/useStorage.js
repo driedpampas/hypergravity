@@ -3,7 +3,6 @@ import {
     getStorageValue,
     setStorageValue,
     addStorageListener,
-    writeLocalStorageValue,
 } from '../utils/browserEnv';
 
 /**
@@ -27,7 +26,7 @@ function mergeWithDefaults(stored, defaults) {
 }
 
 /**
- * Preact/React hook for persisting state to Chrome Storage with localStorage fallback.
+ * Preact/React hook for persisting state to async storage backends.
  * Automatically synchronizes state changes across different tabs or extension components.
  * @param {string} key - The storage key.
  * @param {*} initialValue - The initial/default value.
@@ -58,8 +57,6 @@ export function useStorage(key, initialValue) {
             if (newValue !== undefined) {
                 const merged = mergeWithDefaults(newValue, defaultsRef.current);
                 setValue(merged);
-                // keep local storage in sync as fallback
-                writeLocalStorageValue(key, merged);
             }
         });
 

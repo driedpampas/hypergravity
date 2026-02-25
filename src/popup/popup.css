@@ -271,6 +271,16 @@ body {
     background: #3367d6;
 }
 
+.hg-popup-modal-btn--danger {
+    background: #d93025;
+    color: #fff;
+    border-color: #d93025;
+}
+
+.hg-popup-modal-btn--danger:hover {
+    background: #b3261e;
+}
+
 @keyframes hgFadeIn {
     from {
         opacity: 0;
@@ -378,5 +388,9 @@ body {
 
     .hg-popup-modal-btn:hover {
         background: #444;
+    }
+
+    .hg-popup-modal-btn--danger {
+        color: #fff;
     }
 }
