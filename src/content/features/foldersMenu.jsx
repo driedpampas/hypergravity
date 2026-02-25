@@ -4,6 +4,10 @@ import { useState } from 'preact/hooks';
 import { FolderAddIcon, CloseIcon } from '../../icons';
 import { getStorageValue, setStorageValue } from '../../utils/browserEnv';
 import { FOLDERS_KEY } from '../../utils/constants';
+import {
+    normalizeFoldersData,
+    withUpdatedFolders,
+} from '../../utils/foldersData';
 import { inferChatInfoFromConversationRow } from '../helpers/chatInfo';
 
 function FolderSelectModal({
@@ -14,6 +18,19 @@ function FolderSelectModal({
     onSave,
 }) {
     const [selected, setSelected] = useState(new Set(initiallySelected));
+
+    const flattenFolders = (parentId = null, depth = 0) => {
+        const children = folders.filter(
+            (folder) => (folder.parentId || null) === (parentId || null)
+        );
+
+        return children.flatMap((folder) => [
+            { ...folder, __depth: depth },
+            ...flattenFolders(folder.id, depth + 1),
+        ]);
+    };
+
+    const orderedFolders = flattenFolders(null, 0);
 
     const toggle = (id) => {
         const next = new Set(selected);
@@ -39,7 +56,7 @@ function FolderSelectModal({
                 Manage folders for: <strong>{chatInfo.title}</strong>
             </div>
             <div class="hg-folder-select-list">
-                {folders.map((folder) => (
+                {orderedFolders.map((folder) => (
                     <button
                         key={folder.id}
                         class="hg-folder-select-item"
@@ -49,7 +66,13 @@ function FolderSelectModal({
                         <span class="hg-folder-select-check">
                             {selected.has(folder.id) ? '✓' : ''}
                         </span>
-                        <span class="hg-folder-select-name">{folder.name}</span>
+                        <span
+                            class="hg-folder-select-name"
+                            style={{ paddingLeft: `${folder.__depth * 14}px` }}
+                        >
+                            {folder.__depth > 0 ? '↳ ' : ''}
+                            {folder.name}
+                        </span>
                         <span class="hg-folder-select-count">
                             {(folder.chats || []).length}
                         </span>
@@ -77,7 +100,9 @@ export function createFoldersMenuManager({
     let lastClickedChatInfo = null;
 
     async function showAddToFolderMenu(chatInfo) {
-        const folders = await getStorageValue(FOLDERS_KEY, []);
+        const storedFolders = await getStorageValue(FOLDERS_KEY);
+        const foldersData = normalizeFoldersData(storedFolders);
+        const folders = foldersData.folders;
 
         if (!Array.isArray(folders) || folders.length === 0) {
             showToast('Create a folder first', 'info');
@@ -125,7 +150,10 @@ export function createFoldersMenuManager({
                 return { ...folder, chats };
             });
 
-            await setStorageValue(FOLDERS_KEY, updatedFolders);
+            await setStorageValue(
+                FOLDERS_KEY,
+                withUpdatedFolders(storedFolders, updatedFolders)
+            );
             showToast('Folder changes saved', 'success');
             close();
         };
@@ -150,15 +178,33 @@ export function createFoldersMenuManager({
 
     function handleGlobalMenuButtonTracking(event) {
         const button = event.target.closest(
-            'button[data-test-id="side-nav-menu-button"]'
+            '.mat-mdc-menu-trigger'
         );
         if (!button) return;
 
-        const row = button.closest(
-            '.conversation, .conversation-list-item, [class*="conversation-item"]'
+        const sidebarRow = button.closest(
+            '.conversation-items-container, .conversation, .conversation-list-item, [class*="conversation-item"]'
         );
-        const info = inferChatInfoFromConversationRow(row);
-        if (info) lastClickedChatInfo = info;
+        const sidebarInfo = inferChatInfoFromConversationRow(sidebarRow);
+        if (sidebarInfo) {
+            lastClickedChatInfo = sidebarInfo;
+            return;
+        }
+
+        const topBarRoot = button.closest('top-bar-actions');
+        if (!topBarRoot) return;
+
+        const activeInfo = findActiveChatInfo();
+        if (!activeInfo) return;
+
+        const topBarTitle = topBarRoot
+            .querySelector('[data-test-id="conversation-title"]')
+            ?.textContent?.trim();
+
+        lastClickedChatInfo = {
+            ...activeInfo,
+            title: topBarTitle || activeInfo.title,
+        };
     }
 
     function injectAddToFolderOption(menuRoot) {

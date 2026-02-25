@@ -127,6 +127,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex: 1;
+    min-width: 0;
 }
 
 .hg-folder-info span {
@@ -138,6 +140,255 @@
 .hg-folder-count {
     color: var(--gem-sys-color--on-surface-variant, #575a5a) !important;
     font-size: 13px !important;
+    margin-left: auto;
+}
+
+.hg-folder-open {
+    border: none;
+    background: transparent;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hg-folder-open:hover {
+    text-decoration: underline;
+}
+
+.hg-folder-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.hg-folder-chevron,
+.hg-folder-chevron-placeholder {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    flex-shrink: 0;
+}
+
+.hg-folder-chevron {
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.hg-folder-chevron:hover {
+    background: var(--gem-sys-color--surface-container-highest, #dce1e9);
+}
+
+.hg-folder-action-btn {
+    border: none;
+    background: var(--gem-sys-color--surface-container-high, #e9eef6);
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 6px 10px;
+}
+
+.hg-folder-action-btn:hover {
+    background: var(--gem-sys-color--surface-container-highest, #dce1e9);
+}
+
+.hg-folder-rename-input {
+    border: 1px solid var(--gem-sys-color--outline, #727676);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    font-size: 14px;
+    padding: 6px 8px;
+    width: 180px;
+    max-width: 35vw;
+}
+
+.hg-folder-chats {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.hg-subfolder-section {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+}
+
+.hg-subfolder-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 6px 20px;
+}
+
+.hg-subfolder-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    padding: 8px 20px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hg-subfolder-item:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.hg-subfolder-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hg-subfolder-count {
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    font-size: 12px;
+}
+
+.hg-folder-chat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.hg-folder-chat-link {
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: calc(100% - 44px);
+}
+
+.hg-folder-chat-link:hover {
+    text-decoration: underline;
+}
+
+.hg-recycle-list {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+
+.hg-recycle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.hg-recycle-item-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+.hg-recycle-item-content strong,
+.hg-recycle-item-content span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hg-recycle-item-content strong {
+    font-size: 14px;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.hg-recycle-item-content span {
+    font-size: 12px;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+.hg-bulk-add-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.hg-bulk-add-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.hg-bulk-search-input {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid var(--gem-sys-color--outline, #727676);
+    border-radius: 8px;
+    outline: none;
+    background: transparent;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.hg-bulk-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.hg-bulk-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.hg-bulk-item:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.hg-bulk-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    padding: 10px 16px;
 }
 
 .hg-folder-delete {

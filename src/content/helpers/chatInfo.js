@@ -20,19 +20,42 @@ export function findActiveChatInfo() {
 
     if (!id || id.length < 6) return null;
 
+    const explicitConversationTitle =
+        document
+            .querySelector('[data-test-id="conversation-title"]')
+            ?.textContent?.trim() ||
+        document
+            .querySelector('.conversation-title-container .conversation-title-column')
+            ?.textContent?.trim();
+
     const titleFromHeader =
         document.querySelector('h1')?.textContent?.trim() ||
-        document.querySelector('[class*="title"]')?.textContent?.trim();
+        document
+            .querySelector('.conversation-title, .chat-title, [class*="conversation-title"]')
+            ?.textContent?.trim();
     const titleFromDocument = document.title
         .replace(' - Gemini', '')
         .replace('Google Gemini', '')
         .trim();
 
+    const titleCandidates = [
+        explicitConversationTitle,
+        titleFromHeader,
+        titleFromDocument,
+    ]
+        .map((value) => value?.replace(/\s+/g, ' ').trim())
+        .filter(Boolean);
+
     const title =
-        titleFromHeader ||
-        (titleFromDocument && titleFromDocument !== 'Google Gemini'
-            ? titleFromDocument
-            : `Chat from ${new Date().toLocaleDateString()}`);
+        titleCandidates.find((value) => {
+            const normalized = value.toLowerCase();
+            return (
+                normalized !== 'google gemini' &&
+                normalized !== 'gemini' &&
+                normalized !== 'chats' &&
+                normalized !== 'chat'
+            );
+        }) || `Chat from ${new Date().toLocaleDateString()}`;
 
     return {
         id,
@@ -53,17 +76,49 @@ export function inferChatInfoFromConversationRow(row) {
 
     const href = link.href;
     const id = href.split('/app/').pop()?.split(/[?#]/)[0];
-    if (!id) return null;
+    if (!id || id.length < 6 || !/^[a-z0-9_-]+$/i.test(id)) return null;
+
+    const ariaLabel = (row.getAttribute('aria-label') || '').trim();
+    const rowText = row.textContent
+        ?.replace(/more_vert/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const hasConversationSemantics =
+        row.classList.contains('conversation') ||
+        row.classList.contains('conversation-list-item') ||
+        row.getAttribute('data-test-id')?.includes('conversation') ||
+        link.getAttribute('data-test-id')?.includes('conversation') ||
+        Boolean(
+            row.closest(
+                '.conversation, .conversation-list-item, [data-test-id*="conversation"]'
+            )
+        );
+
+    if (
+        !hasConversationSemantics &&
+        !row.querySelector('.conversation-title, [class*="conversation-title"]')
+    ) {
+        return null;
+    }
 
     const title =
         row
             .querySelector('.conversation-title, [class*="title"]')
             ?.textContent?.trim() ||
-        row.textContent
-            ?.replace(/more_vert/gi, '')
-            .replace(/\s+/g, ' ')
-            .trim() ||
+        ariaLabel ||
+        rowText ||
         'Untitled Chat';
+
+    const normalizedTitle = title.toLowerCase();
+    if (
+        normalizedTitle === 'hypergravity' ||
+        normalizedTitle === 'settings' ||
+        normalizedTitle === 'new chat' ||
+        normalizedTitle === 'chats'
+    ) {
+        return null;
+    }
 
     return { id, title: title.slice(0, 100), url: href };
 }
