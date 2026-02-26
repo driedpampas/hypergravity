@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 
 const repoRoot = resolve(new URL('..', import.meta.url).pathname);
 const hooksDir = resolve(repoRoot, '.githooks');
-const preCommitHook = resolve(hooksDir, 'pre-commit');
+const prePushHook = resolve(hooksDir, 'pre-push');
 
 if (!existsSync(hooksDir)) {
     console.error('Missing .githooks directory.');
@@ -17,8 +17,8 @@ execSync('git config core.hooksPath .githooks', {
     stdio: 'inherit',
 });
 
-if (existsSync(preCommitHook)) {
-    chmodSync(preCommitHook, 0o755);
+if (existsSync(prePushHook)) {
+    chmodSync(prePushHook, 0o755);
 }
 
 console.log('Git hooks configured to use .githooks');
