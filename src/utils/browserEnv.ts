@@ -22,7 +22,7 @@ function emitToLocalListeners(key: string, value: unknown): void {
     for (const listener of listeners) {
         try {
             listener(value);
-        } catch (e) {
+        } catch (_e) {
             // no-op
         }
     }

@@ -1,6 +1,6 @@
-import type { JSX } from 'preact';
+import type { SVGAttributes } from 'preact';
 
-export function HypergravityIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
+export function HypergravityIcon(props: SVGAttributes<SVGSVGElement>) {
     return (
         <svg
             {...props}

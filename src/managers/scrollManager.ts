@@ -69,7 +69,7 @@ export function createScrollManager() {
         for (const callback of subscribers) {
             try {
                 callback(state);
-            } catch (e) {
+            } catch (_e) {
                 // no-op
             }
         }

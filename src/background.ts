@@ -28,6 +28,65 @@ const CHAT_MEMORY_SUMMARY_PROMPT =
 const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
 const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';
 
+type ScriptFunction<TArgs extends unknown[], TResult> = (...args: TArgs) => TResult;
+
+type RetryWithTimeoutConfig<TValue> = {
+    task: () => Promise<TValue>;
+    timeoutMs: number;
+    intervalMs?: number;
+    shouldStop?: (value: TValue) => boolean;
+    onSuccess?: (value: TValue) => Promise<void> | void;
+};
+
+type RetryWithTimeoutResult<TValue> =
+    | { success: true; value: TValue }
+    | { success: false; value: null };
+
+type TranscriptMessage = {
+    role?: string;
+    text?: string;
+};
+
+type ChatMemory = {
+    chatId: string;
+    summary: string;
+    sourceHash: string | null;
+    messageCount: number;
+    updatedAt: number;
+};
+
+type SummarizeChatMemoryRequest = {
+    type: 'SUMMARIZE_CHAT_MEMORY';
+    chatId?: string;
+    messages?: TranscriptMessage[];
+    sourceHash?: string;
+};
+
+type OptimizePromptRequest = {
+    type: 'OPTIMIZE_PROMPT';
+    prompt?: string;
+};
+
+type CancelOptimizationRequest = {
+    type: 'CANCEL_OPTIMIZATION';
+};
+
+type RuntimeMessage =
+    | SummarizeChatMemoryRequest
+    | OptimizePromptRequest
+    | CancelOptimizationRequest;
+
+const MESSAGE_TYPES = {
+    optimizePrompt: 'OPTIMIZE_PROMPT',
+    summarizeChatMemory: 'SUMMARIZE_CHAT_MEMORY',
+    cancelOptimization: 'CANCEL_OPTIMIZATION',
+} as const;
+
+type HandlerRequestMessage = SummarizeChatMemoryRequest | OptimizePromptRequest;
+type RuntimeMessageHandler<TRequest extends HandlerRequestMessage> = (
+    request: TRequest
+) => Promise<Record<string, unknown>>;
+
 let currentOptimizationTabId: number | null = null;
 let chatMemoryMigrationDone = false;
 
@@ -52,9 +111,9 @@ function sleep(ms: number): Promise<void> {
 
 async function executeInTab(
     tabId: number,
-    func: (...args: any[]) => any,
-    args: any[] = []
-): Promise<any> {
+    func: ScriptFunction<unknown[], unknown>,
+    args: unknown[] = []
+): Promise<unknown> {
     const results = await chrome.scripting.executeScript({
         target: { tabId },
         func,
@@ -69,13 +128,7 @@ async function retryWithTimeout({
     intervalMs = DEFAULT_POLL_INTERVAL_MS,
     shouldStop = (value) => Boolean(value),
     onSuccess,
-}: {
-    task: () => Promise<any>;
-    timeoutMs: number;
-    intervalMs?: number;
-    shouldStop?: (value: any) => boolean;
-    onSuccess?: (value: any) => Promise<void> | void;
-}) {
+}: RetryWithTimeoutConfig<unknown>): Promise<RetryWithTimeoutResult<unknown>> {
     const endAt = Date.now() + timeoutMs;
     while (Date.now() < endAt) {
         try {
@@ -267,7 +320,11 @@ function openSidebarIfClosed(): 'ALREADY_OPEN' | 'OPENED' | 'NOT_FOUND' {
         const btn = document.querySelector<HTMLElement>(
             'side-nav-menu-button button, [data-test-id="side-nav-menu-button"] button, button[aria-label*="menu"], button[aria-label*="Menu"]'
         );
-        return btn ? (btn.click(), 'OPENED') : 'NOT_FOUND';
+        if (btn) {
+            btn.click();
+            return 'OPENED';
+        }
+        return 'NOT_FOUND';
     }
     return 'NOT_FOUND';
 }
@@ -407,7 +464,7 @@ async function waitForTabLoad(tabId: number): Promise<void> {
             reject(new Error('Tab load timeout'));
         }, TAB_LOAD_TIMEOUT_MS);
 
-        const listener = (id: number, changeInfo: any) => {
+        const listener = (id: number, changeInfo: { status?: string }) => {
             if (id === tabId && changeInfo.status === 'complete') {
                 clearTimeout(timeout);
                 chrome.tabs.onUpdated.removeListener(listener);
@@ -441,8 +498,11 @@ async function pollForResponse(
                 func: checkResponseStatus,
                 args: [promptText],
             });
-            if (results && results[0] && results[0].result) {
-                const { isGenerating, response } = results[0].result;
+            if (results?.[0]?.result) {
+                const { isGenerating, response } = results[0].result as {
+                    isGenerating: boolean;
+                    response: string | null;
+                };
                 if (response && response.length > 0) {
                     if (response.length === lastLength) {
                         stableCount++;
@@ -537,7 +597,7 @@ async function runFlashBackgroundPrompt(fullPrompt: string, pollTimeout = 60000)
     }
 }
 
-function formatTranscript(messages: any[]): string {
+function formatTranscript(messages: TranscriptMessage[]): string {
     const lines: string[] = [];
     for (const msg of messages) {
         const role = msg?.role === 'model' ? 'MODEL' : 'USER';
@@ -571,12 +631,13 @@ async function migrateLegacyChatMemoriesToIdb() {
     chatMemoryMigrationDone = true;
 }
 
-async function getChatMemory(chatId: string): Promise<any> {
+async function getChatMemory(chatId: string): Promise<ChatMemory | null> {
     await migrateLegacyChatMemoriesToIdb();
-    return getIdbValue(getChatMemoryKey(chatId), null);
+    const value = await getIdbValue<ChatMemory | null>(getChatMemoryKey(chatId), null);
+    return value as ChatMemory | null;
 }
 
-async function setChatMemory(chatId: string, memory: Record<string, unknown>) {
+async function setChatMemory(chatId: string, memory: ChatMemory) {
     await migrateLegacyChatMemoriesToIdb();
     await setIdbValue(getChatMemoryKey(chatId), memory);
 }
@@ -585,7 +646,7 @@ async function removeLegacyChatMemoryBlob() {
     return removeStorageKeys([CHAT_MEMORIES_KEY]);
 }
 
-async function handleSummarizeChatMemory(request: any) {
+async function handleSummarizeChatMemory(request: SummarizeChatMemoryRequest) {
     const chatId = String(request?.chatId || '').trim();
     const messages = Array.isArray(request?.messages) ? request.messages : [];
     const sourceHash = String(request?.sourceHash || '').trim();
@@ -642,14 +703,14 @@ async function handleSummarizeChatMemory(request: any) {
     }
 }
 
-async function handleOptimizePrompt(request: any) {
+async function handleOptimizePrompt(request: OptimizePromptRequest) {
     const prompt = String(request?.prompt || '').trim();
     if (!prompt) {
         return { success: false, error: 'Prompt is empty' };
     }
 
     try {
-        const fullPrompt = OPTIMIZATION_SYSTEM_PROMPT + prompt + '\n```';
+        const fullPrompt = `${OPTIMIZATION_SYSTEM_PROMPT + prompt}\n\`\`\``;
         let response = await runFlashBackgroundPrompt(fullPrompt, 60000);
         if (response) response = cleanOptimizedPrompt(response);
 
@@ -665,19 +726,22 @@ async function handleOptimizePrompt(request: any) {
     }
 }
 
-chrome.runtime.onMessage.addListener((message: any, _sender, sendResponse) => {
-    const handlers: Record<string, (request: any) => Promise<any>> = {
-        OPTIMIZE_PROMPT: handleOptimizePrompt,
-        SUMMARIZE_CHAT_MEMORY: handleSummarizeChatMemory,
+chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
+    const handlers: {
+        [MESSAGE_TYPES.optimizePrompt]: RuntimeMessageHandler<OptimizePromptRequest>;
+        [MESSAGE_TYPES.summarizeChatMemory]: RuntimeMessageHandler<SummarizeChatMemoryRequest>;
+    } = {
+        [MESSAGE_TYPES.optimizePrompt]: handleOptimizePrompt,
+        [MESSAGE_TYPES.summarizeChatMemory]: handleSummarizeChatMemory,
     };
 
     const handler = handlers[message?.type];
     if (handler) {
-        handler(message).then(sendResponse);
+        handler(message as HandlerRequestMessage).then(sendResponse);
         return true;
     }
 
-    if (message?.type === 'CANCEL_OPTIMIZATION') {
+    if (message?.type === MESSAGE_TYPES.cancelOptimization) {
         if (currentOptimizationTabId) {
             chrome.tabs.remove(currentOptimizationTabId).catch(() => {});
             currentOptimizationTabId = null;

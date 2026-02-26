@@ -1,7 +1,7 @@
 import { BackArrowIcon } from '@icons/CommonIcons';
-import type { JSX } from 'preact';
+import type { SVGAttributes } from 'preact';
 
-type IconProps = JSX.SVGAttributes<SVGSVGElement>;
+type IconProps = SVGAttributes<SVGSVGElement>;
 
 export function FolderBackIcon(props: IconProps) {
     return <BackArrowIcon {...props} />;

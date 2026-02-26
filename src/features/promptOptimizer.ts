@@ -88,7 +88,7 @@ export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
 
             if (!isOptimizing) return;
 
-            if (response && response.success && response.optimizedPrompt) {
+            if (response?.success && response.optimizedPrompt) {
                 setPromptText(response.optimizedPrompt);
                 showToast('Prompt optimized! Review changes.', 'success');
                 isOptimizing = false;
@@ -96,7 +96,7 @@ export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
                 return;
             }
 
-            showToast('Optimization failed: ' + (response?.error || 'Unknown error'), 'error');
+            showToast(`Optimization failed: ${response?.error || 'Unknown error'}`, 'error');
         } catch (e) {
             if (isOptimizing) {
                 console.error('[hypergravity] Optimization error:', e);

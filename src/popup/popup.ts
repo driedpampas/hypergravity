@@ -20,7 +20,7 @@ function showStatus(message: string, type = '') {
     const el = document.getElementById('hg-status');
     if (!el) return;
     el.textContent = message;
-    el.className = 'hg-popup-status' + (type ? ` ${type}` : '');
+    el.className = `hg-popup-status${type ? ` ${type}` : ''}`;
     if (type) {
         setTimeout(() => {
             el.textContent = '';
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (confirmed) {
                 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-                    if (tabs[0] && tabs[0].id) {
+                    if (tabs[0]?.id) {
                         chrome.tabs.reload(tabs[0].id);
                     }
                 });
