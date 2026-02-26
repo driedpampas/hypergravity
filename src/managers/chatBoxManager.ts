@@ -13,13 +13,20 @@ const CHAT_HISTORY_SELECTORS = [
 
 const TOOLS_ROOT_ID = 'hypergravity-chat-tools-root';
 
+type ChatInputElement = HTMLElement | HTMLTextAreaElement;
+
+type AddToolOptions = {
+    align?: 'left' | 'right';
+    weight?: number;
+};
+
 /**
  * Finds the Gemini chat input element using a series of fallbacks.
  * @returns {HTMLElement|null}
  */
-function getInputElement() {
+function getInputElement(): ChatInputElement | null {
     for (const sel of INPUT_SELECTORS) {
-        const el = document.querySelector(sel);
+        const el = document.querySelector<ChatInputElement>(sel);
         if (el) return el;
     }
     return null;
@@ -29,9 +36,14 @@ function getInputElement() {
  * Returns the current text content of the Gemini chat input.
  * @returns {string}
  */
-function getInputText() {
+function getInputText(): string {
     const el = getInputElement();
-    return (el && (el.innerText || el.textContent || el.value)) || '';
+    if (!el) return '';
+    if (el instanceof HTMLTextAreaElement) {
+        return el.value || '';
+    }
+
+    return el.innerText || el.textContent || '';
 }
 
 /**
@@ -39,7 +51,7 @@ function getInputText() {
  * @param {HTMLElement} element - The element to check.
  * @returns {boolean}
  */
-function isGemInstructionsField(element) {
+function isGemInstructionsField(element: HTMLElement | null): boolean {
     if (!element) return false;
 
     const richTextarea = element.closest('rich-textarea');
@@ -54,7 +66,7 @@ function isGemInstructionsField(element) {
  * Finds the wrapping container for the chat input field, useful for UI injection.
  * @returns {HTMLElement|null}
  */
-function getInputAnchorElement() {
+function getInputAnchorElement(): HTMLElement | null {
     const input = getInputElement();
     if (!input) return null;
 
@@ -71,9 +83,9 @@ function getInputAnchorElement() {
  * Returns the main scrollable container for chat history.
  * @returns {HTMLElement|null}
  */
-function getChatHistoryContainer() {
+function getChatHistoryContainer(): HTMLElement | null {
     for (const selector of CHAT_HISTORY_SELECTORS) {
-        const el = document.querySelector(selector);
+        const el = document.querySelector<HTMLElement>(selector);
         if (el) return el;
     }
 
@@ -84,7 +96,7 @@ function getChatHistoryContainer() {
  * Programmatically updates Gemini chat input text, handling both contenteditable and textarea modes.
  * @param {string} text - The text to set.
  */
-function setInputText(text) {
+function setInputText(text: string): void {
     const el = getInputElement();
     if (!el) return;
 
@@ -92,7 +104,7 @@ function setInputText(text) {
         while (el.firstChild) {
             el.removeChild(el.firstChild);
         }
-        text.split('\n').forEach((line) => {
+        for (const line of text.split('\n')) {
             const p = document.createElement('p');
             if (line) {
                 p.textContent = line;
@@ -100,7 +112,7 @@ function setInputText(text) {
                 p.appendChild(document.createElement('br'));
             }
             el.appendChild(p);
-        });
+        }
         el.classList.remove('ql-blank');
         el.focus();
 
@@ -113,17 +125,21 @@ function setInputText(text) {
             range.selectNodeContents(el);
             range.collapse(false);
         }
-        sel.removeAllRanges();
-        sel.addRange(range);
+        if (sel) {
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
         el.dispatchEvent(new Event('input', { bubbles: true }));
         el.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-        el.value = text;
-        el.focus();
-        const len = el.value.length;
-        el.setSelectionRange(len, len);
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
+        if (el instanceof HTMLTextAreaElement) {
+            el.value = text;
+            el.focus();
+            const len = el.value.length;
+            el.setSelectionRange(len, len);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 }
 
@@ -144,7 +160,11 @@ function getToolsContainer() {
  * @param {number} [options.weight=50] - Ordering weight (lower is first).
  * @returns {boolean} True if successfully added.
  */
-function addTool(id, element, { align = 'left', weight = 50 } = {}) {
+function addTool(
+    id: string,
+    element: HTMLElement,
+    { align = 'left', weight = 50 }: AddToolOptions = {}
+): boolean {
     const root = getToolsContainer();
     if (!root || !element) return false;
 
@@ -189,7 +209,7 @@ function addTool(id, element, { align = 'left', weight = 50 } = {}) {
  * @param {string} id - The tool ID.
  * @returns {boolean} True if element was found and removed.
  */
-function removeTool(id) {
+function removeTool(id: string): boolean {
     const container = getToolsContainer();
     if (!container) return false;
 
@@ -206,7 +226,7 @@ function removeTool(id) {
  * @param {string} id - The tool ID.
  * @returns {boolean}
  */
-function hasTool(id) {
+function hasTool(id: string): boolean {
     const container = getToolsContainer();
     if (!container) return false;
     return !!container.querySelector(`[data-hg-tool-id="${id}"]`);

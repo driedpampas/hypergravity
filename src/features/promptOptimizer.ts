@@ -1,9 +1,17 @@
-// @ts-nocheck
 import { chatBoxManager } from '@managers/chatBoxManager';
 import { optimizePrompt, cancelOptimization } from '@utils/browserEnv';
 
 const getPromptText = () => chatBoxManager.getInputText();
-const setPromptText = (text) => chatBoxManager.setInputText(text);
+const setPromptText = (text: string) => chatBoxManager.setInputText(text);
+
+type PromptOptimizerState = 'idle' | 'loading' | 'confirmation';
+type ToastType = 'info' | 'success' | 'error';
+type OptimizeResponse = {
+    success?: boolean;
+    optimizedPrompt?: string;
+    error?: string;
+};
+type ShowToast = (message: string, type?: ToastType) => void;
 
 /**
  * Factory function for creating a Prompt Optimizer instance.
@@ -11,22 +19,22 @@ const setPromptText = (text) => chatBoxManager.setInputText(text);
  * @param {Function} options.showToast - Callback to display notifications to the user.
  * @returns {Object} Public API for optimization control.
  */
-export function createPromptOptimizer({ showToast }) {
+export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
     let isOptimizing = false;
     let preOptimizationPrompt = '';
-    let onStateChange = null;
+    let onStateChange: ((state: PromptOptimizerState) => void) | null = null;
 
     /**
      * Registers a callback that is fired whenever the optimizer's internal state reaches a milestone.
      */
-    function setStateChangeCallback(cb) {
+    function setStateChangeCallback(cb: (state: PromptOptimizerState) => void) {
         onStateChange = cb;
     }
 
     /**
      * Notifies the state change callback of a new status.
      */
-    function emitState(state) {
+    function emitState(state: PromptOptimizerState) {
         if (typeof onStateChange === 'function') onStateChange(state);
     }
 
@@ -76,7 +84,7 @@ export function createPromptOptimizer({ showToast }) {
         emitState('loading');
 
         try {
-            const response = await optimizePrompt(promptText);
+            const response = (await optimizePrompt(promptText)) as OptimizeResponse;
 
             if (!isOptimizing) return;
 

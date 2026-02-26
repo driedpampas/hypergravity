@@ -14,7 +14,7 @@ function isDebugEnabled() {
  * @param {string} tag - Context tag for the log message.
  * @param {...*} args - Arguments to log.
  */
-export function debugLog(tag, ...args) {
+export function debugLog(tag: string, ...args: unknown[]): void {
     if (isDebugEnabled()) {
         console.log(`[HG ${tag}]`, ...args);
     }

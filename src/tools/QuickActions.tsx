@@ -1,9 +1,16 @@
-// @ts-nocheck
 import { useStorage } from '@hooks/useStorage';
 import { chatBoxManager } from '@managers/chatBoxManager';
 
+type QuickActionItem = {
+    name: string;
+    prompt: string;
+    color?: string;
+    icon?: string;
+};
+
 export function QuickActions() {
-    const [quickActions] = useStorage('quickActions', []);
+    const [quickActionsValue] = useStorage('quickActions', []);
+    const quickActions = quickActionsValue as QuickActionItem[];
 
     if (!quickActions.length) return null;
 
@@ -17,8 +24,9 @@ export function QuickActions() {
                 gap: '8px',
             }}
         >
-            {quickActions.map((action, idx) => (
+            {quickActions.map((action: QuickActionItem, idx: number) => (
                 <button
+                    type="button"
                     key={idx}
                     class="hg-optimize-btn"
                     style={{

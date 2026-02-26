@@ -1,4 +1,14 @@
-// @ts-nocheck
+import type { ComponentChildren, CSSProperties } from 'preact';
+
+type ChatToolProps = {
+    id: string;
+    align?: 'left' | 'right';
+    visible?: boolean;
+    className?: string;
+    style?: CSSProperties;
+    children?: ComponentChildren;
+};
+
 export function ChatTool({
     id,
     align = 'left',
@@ -6,7 +16,7 @@ export function ChatTool({
     className = '',
     style = {},
     children,
-}) {
+}: ChatToolProps) {
     if (!visible) return null;
 
     return (

@@ -1,5 +1,5 @@
 {
-    "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
     "formatter": {
         "enabled": true,
         "indentStyle": "space",
@@ -7,6 +7,17 @@
         "lineWidth": 100
     },
     "javascript": {
+        "globals": [
+            "chrome",
+            "GM_info",
+            "GM_getValue",
+            "GM_setValue",
+            "GM_deleteValue",
+            "GM_listValues",
+            "GM_addValueChangeListener",
+            "GM_removeValueChangeListener",
+            "GM_openInTab"
+        ],
         "formatter": {
             "quoteStyle": "single",
             "semicolons": "always",
@@ -20,6 +31,6 @@
         }
     },
     "files": {
-        "ignore": ["dist", "node_modules", ".local", ".old", ".tmp"]
+        "includes": ["**", "!**/dist", "!**/node_modules", "!**/.local", "!**/.old", "!**/.tmp"]
     }
 }

@@ -1,12 +1,24 @@
-// @ts-nocheck
 import { render } from 'preact';
+
+type ChatRole = 'User' | 'Gemini';
+type ChatExportMessage = {
+    role: ChatRole;
+    text: string;
+    timestamp: string;
+};
+
+type ActiveChatInfo = {
+    id: string;
+    title: string;
+    url: string;
+};
 
 /**
  * Normalizes a string for use as a filename by removing non-alphanumeric characters.
  * @param {string} value - The input string.
  * @returns {string} The sanitized filename.
  */
-function sanitizeFilename(value) {
+function sanitizeFilename(value: string): string {
     return (value || 'Gemini_Chat')
         .replace(/[^a-z0-9]/gi, '_')
         .replace(/_+/g, '_')
@@ -18,7 +30,7 @@ function sanitizeFilename(value) {
  * @param {Blob} blob - The file content blob.
  * @param {string} filename - The name of the file to save as.
  */
-function downloadBlob(blob, filename) {
+function downloadBlob(blob: Blob, filename: string): void {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -33,7 +45,17 @@ function downloadBlob(blob, filename) {
  * Controller class managing the extraction and export of Gemini chat history in various formats.
  */
 export class ChatExportController {
-    constructor({ showToast, findActiveChatInfo }) {
+    private showToast: (message: string, type?: 'info' | 'success' | 'error') => void;
+
+    private findActiveChatInfo: () => ActiveChatInfo | null;
+
+    constructor({
+        showToast,
+        findActiveChatInfo,
+    }: {
+        showToast: (message: string, type?: 'info' | 'success' | 'error') => void;
+        findActiveChatInfo: () => ActiveChatInfo | null;
+    }) {
         this.showToast = showToast;
         this.findActiveChatInfo = findActiveChatInfo;
     }
@@ -42,7 +64,7 @@ export class ChatExportController {
      * Scrapes the current page DOM to extract a structured list of chat messages.
      * @returns {Array<{role: 'User'|'Gemini', text: string, timestamp: string}>}
      */
-    getChatHistory() {
+    getChatHistory(): ChatExportMessage[] {
         const userSelectors = [
             'user-query',
             '.user-message',
@@ -60,7 +82,7 @@ export class ChatExportController {
             'response-container',
         ].join(', ');
 
-        let nodes = Array.from(document.querySelectorAll(allSelectors));
+        let nodes = Array.from(document.querySelectorAll<HTMLElement>(allSelectors));
         nodes = nodes.filter(
             (node, index, arr) =>
                 !arr.some(
@@ -84,7 +106,7 @@ export class ChatExportController {
                     timestamp: '',
                 };
             })
-            .filter(Boolean);
+            .filter((msg): msg is ChatExportMessage => msg !== null);
     }
 
     /**
@@ -93,7 +115,7 @@ export class ChatExportController {
      * @param {string} title - Chat title.
      * @returns {string}
      */
-    formatTextExport(messages, title) {
+    formatTextExport(messages: ChatExportMessage[], title: string): string {
         let output = `${title}\nExported using hypergravity on: ${new Date().toLocaleString()}\n\n`;
         messages.forEach((msg) => {
             output += `${msg.role}\n\n${msg.text}\n\n`;
@@ -154,7 +176,7 @@ export class ChatExportController {
             );
             y += 22;
 
-            const ensureSpace = (needed = 18) => {
+            const ensureSpace = (needed = 18): void => {
                 const pageHeight = pdf.internal.pageSize.getHeight();
                 if (y + needed > pageHeight - margin) {
                     pdf.addPage();
@@ -162,17 +184,17 @@ export class ChatExportController {
                 }
             };
 
-            messages.forEach((msg) => {
+            messages.forEach((msg: ChatExportMessage) => {
                 ensureSpace(24);
                 pdf.setFontSize(11);
-                pdf.setFont(undefined, 'bold');
+                pdf.setFont('helvetica', 'bold');
                 pdf.text(msg.role, margin, y);
                 y += 16;
 
-                pdf.setFont(undefined, 'normal');
+                pdf.setFont('helvetica', 'normal');
                 pdf.setFontSize(10);
                 const lines = pdf.splitTextToSize(msg.text, maxWidth);
-                lines.forEach((line) => {
+                lines.forEach((line: string) => {
                     ensureSpace(14);
                     pdf.text(line, margin, y);
                     y += 14;
@@ -221,7 +243,7 @@ export class ChatExportController {
                 new Paragraph({ text: '' }),
             ];
 
-            messages.forEach((msg) => {
+            messages.forEach((msg: ChatExportMessage) => {
                 children.push(
                     new Paragraph({
                         children: [
@@ -234,7 +256,7 @@ export class ChatExportController {
                     })
                 );
 
-                msg.text.split('\n').forEach((line) => {
+                msg.text.split('\n').forEach((line: string) => {
                     children.push(
                         new Paragraph({
                             children: [new TextRun({ text: line, size: 22 })],
@@ -342,7 +364,7 @@ export class ChatExportController {
 
         const close = () => this.closePopup();
 
-        const handleAction = async (format) => {
+        const handleAction = async (format: 'copy' | 'txt' | 'pdf' | 'docx' | 'print') => {
             if (format === 'copy') this.copyToClipboard();
             if (format === 'txt') this.exportAsText();
             if (format === 'pdf') await this.exportAsPdf();

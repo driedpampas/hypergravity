@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { countText } from '@utils/textStats';
 import { useStorage } from '@hooks/useStorage';
@@ -14,9 +13,25 @@ import { debugLog as _debugLog } from '@utils/debug';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import './TokenCounter.css';
 
-const debugLog = (...args) => _debugLog('TokenCounter', ...args);
+type TokenCounterMode =
+    | 'none'
+    | 'text'
+    | 'percentage'
+    | 'text_percentage'
+    | 'ring'
+    | 'ring_text'
+    | 'ring_percentage'
+    | 'ring_text_percentage';
 
-function normalizeTokenCounterMode(mode) {
+type CountedMessage = {
+    text: string;
+    role: 'input' | 'output';
+    estimatedTokens: number;
+};
+
+const debugLog = (...args: unknown[]) => _debugLog('TokenCounter', ...args);
+
+function normalizeTokenCounterMode(mode: unknown): TokenCounterMode {
     const normalized = String(mode || '').trim();
 
     switch (normalized) {
@@ -40,7 +55,7 @@ function normalizeTokenCounterMode(mode) {
     }
 }
 
-function getTokenCounterDisplayConfig(mode) {
+function getTokenCounterDisplayConfig(mode: TokenCounterMode) {
     switch (mode) {
         case 'none':
             return { showCircle: false, showText: false, showPercentage: false };
@@ -120,7 +135,7 @@ const MODEL_SELECTORS = [
     'message-content .markdown-main-panel',
 ];
 
-function uniqueTopLevelNodes(nodes) {
+function uniqueTopLevelNodes(nodes: Element[]): Element[] {
     return nodes.filter(
         (node, index, arr) =>
             !arr.some(
@@ -130,11 +145,15 @@ function uniqueTopLevelNodes(nodes) {
     );
 }
 
-function getNodeText(node) {
-    return (node?.innerText || node?.textContent || '').trim();
+function getNodeText(node: Element | null): string {
+    if (!node) return '';
+    if (node instanceof HTMLElement) {
+        return (node.innerText || node.textContent || '').trim();
+    }
+    return (node.textContent || '').trim();
 }
 
-function getNodeTextExcludingThoughts(node) {
+function getNodeTextExcludingThoughts(node: Element | null): string {
     if (!node) return '';
 
     if (
@@ -153,14 +172,14 @@ function getNodeTextExcludingThoughts(node) {
         return ownMathText;
     }
 
-    const clone = node.cloneNode(true);
+    const clone = node.cloneNode(true) as Element;
     clone
         .querySelectorAll(
             'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts, .cdk-visually-hidden'
         )
-        .forEach((el) => el.remove());
+        .forEach((el: Element) => el.remove());
 
-    clone.querySelectorAll('[data-math]').forEach((el) => {
+    clone.querySelectorAll('[data-math]').forEach((el: Element) => {
         const mathText = (el.getAttribute('data-math') || '').trim();
         const replacement = document.createTextNode(
             mathText ? ` ${mathText} ` : ' '
@@ -171,7 +190,10 @@ function getNodeTextExcludingThoughts(node) {
     return getNodeText(clone);
 }
 
-function resolveNodesByPriority(conversationContainer, selectorGroups) {
+function resolveNodesByPriority(
+    conversationContainer: Element,
+    selectorGroups: string[]
+) {
     for (const selectors of selectorGroups) {
         const nodes = uniqueTopLevelNodes(
             Array.from(conversationContainer.querySelectorAll(selectors))
@@ -185,7 +207,7 @@ function resolveNodesByPriority(conversationContainer, selectorGroups) {
     return { nodes: [], selectors: selectorGroups.join(' | ') };
 }
 
-function collectMessageNodes(conversationContainer) {
+function collectMessageNodes(conversationContainer: Element) {
     const userResolved = resolveNodesByPriority(
         conversationContainer,
         USER_SELECTOR_GROUPS
@@ -209,7 +231,11 @@ function collectMessageNodes(conversationContainer) {
     };
 }
 
-async function countTokensWithGemini(text, apiKey, signal) {
+async function countTokensWithGemini(
+    text: string,
+    apiKey: string,
+    signal: AbortSignal
+) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:countTokens?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -234,14 +260,19 @@ async function countTokensWithGemini(text, apiKey, signal) {
 export function TokenCounter() {
     const [stats, setStats] = useState({ inputTokens: 0, outputTokens: 0 });
     const [geminiSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
-    const [conversationId, setConversationId] = useState(null);
+    const [conversationId, setConversationId] = useState<string | null>(null);
     const [isExpanded, setIsExpanded] = useState(false);
-    const currentIdRef = useRef(null);
-    const popupRef = useRef(null);
+    const currentIdRef = useRef<string | null>(null);
+    const popupRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        function handleClickOutside(event) {
-            if (popupRef.current && !popupRef.current.contains(event.target)) {
+        function handleClickOutside(event: MouseEvent) {
+            const target = event.target;
+            if (
+                popupRef.current &&
+                target instanceof Node &&
+                !popupRef.current.contains(target)
+            ) {
                 setIsExpanded(false);
             }
         }
@@ -300,18 +331,18 @@ export function TokenCounter() {
     }, []);
 
     useEffect(() => {
-        let debounceTimeout;
-        let observer;
-        let interval;
-        let containerObserver;
-        let exactDebounceTimeout;
+        let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
+        let observer: MutationObserver | null = null;
+        let interval: ReturnType<typeof setInterval> | null = null;
+        let containerObserver: MutationObserver | null = null;
+        let exactDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
         let exactRequestSeq = 0;
-        let exactController = null;
+        let exactController: AbortController | null = null;
 
         const updateTokens = async () => {
             try {
                 const conversationContainers = getConversationContainers();
-                const allMessages = [];
+                const allMessages: CountedMessage[] = [];
 
                 for (const container of conversationContainers) {
                     const { userNodes, modelNodes } =
@@ -419,7 +450,7 @@ export function TokenCounter() {
                     return { inputTokens: inTok, outputTokens: outTok };
                 };
 
-                const applyStats = (label) => {
+                const applyStats = (label: string) => {
                     const next = computeStats();
                     setStats((prev) => {
                         if (
@@ -442,7 +473,9 @@ export function TokenCounter() {
                 if (pending.length === 0) return;
 
                 // Debounce API calls to avoid spamming during rapid DOM changes
-                clearTimeout(exactDebounceTimeout);
+                if (exactDebounceTimeout) {
+                    clearTimeout(exactDebounceTimeout);
+                }
                 exactDebounceTimeout = setTimeout(async () => {
                     try {
                         exactRequestSeq += 1;
@@ -454,6 +487,7 @@ export function TokenCounter() {
 
                         if (exactController) exactController.abort();
                         exactController = new AbortController();
+                        const controller = exactController;
 
                         const BATCH_SIZE = 3;
                         for (let i = 0; i < pending.length; i += BATCH_SIZE) {
@@ -464,7 +498,7 @@ export function TokenCounter() {
                                         await countTokensWithGemini(
                                             msg.text,
                                             apiKey,
-                                            exactController.signal
+                                            controller.signal
                                         );
                                     await setCachedTokenCount(
                                         msg.hash,
@@ -480,19 +514,23 @@ export function TokenCounter() {
                         if (requestId !== exactRequestSeq) return;
 
                         applyStats('exact');
-                    } catch (error) {
-                        if (error?.name === 'AbortError') return;
+                    } catch (error: unknown) {
+                        if (
+                            error instanceof DOMException &&
+                            error.name === 'AbortError'
+                        )
+                            return;
                         debugLog('Gemini countTokens error:', error);
                     }
                 }, 700);
-            } catch (error) {
+            } catch (error: unknown) {
                 debugLog('Token update failed:', error);
                 setStats({ inputTokens: 0, outputTokens: 0 });
             }
         };
 
         const scheduleUpdate = () => {
-            clearTimeout(debounceTimeout);
+            if (debounceTimeout) clearTimeout(debounceTimeout);
             debounceTimeout = setTimeout(updateTokens, 500);
         };
 
@@ -503,8 +541,9 @@ export function TokenCounter() {
             setTimeout(scheduleUpdate, 900);
         };
 
-        const isSendButton = (target) => {
-            const button = target?.closest?.('button, [role="button"]');
+        const isSendButton = (target: EventTarget | null): boolean => {
+            const el = target instanceof Element ? target : null;
+            const button = el?.closest?.('button, [role="button"]');
             if (!button) return false;
 
             if (
@@ -523,13 +562,13 @@ export function TokenCounter() {
             return ariaLabel.includes('send');
         };
 
-        const onClick = (event) => {
+        const onClick = (event: MouseEvent) => {
             if (isSendButton(event.target)) {
                 scheduleSendTriggeredUpdates();
             }
         };
 
-        const onKeyDown = (event) => {
+        const onKeyDown = (event: KeyboardEvent) => {
             if (event.key !== 'Enter') return;
             if (
                 event.shiftKey ||
@@ -580,7 +619,9 @@ export function TokenCounter() {
         if (!attachObserverToConversation()) {
             interval = setInterval(() => {
                 if (attachObserverToConversation()) {
-                    clearInterval(interval);
+                    if (interval) {
+                        clearInterval(interval);
+                    }
                 }
             }, 1000);
         }
@@ -595,8 +636,8 @@ export function TokenCounter() {
             if (observer) observer.disconnect();
             if (containerObserver) containerObserver.disconnect();
             if (interval) clearInterval(interval);
-            clearTimeout(debounceTimeout);
-            clearTimeout(exactDebounceTimeout);
+            if (debounceTimeout) clearTimeout(debounceTimeout);
+            if (exactDebounceTimeout) clearTimeout(exactDebounceTimeout);
             if (exactController) exactController.abort();
             document.removeEventListener('click', onClick, true);
             document.removeEventListener('keydown', onKeyDown, true);
@@ -621,7 +662,7 @@ export function TokenCounter() {
         fillPercentage = 0;
     }
 
-    const formatTokenCount = (count) => {
+    const formatTokenCount = (count: number): string => {
         if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
         if (count >= 1000) return `${(count / 1000).toFixed(0)}k`;
         return String(count);

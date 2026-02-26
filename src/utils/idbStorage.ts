@@ -1,16 +1,28 @@
 import { openDB } from 'idb';
+import type { DBSchema, IDBPDatabase } from 'idb';
 
 const DB_NAME = 'hypergravity';
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
 
-let dbPromise = null;
-let pendingWriteOps = new Map();
-let flushScheduled = false;
-let pendingFlushPromise = null;
-let resolvePendingFlush = null;
+type PendingWriteOperation =
+    | { type: 'set'; value: unknown }
+    | { type: 'delete' };
 
-function getDb() {
+interface HypergravityDbSchema extends DBSchema {
+    kv: {
+        key: string;
+        value: unknown;
+    };
+}
+
+let dbPromise: Promise<IDBPDatabase<HypergravityDbSchema>> | null = null;
+let pendingWriteOps = new Map<string, PendingWriteOperation>();
+let flushScheduled = false;
+let pendingFlushPromise: Promise<void> | null = null;
+let resolvePendingFlush: (() => void) | null = null;
+
+function getDb(): Promise<IDBPDatabase<HypergravityDbSchema>> {
     if (!dbPromise) {
         dbPromise = openDB(DB_NAME, DB_VERSION, {
             upgrade(db) {
@@ -24,7 +36,7 @@ function getDb() {
     return dbPromise;
 }
 
-function ensureFlushScheduled() {
+function ensureFlushScheduled(): Promise<void> {
     if (!pendingFlushPromise) {
         pendingFlushPromise = new Promise((resolve) => {
             resolvePendingFlush = resolve;
@@ -39,7 +51,7 @@ function ensureFlushScheduled() {
     return pendingFlushPromise;
 }
 
-async function flushPendingWrites() {
+async function flushPendingWrites(): Promise<void> {
     const ops = pendingWriteOps;
     pendingWriteOps = new Map();
 
@@ -75,7 +87,10 @@ async function flushPendingWrites() {
     }
 }
 
-export async function getIdbValue(key, fallback = undefined) {
+export async function getIdbValue<T = unknown>(
+    key: string,
+    fallback: T = undefined as T
+): Promise<T | unknown> {
     try {
         const db = await getDb();
         const value = await db.get(STORE_NAME, key);
@@ -85,17 +100,19 @@ export async function getIdbValue(key, fallback = undefined) {
     }
 }
 
-export async function setIdbValue(key, value) {
+export async function setIdbValue(key: string, value: unknown): Promise<void> {
     pendingWriteOps.set(key, { type: 'set', value });
     await ensureFlushScheduled();
 }
 
-export async function removeIdbValue(key) {
+export async function removeIdbValue(key: string): Promise<void> {
     pendingWriteOps.set(key, { type: 'delete' });
     await ensureFlushScheduled();
 }
 
-export async function setIdbValues(values) {
+export async function setIdbValues(
+    values: Record<string, unknown>
+): Promise<void> {
     if (!values || typeof values !== 'object') return;
 
     for (const [key, value] of Object.entries(values)) {
@@ -105,7 +122,7 @@ export async function setIdbValues(values) {
     await ensureFlushScheduled();
 }
 
-export async function removeIdbValues(keys) {
+export async function removeIdbValues(keys: string[]): Promise<void> {
     if (!Array.isArray(keys) || keys.length === 0) return;
 
     for (const key of keys) {
@@ -115,14 +132,16 @@ export async function removeIdbValues(keys) {
     await ensureFlushScheduled();
 }
 
-export async function getIdbValues(keys) {
+export async function getIdbValues(
+    keys: string[]
+): Promise<Record<string, unknown>> {
     if (!Array.isArray(keys) || keys.length === 0) return {};
 
     try {
         const db = await getDb();
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
-        const result = {};
+        const result: Record<string, unknown> = {};
 
         await Promise.all(
             keys.map(async (key) => {
@@ -137,7 +156,7 @@ export async function getIdbValues(keys) {
     }
 }
 
-export async function getAllIdbValues() {
+export async function getAllIdbValues(): Promise<Record<string, unknown>> {
     try {
         const db = await getDb();
         const tx = db.transaction(STORE_NAME, 'readonly');
@@ -149,7 +168,7 @@ export async function getAllIdbValues() {
         ]);
         await tx.done;
 
-        const result = {};
+        const result: Record<string, unknown> = {};
         keys.forEach((key, index) => {
             result[String(key)] = values[index];
         });

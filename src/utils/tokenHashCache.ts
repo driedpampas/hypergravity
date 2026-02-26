@@ -9,33 +9,35 @@ const FLUSH_INTERVAL = 15000;
 const HASH_HEX_LENGTH = 20;
 const LEGACY_HASH_HEX_LENGTH = 16;
 
-let memoryCache = null;
-let flushTimer = null;
-let loadPromise = null;
-let dirtyHashes = new Set();
-let migrationPromise = null;
+type TokenCacheMap = Record<string, number>;
 
-const debugLog = (...args) => _debugLog('Cache', ...args);
+let memoryCache: TokenCacheMap | null = null;
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let loadPromise: Promise<TokenCacheMap> | null = null;
+let dirtyHashes = new Set<string>();
+let migrationPromise: Promise<void> | null = null;
+
+const debugLog = (...args: unknown[]) => _debugLog('Cache', ...args);
 
 /**
  * Ensures the in-memory cache is populated from persistent storage.
  * @returns {Promise<Object>} The cache data object.
  */
-function loadCache() {
+function loadCache(): Promise<TokenCacheMap> {
     if (loadPromise) return loadPromise;
 
     loadPromise = (async () => {
         await ensureLegacyCacheMigration();
 
         const allValues = await getAllIdbValues();
-        const hydrated = {};
+        const hydrated: TokenCacheMap = {};
 
         for (const [fullKey, value] of Object.entries(allValues)) {
             if (!fullKey.startsWith(CACHE_PREFIX)) continue;
             const hash = fullKey.slice(CACHE_PREFIX.length);
             if (!hash) continue;
             if (Number.isFinite(value)) {
-                hydrated[hash] = value;
+                hydrated[hash] = Number(value);
             }
         }
 
@@ -47,7 +49,7 @@ function loadCache() {
     return loadPromise;
 }
 
-function readLegacyLocalStorageMap() {
+function readLegacyLocalStorageMap(): Record<string, unknown> | null {
     try {
         const raw = localStorage.getItem(CACHE_KEY);
         if (!raw) return null;
@@ -64,12 +66,12 @@ function removeLegacyLocalStorageMap() {
     } catch {}
 }
 
-async function ensureLegacyCacheMigration() {
+async function ensureLegacyCacheMigration(): Promise<void> {
     if (migrationPromise) return migrationPromise;
 
     migrationPromise = (async () => {
         const allValues = await getAllIdbValues();
-        const existingHashes = new Set();
+        const existingHashes = new Set<string>();
 
         for (const fullKey of Object.keys(allValues)) {
             if (!fullKey.startsWith(CACHE_PREFIX)) continue;
@@ -82,7 +84,7 @@ async function ensureLegacyCacheMigration() {
             readLegacyLocalStorageMap(),
         ];
 
-        const batch = {};
+        const batch: Record<string, unknown> = {};
         let migratedCount = 0;
 
         for (const legacyMap of legacyMaps) {
@@ -124,7 +126,7 @@ async function flushToStorage() {
     const hashes = Array.from(dirtyHashes);
     dirtyHashes = new Set();
 
-    const batch = {};
+    const batch: Record<string, unknown> = {};
     for (const hash of hashes) {
         const value = memoryCache[hash];
         if (Number.isFinite(value)) {
@@ -143,7 +145,9 @@ async function flushToStorage() {
  * Debounces cache writes to storage to prevent excessive API calls.
  */
 function scheduleFlush() {
-    clearTimeout(flushTimer);
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+    }
     flushTimer = setTimeout(flushToStorage, FLUSH_DELAY);
 }
 
@@ -175,7 +179,10 @@ const MODEL_PREFIXES = [
  * @param {'input'|'output'} role - The source of the message.
  * @returns {string} Cleaned text.
  */
-export function sanitizeMessageText(text, role) {
+export function sanitizeMessageText(
+    text: string,
+    role: 'input' | 'output'
+): string {
     if (!text) return '';
     let cleaned = text;
     const prefixes = role === 'input' ? USER_PREFIXES : MODEL_PREFIXES;
@@ -192,7 +199,7 @@ export function sanitizeMessageText(text, role) {
  * @param {string} text
  * @returns {Promise<string>} Hexadecimal hash string.
  */
-export async function hashText(text) {
+export async function hashText(text: string): Promise<string> {
     const normalized = (text || '').replace(/\s+/g, ' ').trim();
     const encoded = new TextEncoder().encode(normalized);
     const buffer = await crypto.subtle.digest('SHA-256', encoded);
@@ -209,7 +216,7 @@ export async function hashText(text) {
  * @param {string} hash - The SHA-256 hash of the text.
  * @returns {Promise<number|null>}
  */
-export async function getCachedTokenCount(hash) {
+export async function getCachedTokenCount(hash: string): Promise<number | null> {
     const cache = await loadCache();
     const directValue = cache[hash];
     let result = Number.isFinite(directValue) ? directValue : null;
@@ -236,7 +243,10 @@ export async function getCachedTokenCount(hash) {
  * @param {string} hash
  * @param {number} count
  */
-export async function setCachedTokenCount(hash, count) {
+export async function setCachedTokenCount(
+    hash: string,
+    count: number
+): Promise<void> {
     const cache = await loadCache();
     cache[hash] = count;
     dirtyHashes.add(hash);
@@ -253,13 +263,13 @@ export async function getAllCacheData() {
     return { ...cache };
 }
 
-export async function importCacheData(data) {
+export async function importCacheData(data: unknown): Promise<number> {
     if (!data || typeof data !== 'object') return 0;
     const cache = await loadCache();
     let imported = 0;
-    for (const [hash, count] of Object.entries(data)) {
+    for (const [hash, count] of Object.entries(data as Record<string, unknown>)) {
         if (typeof hash === 'string' && Number.isFinite(count)) {
-            cache[hash] = count;
+            cache[hash] = Number(count);
             dirtyHashes.add(hash);
             imported++;
         }
@@ -278,7 +288,9 @@ export async function clearCacheData() {
     const cache = await loadCache();
     const hashes = Object.keys(cache);
 
-    clearTimeout(flushTimer);
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+    }
     dirtyHashes = new Set();
 
     if (hashes.length > 0) {

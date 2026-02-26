@@ -3,7 +3,7 @@
  * @param {string} text - The input text to analyze.
  * @returns {Object} An object containing word, character, line, sentence, paragraph, and estimated token counts.
  */
-export function countText(text) {
+export function countText(text: string) {
     if (!text)
         return {
             words: 0,
@@ -56,13 +56,15 @@ export function countText(text) {
     const linesCountRaw = trimmed
         .replace(/\r?\n\r?\n+/g, '\n\n')
         .split(/\r?\n/)
-        .filter((e) => e !== '').length;
+        .filter((e: string) => e !== '').length;
     const linesCount = trimmed.length === 0 ? 0 : Math.max(1, linesCountRaw);
 
     const paragraphsCount =
         trimmed.length === 0
             ? 0
-            : trimmed.split(/(?:\r?\n){3,}/).filter((e) => e.trim().length > 0)
+            : trimmed
+                .split(/(?:\r?\n){3,}/)
+                .filter((e: string) => e.trim().length > 0)
                   .length;
 
     const punctuationCount = (text.match(/[^\w\s]/g) || []).length;

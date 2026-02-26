@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'preact/hooks';
 import { countText } from '@utils/textStats';
 import { chatBoxManager } from '@managers/chatBoxManager';
@@ -30,7 +29,7 @@ export function WordCounter() {
             id="hg-word-counter"
             class={isExpanded ? 'expanded' : ''}
             onClick={() => setIsExpanded(!isExpanded)}
-            tabIndex="0"
+            tabIndex={0}
         >
             <div class="hg-counter-summary">
                 <strong>{textStats.words}</strong>&nbsp;words /&nbsp;

@@ -1,47 +1,76 @@
-const DEFAULT_FOLDERS_DATA = {
+export type StoredChat = {
+    id: string;
+    title: string;
+    url: string;
+    pinned: boolean;
+};
+
+export type StoredFolder = {
+    id: string;
+    name: string;
+    color: string;
+    chats: StoredChat[];
+    parentId: string | null;
+    expanded: boolean;
+};
+
+export type FoldersData = {
+    folders: StoredFolder[];
+    recycleBin: unknown[];
+    permanentlyDeleted: unknown[];
+};
+
+const DEFAULT_FOLDERS_DATA: FoldersData = {
     folders: [],
     recycleBin: [],
     permanentlyDeleted: [],
 };
 
-function normalizeChat(chat) {
+function normalizeChat(chat: unknown): StoredChat | null {
     if (!chat || typeof chat !== 'object') return null;
-    const id = String(chat.id || '').trim();
+    const chatObj = chat as Record<string, unknown>;
+    const id = String(chatObj.id || '').trim();
     if (!id) return null;
 
     return {
         id,
-        title: String(chat.title || 'Untitled Chat').trim() || 'Untitled Chat',
-        url: String(chat.url || '').trim(),
-        pinned: Boolean(chat.pinned),
+        title:
+            String(chatObj.title || 'Untitled Chat').trim() || 'Untitled Chat',
+        url: String(chatObj.url || '').trim(),
+        pinned: Boolean(chatObj.pinned),
     };
 }
 
-function normalizeFolder(folder) {
+function normalizeFolder(folder: unknown): StoredFolder | null {
     if (!folder || typeof folder !== 'object') return null;
-    const id = String(folder.id || '').trim();
-    const name = String(folder.name || '').trim();
+    const folderObj = folder as Record<string, unknown>;
+    const id = String(folderObj.id || '').trim();
+    const name = String(folderObj.name || '').trim();
     if (!id || !name) return null;
 
-    const chats = Array.isArray(folder.chats)
-        ? folder.chats.map(normalizeChat).filter(Boolean)
+    const chats = Array.isArray(folderObj.chats)
+        ? folderObj.chats
+              .map(normalizeChat)
+              .filter((chat): chat is StoredChat => chat !== null)
         : [];
 
     return {
         id,
         name,
-        color: String(folder.color || '#4285f4'),
+        color: String(folderObj.color || '#4285f4'),
         chats,
-        parentId: folder.parentId || null,
-        expanded: folder.expanded !== false,
+        parentId: (folderObj.parentId as string | null | undefined) || null,
+        expanded: folderObj.expanded !== false,
     };
 }
 
-export function normalizeFoldersData(value) {
+export function normalizeFoldersData(value: unknown): FoldersData {
     if (Array.isArray(value)) {
         return {
             ...DEFAULT_FOLDERS_DATA,
-            folders: value.map(normalizeFolder).filter(Boolean),
+            folders: value
+                .map(normalizeFolder)
+                .filter((folder): folder is StoredFolder => folder !== null),
         };
     }
 
@@ -49,23 +78,34 @@ export function normalizeFoldersData(value) {
         return { ...DEFAULT_FOLDERS_DATA };
     }
 
+    const valueObj = value as Record<string, unknown>;
+
     return {
-        folders: Array.isArray(value.folders)
-            ? value.folders.map(normalizeFolder).filter(Boolean)
+        folders: Array.isArray(valueObj.folders)
+            ? valueObj.folders
+                  .map(normalizeFolder)
+                  .filter((folder): folder is StoredFolder => folder !== null)
             : [],
-        recycleBin: Array.isArray(value.recycleBin) ? value.recycleBin : [],
-        permanentlyDeleted: Array.isArray(value.permanentlyDeleted)
-            ? value.permanentlyDeleted
+        recycleBin: Array.isArray(valueObj.recycleBin)
+            ? valueObj.recycleBin
+            : [],
+        permanentlyDeleted: Array.isArray(valueObj.permanentlyDeleted)
+            ? valueObj.permanentlyDeleted
             : [],
     };
 }
 
-export function withUpdatedFolders(previousValue, nextFolders) {
+export function withUpdatedFolders(
+    previousValue: unknown,
+    nextFolders: unknown
+): FoldersData {
     const base = normalizeFoldersData(previousValue);
     return {
         ...base,
         folders: Array.isArray(nextFolders)
-            ? nextFolders.map(normalizeFolder).filter(Boolean)
+            ? nextFolders
+                  .map(normalizeFolder)
+                  .filter((folder): folder is StoredFolder => folder !== null)
             : [],
     };
 }

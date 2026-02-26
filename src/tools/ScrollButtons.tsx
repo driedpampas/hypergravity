@@ -1,14 +1,19 @@
-// @ts-nocheck
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ChevronDownIcon, ChevronUpIcon } from '@icons';
 import { useStorage } from '@hooks/useStorage';
 import { createScrollManager } from '@managers/scrollManager';
 import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 
+type ScrollManager = ReturnType<typeof createScrollManager>;
+type ScrollButtonState = {
+    isAutoscrollActive: boolean;
+    canShowButtons: boolean;
+};
+
 export function ScrollButtons() {
     const [settings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
-    const managerRef = useRef(null);
-    const [state, setState] = useState({
+    const managerRef = useRef<ScrollManager | null>(null);
+    const [state, setState] = useState<ScrollButtonState>({
         isAutoscrollActive: false,
         canShowButtons: false,
     });
@@ -19,8 +24,9 @@ export function ScrollButtons() {
 
     useEffect(() => {
         const manager = managerRef.current;
+        if (!manager) return;
         const unsubscribe = manager.subscribe(setState);
-        let rafId = null;
+        let rafId: number | null = null;
         const scrollListenerOptions = {
             passive: true,
             capture: true,
@@ -96,9 +102,9 @@ export function ScrollButtons() {
                 title="Scroll to bottom (double-click to auto-follow)"
                 aria-label="Scroll to bottom"
                 onClick={managerRef.current.scrollToBottom}
-                onDoubleClick={(event) => {
+                onDblClick={(event: MouseEvent) => {
                     event.stopPropagation();
-                    managerRef.current.toggleAutoscroll();
+                    managerRef.current?.toggleAutoscroll();
                 }}
             >
                 <ChevronDownIcon width="16" height="16" />

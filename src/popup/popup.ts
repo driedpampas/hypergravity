@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { h, render } from 'preact';
 import {
     getStorageValue,
@@ -10,12 +9,24 @@ import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import {
     getAllCacheData,
     importCacheData,
-    getCacheStats,
     clearCacheData,
 } from '@utils/tokenHashCache';
 
-function showStatus(message, type = '') {
+type CacheMessage = {
+    type: 'HG_TOKEN_CACHE_GET_ALL' | 'HG_TOKEN_CACHE_IMPORT' | 'HG_TOKEN_CACHE_CLEAR';
+    data?: Record<string, unknown>;
+};
+
+type CacheResponse = {
+    success?: boolean;
+    data?: Record<string, unknown>;
+};
+
+type PopupSettings = typeof DEFAULT_SETTINGS;
+
+function showStatus(message: string, type = '') {
     const el = document.getElementById('hg-status');
+    if (!el) return;
     el.textContent = message;
     el.className = 'hg-popup-status' + (type ? ` ${type}` : '');
     if (type) {
@@ -26,7 +37,9 @@ function showStatus(message, type = '') {
     }
 }
 
-async function sendCacheMessageToActiveGeminiTab(message) {
+async function sendCacheMessageToActiveGeminiTab(
+    message: CacheMessage
+): Promise<CacheResponse | null> {
     const [activeTab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
@@ -36,7 +49,7 @@ async function sendCacheMessageToActiveGeminiTab(message) {
     if (!activeTab.url?.startsWith('https://gemini.google.com/')) return null;
 
     try {
-        return await chrome.tabs.sendMessage(activeTab.id, message);
+        return (await chrome.tabs.sendMessage(activeTab.id, message)) as CacheResponse;
     } catch {
         return null;
     }
@@ -62,13 +75,14 @@ async function loadCacheData() {
 }
 
 async function refreshStats() {
+    const statEl = document.getElementById('hg-cache-entries');
+    if (!statEl) return;
     try {
         const merged = await getSyncedCacheData();
         const entries = Object.keys(merged).length;
-        document.getElementById('hg-cache-entries').textContent =
-            entries.toLocaleString();
+        statEl.textContent = entries.toLocaleString();
     } catch {
-        document.getElementById('hg-cache-entries').textContent = 'error';
+        statEl.textContent = 'error';
     }
 }
 
@@ -91,11 +105,12 @@ async function handleExport() {
 
         showStatus(`Exported ${Object.keys(data).length} entries`, 'success');
     } catch (err) {
-        showStatus(`Export failed: ${err.message}`, 'error');
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        showStatus(`Export failed: ${message}`, 'error');
     }
 }
 
-async function handleImport(file) {
+async function handleImport(file: File) {
     try {
         showStatus('Importing…');
         const stream = file
@@ -117,7 +132,8 @@ async function handleImport(file) {
 
         showStatus(`Imported ${imported} entries`, 'success');
     } catch (err) {
-        showStatus(`Import failed: ${err.message}`, 'error');
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        showStatus(`Import failed: ${message}`, 'error');
     }
 }
 
@@ -140,6 +156,12 @@ function showConfirmModal({
     confirmText = 'Confirm',
     cancelText = 'Cancel',
     danger = false,
+}: {
+    title: string;
+    body: string;
+    confirmText?: string;
+    cancelText?: string;
+    danger?: boolean;
 }) {
     const overlay = document.getElementById('hg-modal-overlay');
     const titleEl = overlay?.querySelector('.hg-popup-modal-title');
@@ -158,10 +180,10 @@ function showConfirmModal({
     confirmBtn.classList.toggle('hg-popup-modal-btn--danger', danger);
     confirmBtn.classList.toggle('hg-popup-modal-btn--primary', !danger);
 
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
         overlay.classList.add('active');
 
-        const close = (confirmed) => {
+        const close = (confirmed: boolean) => {
             overlay.classList.remove('active');
             cancelBtn.removeEventListener('click', onCancel);
             confirmBtn.removeEventListener('click', onConfirm);
@@ -171,7 +193,7 @@ function showConfirmModal({
 
         const onCancel = () => close(false);
         const onConfirm = () => close(true);
-        const onOverlayClick = (event) => {
+        const onOverlayClick = (event: MouseEvent) => {
             if (event.target === overlay) close(false);
         };
 
@@ -183,22 +205,23 @@ function showConfirmModal({
 
 document.addEventListener('DOMContentLoaded', () => {
     mountIcons();
-    document.getElementById('hg-version').textContent = `v${getVersion()}`;
+    const versionEl = document.getElementById('hg-version');
+    if (versionEl) {
+        versionEl.textContent = `v${getVersion()}`;
+    }
 
     refreshStats();
 
-    document
-        .getElementById('hg-export-btn')
-        .addEventListener('click', handleExport);
+    document.getElementById('hg-export-btn')?.addEventListener('click', handleExport);
 
-    const importInput = document.getElementById('hg-import-input');
-    document.getElementById('hg-import-btn').addEventListener('click', () => {
-        importInput.click();
+    const importInput = document.getElementById(
+        'hg-import-input'
+    ) as HTMLInputElement | null;
+    document.getElementById('hg-import-btn')?.addEventListener('click', () => {
+        importInput?.click();
     });
 
-    document
-        .getElementById('hg-clear-cache-btn')
-        .addEventListener('click', async () => {
+    document.getElementById('hg-clear-cache-btn')?.addEventListener('click', async () => {
             const merged = await getSyncedCacheData();
             const entries = Object.keys(merged).length;
             if (!entries) {
@@ -225,34 +248,37 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus(`Cleared ${cleared} entries`, 'success');
         });
 
-    importInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+    importInput?.addEventListener('change', (e: Event) => {
+        const target = e.target as HTMLInputElement | null;
+        const file = target?.files?.[0];
         if (file) {
             handleImport(file);
-            importInput.value = '';
+            if (importInput) importInput.value = '';
         }
     });
 
     // initialize enable/disable toggle
-    const enableToggle = document.getElementById('hg-enabled-toggle');
-    const toggleUi = document.getElementById('hg-toggle-ui');
+    const enableToggle = document.getElementById(
+        'hg-enabled-toggle'
+    ) as HTMLInputElement | null;
+    const toggleUi = document.getElementById('hg-toggle-ui') as HTMLElement | null;
     const enabledRow = document.getElementById('hg-enabled-row');
 
     if (enableToggle && toggleUi) {
         (async () => {
-            const settings = await getStorageValue(
+            const settings = (await getStorageValue(
                 SETTINGS_KEY,
                 DEFAULT_SETTINGS
-            );
+            )) as PopupSettings;
             enableToggle.checked = Boolean(settings.enabled);
             toggleUi.classList.toggle('active', enableToggle.checked);
         })();
 
         const onChange = async () => {
-            const current = await getStorageValue(
+            const current = (await getStorageValue(
                 SETTINGS_KEY,
                 DEFAULT_SETTINGS
-            );
+            )) as PopupSettings;
             const isChecked = !current.enabled; // toggle state
 
             enableToggle.checked = isChecked;
@@ -286,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         // Clicking the row or the toggle UI should flip it
-        enabledRow.addEventListener('click', (e) => {
+        enabledRow?.addEventListener('click', (e: Event) => {
             // prevent double-triggering if we clicked a child
             e.preventDefault();
             onChange();

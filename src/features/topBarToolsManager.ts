@@ -1,7 +1,18 @@
-// @ts-nocheck
 import { topBarManager } from '@managers/topBarManager';
 import { h } from 'preact';
 import { ExportIcon, ExpandIcon, CollapseIcon } from '@icons';
+
+type SettingsShape = {
+    wideModeEnabled?: boolean;
+    showExportButton?: boolean;
+};
+
+type TopBarToolsManagerOptions = {
+    getSettings: () => Promise<SettingsShape>;
+    updateSettings: (patch: Partial<SettingsShape>) => Promise<SettingsShape>;
+    onExportClick: () => void;
+    onWideToggleDebug?: (enabled: boolean) => void;
+};
 
 /**
  * Factory for the Wide Layout engine which allows Gemini chat content to span the full width of the screen.
@@ -9,7 +20,7 @@ import { ExportIcon, ExpandIcon, CollapseIcon } from '@icons';
  */
 function createWideLayoutEngine() {
     let enabled = false;
-    const markedTargets = new Set();
+    const markedTargets = new Set<HTMLElement>();
     const styleId = 'hg-wide-dynamic-style';
 
     /**
@@ -73,10 +84,10 @@ function createWideLayoutEngine() {
         ];
     }
 
-    function collectKnownTargets() {
+    function collectKnownTargets(): HTMLElement[] {
         const roots = getChatRoots();
         const messageSelectors = getMessageSelectors().join(', ');
-        const candidates = new Set();
+        const candidates = new Set<HTMLElement>();
 
         roots.forEach((root) => {
             candidates.add(root);
@@ -90,7 +101,7 @@ function createWideLayoutEngine() {
         return Array.from(candidates);
     }
 
-    function collectInputTargets() {
+    function collectInputTargets(): HTMLElement[] {
         return Array.from(
             document.querySelectorAll(
                 [
@@ -102,13 +113,13 @@ function createWideLayoutEngine() {
                 ].join(', ')
             )
         ).filter(
-            (node) =>
+            (node): node is HTMLElement =>
                 node instanceof HTMLElement &&
                 !node.closest('.input-area-container.is-zero-state')
         );
     }
 
-    function collectNarrowAncestorsFromMessages() {
+    function collectNarrowAncestorsFromMessages(): HTMLElement[] {
         const roots = getChatRoots();
         if (!roots.length) return [];
 
@@ -119,10 +130,10 @@ function createWideLayoutEngine() {
             )
         ).filter((node) => node instanceof HTMLElement);
 
-        const candidates = new Set();
+        const candidates = new Set<HTMLElement>();
 
         messages.forEach((messageNode) => {
-            let current = messageNode;
+            let current: HTMLElement | null = messageNode;
             let depth = 0;
 
             while (
@@ -154,12 +165,12 @@ function createWideLayoutEngine() {
         return Array.from(candidates);
     }
 
-    function collectInlineMaxWidthTargets() {
+    function collectInlineMaxWidthTargets(): HTMLElement[] {
         const roots = getChatRoots();
 
         if (!roots.length) return [];
 
-        const candidates = new Set();
+        const candidates = new Set<HTMLElement>();
 
         roots.forEach((root) => {
             root.querySelectorAll('[style*="max-width"]').forEach((node) => {
@@ -180,7 +191,7 @@ function createWideLayoutEngine() {
         return Array.from(candidates);
     }
 
-    function markTarget(element) {
+    function markTarget(element: Element): void {
         if (!(element instanceof HTMLElement)) return;
 
         element.setAttribute('data-hg-wide-target', '1');
@@ -206,7 +217,7 @@ function createWideLayoutEngine() {
         });
     }
 
-    function setEnabled(nextEnabled) {
+    function setEnabled(nextEnabled: boolean): void {
         enabled = Boolean(nextEnabled);
 
         if (!enabled) {
@@ -237,7 +248,7 @@ export function createTopBarToolsManager({
     updateSettings,
     onExportClick,
     onWideToggleDebug,
-}) {
+}: TopBarToolsManagerOptions) {
     const wideLayoutEngine = createWideLayoutEngine();
 
     async function handleWideToggle() {
@@ -271,7 +282,7 @@ export function createTopBarToolsManager({
         const wideButton = topBarManager.ensureButton({
             id: 'hg-header-wide-btn',
             title: shouldApplyWide ? 'Collapse Chat' : 'Expand Chat',
-            iconVNode: h(shouldApplyWide ? CollapseIcon : ExpandIcon, null),
+            iconVNode: h(shouldApplyWide ? CollapseIcon : ExpandIcon, {}),
             onClick: () => handleWideToggle(),
         });
 
@@ -286,7 +297,7 @@ export function createTopBarToolsManager({
             topBarManager.ensureButton({
                 id: 'hg-header-export-btn',
                 title: 'Export Chat',
-                iconVNode: h(ExportIcon, null),
+                iconVNode: h(ExportIcon, {}),
                 onClick: () => onExportClick(),
             });
         }

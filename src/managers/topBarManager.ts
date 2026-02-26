@@ -1,13 +1,26 @@
 import { render } from 'preact';
+import type { VNode } from 'preact';
 
 const TOP_BAR_SELECTOR = 'top-bar-actions .right-section .buttons-container';
+
+type EnsureButtonOptions = {
+    id: string;
+    title: string;
+    svg?: string;
+    iconVNode?: VNode;
+    onClick: () => void | Promise<void>;
+};
+
+type AddToolOptions = {
+    position?: 'start' | 'end';
+};
 
 /**
  * Finds the Gemini top bar container for tool injection.
  * @returns {HTMLElement|null}
  */
 function getTopBar() {
-    return document.querySelector(TOP_BAR_SELECTOR) || null;
+    return document.querySelector<HTMLElement>(TOP_BAR_SELECTOR) || null;
 }
 
 /**
@@ -20,7 +33,13 @@ function getTopBar() {
  * @param {Function} options.onClick - Click handler.
  * @returns {HTMLElement|null} The button element.
  */
-function ensureButton({ id, title, svg, iconVNode, onClick }) {
+function ensureButton({
+    id,
+    title,
+    svg,
+    iconVNode,
+    onClick,
+}: EnsureButtonOptions): HTMLElement | null {
     const topBar = getTopBar();
     if (!topBar) return null;
 
@@ -44,9 +63,10 @@ function ensureButton({ id, title, svg, iconVNode, onClick }) {
     } else if (svg && !button.hasChildNodes()) {
         const parser = new DOMParser();
         const docHtml = parser.parseFromString(svg, 'text/html');
-        Array.from(docHtml.body.childNodes).forEach((node) => {
+
+        for (const node of Array.from(docHtml.body.childNodes)) {
             button.appendChild(node);
-        });
+        };
     }
 
     if (button.parentElement !== topBar) {
@@ -64,7 +84,11 @@ function ensureButton({ id, title, svg, iconVNode, onClick }) {
  * @param {'start'|'end'} [options.position='end'] - Side of the bar.
  * @returns {boolean}
  */
-function addTool(id, element, { position = 'end' } = {}) {
+function addTool(
+    id: string,
+    element: HTMLElement,
+    { position = 'end' }: AddToolOptions = {}
+): boolean {
     const topBar = getTopBar();
     if (!topBar || !element) return false;
 
@@ -86,7 +110,7 @@ function addTool(id, element, { position = 'end' } = {}) {
  * @param {string} id - The tool identifier.
  * @returns {boolean}
  */
-function removeTool(id) {
+function removeTool(id: string): boolean {
     const topBar = getTopBar();
     if (!topBar) return false;
 
@@ -103,7 +127,7 @@ function removeTool(id) {
  * @param {string} id
  * @returns {boolean}
  */
-function hasTool(id) {
+function hasTool(id: string): boolean {
     const topBar = getTopBar();
     if (!topBar) return false;
     return !!topBar.querySelector(`[data-hg-tool-id="${id}"]`);

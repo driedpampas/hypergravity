@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
     getStorageValue,
     summarizeChatMemory,
@@ -9,7 +8,18 @@ import { getIdbValue, setIdbValue } from '@utils/idbStorage';
 import { sanitizeMessageText, hashText } from '@utils/tokenHashCache';
 import { debugLog as _debugLog } from '@utils/debug';
 
-const debugLog = (...args) => _debugLog('ChatMemory', ...args);
+type ChatMessage = { role: 'user' | 'model'; text: string };
+type ChatMemory = {
+    sourceHash?: string;
+    [key: string]: unknown;
+};
+type SummaryResponse = {
+    success?: boolean;
+    memory?: ChatMemory;
+    error?: string;
+};
+
+const debugLog = (...args: unknown[]) => _debugLog('ChatMemory', ...args);
 
 const USER_MESSAGE_SELECTORS = [
     'user-query',
@@ -30,7 +40,7 @@ const MODEL_MESSAGE_SELECTORS = [
 const MESSAGE_SELECTORS = `${USER_MESSAGE_SELECTORS}, ${MODEL_MESSAGE_SELECTORS}`;
 const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';
 
-function getChatMemoryKey(chatId) {
+function getChatMemoryKey(chatId: string): string {
     return `${CHAT_MEMORY_PREFIX}${chatId}`;
 }
 
@@ -43,7 +53,7 @@ function getCurrentConversationId() {
 }
 
 function isGenerating() {
-    const stopBtn = document.querySelector(
+    const stopBtn = document.querySelector<HTMLElement>(
         'button[aria-label*="Stop"], button[aria-label*="stop"]'
     );
     if (stopBtn && stopBtn.offsetParent !== null) return true;
@@ -54,7 +64,7 @@ function isGenerating() {
     );
 }
 
-function uniqueTopLevelNodes(nodes) {
+function uniqueTopLevelNodes(nodes: Element[]): Element[] {
     return nodes.filter(
         (node, index, arr) =>
             !arr.some(
@@ -64,11 +74,15 @@ function uniqueTopLevelNodes(nodes) {
     );
 }
 
-function getNodeText(node) {
-    return (node?.innerText || node?.textContent || '').trim();
+function getNodeText(node: Element | null): string {
+    if (!node) return '';
+    if (node instanceof HTMLElement) {
+        return (node.innerText || node.textContent || '').trim();
+    }
+    return (node.textContent || '').trim();
 }
 
-function getNodeTextExcludingThoughts(node) {
+function getNodeTextExcludingThoughts(node: Element | null): string {
     if (!node) return '';
 
     if (
@@ -78,21 +92,21 @@ function getNodeTextExcludingThoughts(node) {
         return '';
     }
 
-    const clone = node.cloneNode(true);
+    const clone = node.cloneNode(true) as Element;
     clone
         .querySelectorAll(
             'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts'
         )
-        .forEach((el) => el.remove());
+        .forEach((el: Element) => el.remove());
 
     return getNodeText(clone);
 }
 
-function isUserNode(node) {
+function isUserNode(node: Element): boolean {
     return node.matches?.(USER_MESSAGE_SELECTORS);
 }
 
-function collectTranscriptMessages() {
+function collectTranscriptMessages(): ChatMessage[] {
     const root =
         document.querySelector('[data-test-id="chat-history-container"]') ||
         document.querySelector('infinite-scroller.chat-history') ||
@@ -103,7 +117,7 @@ function collectTranscriptMessages() {
         Array.from(root.querySelectorAll(MESSAGE_SELECTORS))
     ).filter((node) => getNodeText(node).length > 0);
 
-    const messages = [];
+    const messages: ChatMessage[] = [];
     for (const node of orderedNodes) {
         const role = isUserNode(node) ? 'user' : 'model';
         const text = sanitizeMessageText(
@@ -118,22 +132,25 @@ function collectTranscriptMessages() {
     return messages;
 }
 
-function serializeTranscript(messages) {
+function serializeTranscript(messages: ChatMessage[]): string {
     return messages
         .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
         .join('\n\n');
 }
 
 export function createChatMemoryManager() {
-    let debounceTimer = null;
-    let inFlightChatId = null;
-    const latestSourceHashByChatId = new Map();
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    let inFlightChatId: string | null = null;
+    const latestSourceHashByChatId = new Map<string, string>();
 
     async function summarizeCurrentChat() {
         if (!isExtension()) return;
         if (isGenerating()) return;
 
-        const settings = await getStorageValue(SETTINGS_KEY, DEFAULT_SETTINGS);
+        const settings = (await getStorageValue(
+            SETTINGS_KEY,
+            DEFAULT_SETTINGS
+        )) as typeof DEFAULT_SETTINGS;
         if (!settings?.chatMemoryEnabled) return;
 
         const chatId = getCurrentConversationId();
@@ -148,7 +165,10 @@ export function createChatMemoryManager() {
         if (!transcript) return;
 
         const sourceHash = await hashText(transcript);
-        const storedMemory = await getIdbValue(getChatMemoryKey(chatId), null);
+        const storedMemory = (await getIdbValue(
+            getChatMemoryKey(chatId),
+            null
+        )) as ChatMemory | null;
         if (storedMemory?.sourceHash === sourceHash) {
             latestSourceHashByChatId.set(chatId, sourceHash);
             return;
@@ -159,11 +179,11 @@ export function createChatMemoryManager() {
 
         inFlightChatId = chatId;
         try {
-            const result = await summarizeChatMemory({
+            const result = (await summarizeChatMemory({
                 chatId,
                 messages,
                 sourceHash,
-            });
+            })) as SummaryResponse;
 
             if (!result?.success || !result.memory) {
                 debugLog('Memory summarization failed', {
@@ -186,7 +206,9 @@ export function createChatMemoryManager() {
     }
 
     function refresh() {
-        clearTimeout(debounceTimer);
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
         debounceTimer = setTimeout(() => {
             void summarizeCurrentChat();
         }, 1400);

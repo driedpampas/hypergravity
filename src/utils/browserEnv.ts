@@ -7,24 +7,28 @@ import {
     getAllIdbValues,
 } from '@utils/idbStorage';
 
-const localListeners = new Map();
+type StorageListener = (value: unknown) => void;
+
+const localListeners = new Map<string, Set<StorageListener>>();
 const storageContextId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const storageChannel =
     typeof BroadcastChannel !== 'undefined'
         ? new BroadcastChannel('hypergravity-storage-events')
         : null;
 
-function emitToLocalListeners(key, value) {
+function emitToLocalListeners(key: string, value: unknown): void {
     const listeners = localListeners.get(key);
     if (!listeners || listeners.size === 0) return;
-    listeners.forEach((listener) => {
+    for (const listener of listeners) {
         try {
             listener(value);
-        } catch {}
-    });
+        } catch (e) {
+            // no-op
+        }
+    }
 }
 
-function notifyStorageChange(key, value) {
+function notifyStorageChange(key: string, value: unknown): void {
     emitToLocalListeners(key, value);
 
     if (storageChannel) {
@@ -39,8 +43,10 @@ function notifyStorageChange(key, value) {
 }
 
 if (storageChannel) {
-    storageChannel.onmessage = (event) => {
-        const payload = event?.data;
+    storageChannel.onmessage = (event: MessageEvent) => {
+        const payload = event?.data as
+            | { source?: string; key?: string; value?: unknown }
+            | undefined;
         if (!payload || payload.source === storageContextId) return;
         if (!payload.key) return;
         emitToLocalListeners(payload.key, payload.value);
@@ -100,9 +106,12 @@ export function getVersion() {
  * @param {*} [fallback=undefined]
  * @returns {Promise<*>}
  */
-export async function getStorageValue(key, fallback = undefined) {
+export async function getStorageValue<T = unknown>(
+    key: string,
+    fallback: T = undefined as T
+): Promise<T | unknown> {
     if (hasChromeStorage()) {
-        const chromeValue = await new Promise((resolve) => {
+        const chromeValue = await new Promise<unknown>((resolve) => {
             chrome.storage.local.get([key], (result) => {
                 if (chrome.runtime?.lastError) {
                     resolve(undefined);
@@ -127,7 +136,7 @@ export async function getStorageValue(key, fallback = undefined) {
     }
 
     if (isUserscript() && typeof GM_getValue === 'function') {
-        const val = GM_getValue(key, fallback);
+        const val = await GM_getValue(key, fallback);
         await setIdbValue(key, val);
         return val;
     }
@@ -141,17 +150,20 @@ export async function getStorageValue(key, fallback = undefined) {
  * @param {*} value
  * @returns {Promise<void>}
  */
-export async function setStorageValue(key, value) {
+export async function setStorageValue(
+    key: string,
+    value: unknown
+): Promise<void> {
     await setIdbValue(key, value);
 
     if (hasChromeStorage()) {
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
             chrome.storage.local.set({ [key]: value }, () => resolve());
         });
     }
 
     if (isUserscript() && typeof GM_setValue === 'function') {
-        GM_setValue(key, value);
+        await GM_setValue(key, value);
         return Promise.resolve();
     }
 
@@ -164,17 +176,17 @@ export async function setStorageValue(key, value) {
  * @param {string} key
  * @returns {Promise<void>}
  */
-export async function removeStorageValue(key) {
+export async function removeStorageValue(key: string): Promise<void> {
     await removeIdbValue(key);
 
     if (hasChromeStorage()) {
-        return new Promise((resolve) => {
+        return new Promise<void>((resolve) => {
             chrome.storage.local.remove([key], () => resolve());
         });
     }
 
     if (isUserscript() && typeof GM_deleteValue === 'function') {
-        GM_deleteValue(key);
+        await GM_deleteValue(key);
         return Promise.resolve();
     }
 
@@ -182,9 +194,15 @@ export async function removeStorageValue(key) {
     return Promise.resolve();
 }
 
-export function addStorageListener(key, callback) {
+export function addStorageListener(
+    key: string,
+    callback: StorageListener
+): () => void {
     if (hasChromeStorage()) {
-        const listener = (changes, areaName) => {
+        const listener = (
+            changes: Record<string, chrome.storage.StorageChange>,
+            areaName: string
+        ) => {
             if (areaName === 'local' && changes[key]) {
                 callback(changes[key].newValue);
             }
@@ -196,8 +214,8 @@ export function addStorageListener(key, callback) {
     if (isUserscript() && typeof GM_addValueChangeListener === 'function') {
         const listenerId = GM_addValueChangeListener(
             key,
-            (name, old_value, new_value, remote) => {
-                callback(new_value);
+            (_name, _oldValue, newValue, _remote) => {
+                callback(newValue);
             }
         );
         return () => GM_removeValueChangeListener(listenerId);
@@ -217,39 +235,42 @@ export function addStorageListener(key, callback) {
     };
 }
 
-export async function getAllStorageData(keys) {
+export async function getAllStorageData(
+    keys?: string[]
+): Promise<Record<string, unknown>> {
     if (hasChromeStorage()) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(keys, async (result) => {
+        return new Promise<Record<string, unknown>>((resolve) => {
+            chrome.storage.local.get(keys ?? null, async (result) => {
                 if (chrome.runtime?.lastError) {
                     if (Array.isArray(keys)) {
-                        resolve(await getIdbValues(keys));
+                        resolve((await getIdbValues(keys)) as Record<string, unknown>);
                         return;
                     }
                     resolve(await getAllIdbValues());
                     return;
                 }
                 if (result && typeof result === 'object') {
-                    await setIdbValues(result);
+                    await setIdbValues(result as Record<string, unknown>);
                 }
-                resolve(result || {});
+                resolve((result || {}) as Record<string, unknown>);
             });
         });
     }
 
     if (isUserscript() && typeof GM_getValue === 'function') {
-        const result = {};
+        const result: Record<string, unknown> = {};
         if (Array.isArray(keys)) {
             for (const key of keys) {
-                result[key] = GM_getValue(key);
+                result[key] = await GM_getValue(key);
             }
             await setIdbValues(result);
             return result;
         }
 
         if (typeof GM_listValues === 'function') {
-            for (const key of GM_listValues()) {
-                result[key] = GM_getValue(key);
+            const listedKeys = await GM_listValues();
+            for (const key of listedKeys) {
+                result[key] = await GM_getValue(key);
             }
             await setIdbValues(result);
             return result;
@@ -264,7 +285,7 @@ export async function getAllStorageData(keys) {
 }
 
 // Prompt Optimizer
-export async function optimizePrompt(promptText) {
+export async function optimizePrompt(promptText: string): Promise<unknown> {
     if (isExtension()) {
         return chrome.runtime.sendMessage({
             type: 'OPTIMIZE_PROMPT',
@@ -276,15 +297,15 @@ export async function optimizePrompt(promptText) {
         const requestId =
             Date.now().toString() + Math.random().toString().slice(2);
 
-        return new Promise((resolve, reject) => {
+        return new Promise<unknown>((resolve, reject) => {
             // Setup listener for the result
             const listenerId = GM_addValueChangeListener(
                 `hg_opt_result_${requestId}`,
-                (name, old_value, new_value) => {
-                    if (new_value) {
+                (_name, _oldValue, newValue) => {
+                    if (newValue) {
                         GM_removeValueChangeListener(listenerId);
                         GM_deleteValue(`hg_opt_result_${requestId}`);
-                        resolve(new_value);
+                        resolve(newValue);
                     }
                 }
             );
@@ -315,7 +336,9 @@ export async function cancelOptimization() {
     }
 }
 
-export async function summarizeChatMemory(payload) {
+export async function summarizeChatMemory(
+    payload: Record<string, unknown>
+): Promise<unknown> {
     if (isExtension()) {
         return chrome.runtime.sendMessage({
             type: 'SUMMARIZE_CHAT_MEMORY',

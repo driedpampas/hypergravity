@@ -1,9 +1,11 @@
-// @ts-nocheck
 import { useState, useEffect } from 'preact/hooks';
 import { CheckIcon, CloseIcon, OptimizeSparkleIcon } from '@icons';
 import { createPromptOptimizer } from '@features/promptOptimizer';
 
-function showToast(message, type = 'info') {
+function showToast(
+    message: string,
+    type: 'info' | 'success' | 'error' = 'info'
+) {
     const existing = document.querySelector('#hg-toast');
     if (existing) existing.remove();
 
@@ -33,6 +35,7 @@ export function OptimizeButton() {
         return (
             <div class="hg-optimize-confirmation">
                 <button
+                    type="button"
                     class="hg-confirm-btn hg-confirm-reject"
                     title="Undo changes (Escape)"
                     onClick={optimizer.rejectChanges}
@@ -40,6 +43,7 @@ export function OptimizeButton() {
                     <CloseIcon width="16" height="16" strokeWidth="2.5" />
                 </button>
                 <button
+                    type="button"
                     class="hg-confirm-btn hg-confirm-accept"
                     title="Accept changes (Enter)"
                     onClick={optimizer.acceptChanges}
@@ -52,6 +56,7 @@ export function OptimizeButton() {
 
     return (
         <button
+            type="button"
             id="hg-optimize-prompt-btn"
             class={`hg-optimize-btn ${optimizeState === 'loading' ? 'loading' : ''}`}
             title="Optimize prompt with AI"

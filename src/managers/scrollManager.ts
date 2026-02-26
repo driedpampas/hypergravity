@@ -1,23 +1,30 @@
 import { chatBoxManager } from '@managers/chatBoxManager';
 
+type ScrollManagerState = {
+    isAutoscrollActive: boolean;
+    canShowButtons: boolean;
+};
+
+type StateSubscriber = (state: ScrollManagerState) => void;
+
 /**
  * Perform a smooth scroll to a target position.
  * @param {HTMLElement} element - The scrollable element.
  * @param {number} targetTop - The target scroll position.
  */
-function fastSmoothScroll(element, targetTop) {
+function fastSmoothScroll(element: HTMLElement, targetTop: number): void {
     if (!element) return;
 
     const startTop = element.scrollTop;
     const delta = targetTop - startTop;
     const duration = 220;
-    let startTime = null;
+    let startTime: number | null = null;
 
     requestAnimationFrame(function animate(timestamp) {
         if (startTime === null) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
+        const eased = 1 - ((1 - progress) ** 3);
 
         element.scrollTop = startTop + delta * eased;
 
@@ -30,7 +37,7 @@ function fastSmoothScroll(element, targetTop) {
  * @returns {HTMLElement}
  */
 function getScrollableFallback() {
-    return document.scrollingElement || document.documentElement;
+    return (document.scrollingElement || document.documentElement) as HTMLElement;
 }
 
 /**
@@ -38,7 +45,7 @@ function getScrollableFallback() {
  * @param {DOMRect} rect
  * @returns {boolean}
  */
-function isValidAnchorRect(rect) {
+function isValidAnchorRect(rect: DOMRect): boolean {
     return !!rect && rect.width > 0 && rect.height > 0;
 }
 
@@ -49,23 +56,23 @@ function isValidAnchorRect(rect) {
  */
 export function createScrollManager() {
     let isAutoscrollActive = false;
-    let autoscrollRafId = null;
-    let autoscrollContainer = null;
-    const subscribers = new Set();
+    let autoscrollRafId: number | null = null;
+    let autoscrollContainer: HTMLElement | null = null;
+    const subscribers = new Set<StateSubscriber>();
 
     function notify() {
-        const state = {
+        const state: ScrollManagerState = {
             isAutoscrollActive,
             canShowButtons: canShowButtons(),
         };
 
-        subscribers.forEach((callback) => {
+        for (const callback of subscribers) {
             try {
                 callback(state);
-            } catch (error) {
+            } catch (e) {
                 // no-op
             }
-        });
+        };
     }
 
     function stopAutoscrollOnManual() {
@@ -89,7 +96,7 @@ export function createScrollManager() {
         );
     }
 
-    function attachManualStopListeners(container) {
+    function attachManualStopListeners(container: HTMLElement): void {
         if (!container) return;
 
         container.addEventListener('wheel', stopAutoscrollOnManual, {
@@ -128,7 +135,10 @@ export function createScrollManager() {
         autoscrollRafId = requestAnimationFrame(autoFollowFrame);
     }
 
-    function getContainerWithRetry(onResolve, attempt = 0) {
+    function getContainerWithRetry(
+        onResolve: (container: HTMLElement | null) => void,
+        attempt = 0
+    ): void {
         const container = chatBoxManager.getChatHistoryContainer();
         if (container) {
             onResolve(container);
@@ -224,7 +234,7 @@ export function createScrollManager() {
         return true;
     }
 
-    function subscribe(callback) {
+    function subscribe(callback: StateSubscriber): () => void {
         if (typeof callback !== 'function') return () => {};
 
         subscribers.add(callback);
