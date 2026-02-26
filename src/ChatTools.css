@@ -111,6 +111,12 @@ body:not(.hg-chatbox-header-style-enabled) .hg-chat-tools-rail {
     transition: opacity 0.2s ease;
 }
 
+.hg-counter-summary strong,
+.hg-counter-details strong {
+    font-family: var(--hg-font-family-mono);
+    font-variant-numeric: tabular-nums;
+}
+
 .hg-counter-details {
     position: absolute;
     bottom: calc(100% + 8px);

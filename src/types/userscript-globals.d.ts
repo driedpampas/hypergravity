@@ -18,10 +18,6 @@ declare global {
     ): number | string;
     function GM_removeValueChangeListener(listenerId: number | string): void;
     function GM_openInTab(url: string, options?: unknown): unknown;
-
-    interface Window {
-        __HG_DEBUG_TOKEN_COUNTER__?: boolean;
-    }
 }
 
 export {};

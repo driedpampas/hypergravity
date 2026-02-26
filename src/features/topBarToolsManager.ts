@@ -1,5 +1,6 @@
 import { CollapseIcon, ExpandIcon, ExportIcon } from '@icons';
 import { topBarManager } from '@managers/topBarManager';
+import { debugSelectorMatch } from '@utils/debug';
 import { h } from 'preact';
 
 type SettingsShape = {
@@ -84,17 +85,35 @@ function createWideLayoutEngine() {
         ];
     }
 
+    function collectMessagesFromRoot(root: HTMLElement, context: string): HTMLElement[] {
+        const nodes = new Set<HTMLElement>();
+
+        for (const selector of getMessageSelectors()) {
+            const matched = Array.from(root.querySelectorAll(selector)).filter(
+                (node): node is HTMLElement => node instanceof HTMLElement
+            );
+
+            debugSelectorMatch(context, selector, matched.length > 0, {
+                matchedCount: matched.length,
+            });
+
+            matched.forEach((node) => {
+                nodes.add(node);
+            });
+        }
+
+        return Array.from(nodes);
+    }
+
     function collectKnownTargets(): HTMLElement[] {
         const roots = getChatRoots();
-        const messageSelectors = getMessageSelectors().join(', ');
         const candidates = new Set<HTMLElement>();
 
         roots.forEach((root) => {
             candidates.add(root);
-            root.querySelectorAll(messageSelectors).forEach((node) => {
-                if (node instanceof HTMLElement) {
-                    candidates.add(node);
-                }
+
+            collectMessagesFromRoot(root, 'TopBar.collectKnownTargets').forEach((node) => {
+                candidates.add(node);
             });
         });
 
@@ -122,10 +141,9 @@ function createWideLayoutEngine() {
         const roots = getChatRoots();
         if (!roots.length) return [];
 
-        const messageSelectors = getMessageSelectors().join(', ');
-        const messages = Array.from(
-            roots.flatMap((root) => Array.from(root.querySelectorAll(messageSelectors)))
-        ).filter((node) => node instanceof HTMLElement);
+        const messages = roots.flatMap((root) =>
+            collectMessagesFromRoot(root, 'TopBar.collectNarrowAncestorsFromMessages')
+        );
 
         const candidates = new Set<HTMLElement>();
 

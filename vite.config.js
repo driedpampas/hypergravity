@@ -7,10 +7,14 @@ import manifest from './manifest.json';
 
 const srcPath = fileURLToPath(new URL('./src', import.meta.url));
 
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
     const isUserscript = process.env.BUILD_TARGET === 'userscript';
+    const stripDebug = mode === 'release' || process.env.HG_STRIP_DEBUG === '1';
 
     return {
+        define: {
+            __HG_DEBUG_BUILD__: JSON.stringify(!stripDebug),
+        },
         resolve: {
             alias: {
                 '@src': srcPath,

@@ -48,6 +48,7 @@
     cursor: pointer;
     transition: background 0.15s ease;
     border-radius: 24px;
+    border-style: none;
     background: transparent;
     margin-left: 2px;
 }

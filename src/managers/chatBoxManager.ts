@@ -1,3 +1,5 @@
+import { debugSelectorMatch } from '@utils/debug';
+
 const INPUT_SELECTORS = [
     '.ql-editor[contenteditable="true"]',
     'div[contenteditable="true"][role="textbox"]',
@@ -27,8 +29,14 @@ type AddToolOptions = {
 function getInputElement(): ChatInputElement | null {
     for (const sel of INPUT_SELECTORS) {
         const el = document.querySelector<ChatInputElement>(sel);
+        debugSelectorMatch('ChatBox.getInputElement', sel, Boolean(el));
         if (el) return el;
     }
+
+    debugSelectorMatch('ChatBox.getInputElement', '(no selector matched)', false, {
+        totalSelectors: INPUT_SELECTORS.length,
+    });
+
     return null;
 }
 
@@ -86,8 +94,13 @@ function getInputAnchorElement(): HTMLElement | null {
 function getChatHistoryContainer(): HTMLElement | null {
     for (const selector of CHAT_HISTORY_SELECTORS) {
         const el = document.querySelector<HTMLElement>(selector);
+        debugSelectorMatch('ChatBox.getChatHistoryContainer', selector, Boolean(el));
         if (el) return el;
     }
+
+    debugSelectorMatch('ChatBox.getChatHistoryContainer', '(no selector matched)', false, {
+        totalSelectors: CHAT_HISTORY_SELECTORS.length,
+    });
 
     return null;
 }

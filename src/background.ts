@@ -217,6 +217,35 @@ function cleanMemorySummary(text: string) {
  * @returns {boolean} True if successful.
  */
 function enterPrompt(text: string): boolean {
+    const debugSelector = (
+        context: string,
+        selector: string,
+        matched: boolean,
+        extra: Record<string, unknown> = {}
+    ) => {
+        const DEBUG_BUILD_ENABLED = __HG_DEBUG_BUILD__;
+        if (!DEBUG_BUILD_ENABLED) return;
+
+        const raw = localStorage.getItem('hg_debug') || '';
+        const parts = raw
+            .split(/[\s,|]+/)
+            .map((part) => part.trim().toLowerCase())
+            .filter(Boolean);
+        const enabled =
+            parts.includes('1') ||
+            parts.includes('true') ||
+            parts.includes('*') ||
+            parts.includes('all') ||
+            parts.includes('selectors');
+        if (!enabled) return;
+
+        console.log(`[HG Selectors:${context}]`, {
+            selector,
+            matched,
+            ...extra,
+        });
+    };
+
     const selectors = [
         'rich-textarea .ql-editor',
         '.ql-editor.textarea',
@@ -226,8 +255,16 @@ function enterPrompt(text: string): boolean {
     let input: HTMLElement | null = null;
     for (const sel of selectors) {
         input = document.querySelector<HTMLElement>(sel);
+        debugSelector('Background.enterPrompt', sel, Boolean(input));
         if (input) break;
     }
+
+    if (!input) {
+        debugSelector('Background.enterPrompt', '(no selector matched)', false, {
+            totalSelectors: selectors.length,
+        });
+    }
+
     if (!input) return false;
 
     while (input.firstChild) {
@@ -257,6 +294,35 @@ function enterPrompt(text: string): boolean {
  * @returns {boolean} True if button found and clicked.
  */
 function clickSubmit(): boolean {
+    const debugSelector = (
+        context: string,
+        selector: string,
+        matched: boolean,
+        extra: Record<string, unknown> = {}
+    ) => {
+        const DEBUG_BUILD_ENABLED = __HG_DEBUG_BUILD__;
+        if (!DEBUG_BUILD_ENABLED) return;
+
+        const raw = localStorage.getItem('hg_debug') || '';
+        const parts = raw
+            .split(/[\s,|]+/)
+            .map((part) => part.trim().toLowerCase())
+            .filter(Boolean);
+        const enabled =
+            parts.includes('1') ||
+            parts.includes('true') ||
+            parts.includes('*') ||
+            parts.includes('all') ||
+            parts.includes('selectors');
+        if (!enabled) return;
+
+        console.log(`[HG Selectors:${context}]`, {
+            selector,
+            matched,
+            ...extra,
+        });
+    };
+
     const selectors = [
         'button[aria-label*="Send"]',
         'button[aria-label*="send"]',
@@ -266,11 +332,22 @@ function clickSubmit(): boolean {
     ];
     for (const sel of selectors) {
         const btn = document.querySelector<HTMLButtonElement>(sel);
-        if (btn && btn.offsetParent !== null && !btn.disabled) {
+        const isUsable = Boolean(btn && btn.offsetParent !== null && !btn.disabled);
+        debugSelector('Background.clickSubmit', sel, isUsable, {
+            exists: Boolean(btn),
+            visible: Boolean(btn && btn.offsetParent !== null),
+            disabled: Boolean(btn?.disabled),
+        });
+        if (isUsable) {
             btn.click();
             return true;
         }
     }
+
+    debugSelector('Background.clickSubmit', '(no selector matched)', false, {
+        totalSelectors: selectors.length,
+    });
+
     const all = document.querySelectorAll<HTMLButtonElement>('button');
     for (const btn of all) {
         if (
@@ -384,6 +461,35 @@ function setTargetModel(mode: 'flash' | 'thinking' | 'pro' | string) {
  * @returns {Object} { isGenerating: boolean, response: string|null }
  */
 function checkResponseStatus(_promptText: string) {
+    const debugSelector = (
+        context: string,
+        selector: string,
+        matched: boolean,
+        extra: Record<string, unknown> = {}
+    ) => {
+        const DEBUG_BUILD_ENABLED = __HG_DEBUG_BUILD__;
+        if (!DEBUG_BUILD_ENABLED) return;
+
+        const raw = localStorage.getItem('hg_debug') || '';
+        const parts = raw
+            .split(/[\s,|]+/)
+            .map((part) => part.trim().toLowerCase())
+            .filter(Boolean);
+        const enabled =
+            parts.includes('1') ||
+            parts.includes('true') ||
+            parts.includes('*') ||
+            parts.includes('all') ||
+            parts.includes('selectors');
+        if (!enabled) return;
+
+        console.log(`[HG Selectors:${context}]`, {
+            selector,
+            matched,
+            ...extra,
+        });
+    };
+
     const isGenerating = (() => {
         const stopBtn = document.querySelector<HTMLElement>(
             'button[aria-label*="Stop"], button[aria-label*="stop"]'
@@ -441,11 +547,19 @@ function checkResponseStatus(_promptText: string) {
         ];
         for (const sel of selectors) {
             const els = document.querySelectorAll<Element>(sel);
+            debugSelector('Background.checkResponseStatus', sel, els.length > 0, {
+                matchedCount: els.length,
+            });
             if (els.length > 0) {
                 const text = extractText(els[els.length - 1]);
                 if (text && text.length > 0) return text;
             }
         }
+
+        debugSelector('Background.checkResponseStatus', '(no selector matched)', false, {
+            totalSelectors: selectors.length,
+        });
+
         return null;
     })();
 

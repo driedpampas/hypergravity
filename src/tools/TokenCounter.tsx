@@ -1,7 +1,7 @@
 import { useStorage } from '@hooks/useStorage';
 import { InputArrowIcon, OutputArrowIcon, TotalPieIcon } from '@icons';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
-import { debugLog as _debugLog } from '@utils/debug';
+import { debugLog as _debugLog, debugSelectorMatch } from '@utils/debug';
 import { countText } from '@utils/textStats';
 import {
     forceFlush,
@@ -31,16 +31,16 @@ type CountedMessage = {
 
 const debugLog = (...args: unknown[]) => _debugLog('TokenCounter', ...args);
 
+const CHAT_HISTORY_ROOT_SELECTORS = [
+    '[data-test-id="chat-history-container"]',
+    'infinite-scroller.chat-history',
+    '.chat-history',
+];
+
 function normalizeTokenCounterMode(mode: unknown): TokenCounterMode {
     const normalized = String(mode || '').trim();
 
     switch (normalized) {
-        case 'hidden':
-            return 'none';
-        case 'circle':
-            return 'ring';
-        case 'both':
-            return 'ring_text';
         case 'text':
         case 'none':
         case 'percentage':
@@ -79,12 +79,19 @@ function getTokenCounterDisplayConfig(mode: TokenCounterMode) {
 }
 
 function getChatHistoryRoot() {
-    return (
-        document.querySelector('[data-test-id="chat-history-container"]') ||
-        document.querySelector('infinite-scroller.chat-history') ||
-        document.querySelector('.chat-history') ||
-        null
-    );
+    for (const selector of CHAT_HISTORY_ROOT_SELECTORS) {
+        const node = document.querySelector(selector);
+        debugSelectorMatch('TokenCounter.getChatHistoryRoot', selector, Boolean(node));
+        if (node) {
+            return node;
+        }
+    }
+
+    debugSelectorMatch('TokenCounter.getChatHistoryRoot', '(no selector matched)', false, {
+        totalSelectors: CHAT_HISTORY_ROOT_SELECTORS.length,
+    });
+
+    return null;
 }
 
 function getConversationContainers() {
@@ -184,9 +191,15 @@ function getNodeTextExcludingThoughts(node: Element | null): string {
 
 function resolveNodesByPriority(conversationContainer: Element, selectorGroups: string[]) {
     for (const selectors of selectorGroups) {
-        const nodes = uniqueTopLevelNodes(
-            Array.from(conversationContainer.querySelectorAll(selectors))
-        ).filter((node) => getNodeTextExcludingThoughts(node).length > 0);
+        const allNodes = Array.from(conversationContainer.querySelectorAll(selectors));
+        const nodes = uniqueTopLevelNodes(allNodes).filter(
+            (node) => getNodeTextExcludingThoughts(node).length > 0
+        );
+
+        debugSelectorMatch('TokenCounter.resolveNodesByPriority', selectors, nodes.length > 0, {
+            matchedCount: nodes.length,
+            rawCount: allNodes.length,
+        });
 
         if (nodes.length > 0) {
             return { nodes, selectors };
@@ -343,16 +356,36 @@ export function TokenCounter() {
 
                 if (allMessages.length === 0) {
                     const root = getChatHistoryRoot() || document;
-                    const userNodes = uniqueTopLevelNodes(
-                        Array.from(root.querySelectorAll(USER_SELECTORS.join(', ')))
-                    ).filter((node) => getNodeText(node).length > 0);
+                    const userSelector = USER_SELECTORS.join(', ');
+                    const rawUserNodes = Array.from(root.querySelectorAll(userSelector));
+                    const userNodes = uniqueTopLevelNodes(rawUserNodes).filter(
+                        (node) => getNodeText(node).length > 0
+                    );
+                    debugSelectorMatch(
+                        'TokenCounter.fallbackUserNodes',
+                        userSelector,
+                        userNodes.length > 0,
+                        {
+                            matchedCount: userNodes.length,
+                            rawCount: rawUserNodes.length,
+                        }
+                    );
 
-                    const modelNodes = uniqueTopLevelNodes(
-                        Array.from(root.querySelectorAll(MODEL_SELECTORS.join(', ')))
-                    ).filter(
+                    const modelSelector = MODEL_SELECTORS.join(', ');
+                    const rawModelNodes = Array.from(root.querySelectorAll(modelSelector));
+                    const modelNodes = uniqueTopLevelNodes(rawModelNodes).filter(
                         (node) =>
                             getNodeText(node).length > 0 &&
                             !userNodes.some((userNode) => userNode.contains(node))
+                    );
+                    debugSelectorMatch(
+                        'TokenCounter.fallbackModelNodes',
+                        modelSelector,
+                        modelNodes.length > 0,
+                        {
+                            matchedCount: modelNodes.length,
+                            rawCount: rawModelNodes.length,
+                        }
                     );
 
                     for (const node of userNodes) {

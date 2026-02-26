@@ -28,11 +28,11 @@
 - For chat-box tool UI changes, prefer creating/updating components in `src/tools/` and composing them via `ChatTools`, rather than adding logic directly in `content.jsx`.
 
 ## Developer workflow
-- Install: `npm install`
-- Dev (must stay on port 5173): `npm run dev`
-- Build Extension: `npm run build:ext`
-- Build Userscript: `npm run build:user`
-- Preview: `npm run preview`
+- Install: `bun install`
+- Dev (must stay on port 5173): `bun run dev`
+- Build Extension: `bun run build:ext`
+- Build Userscript: `bun run build:user`
+- Preview: `bun run preview`
 - No formal test suite exists; validate by loading the built extension and exercising Gemini UI flows.
 
 ## Style + change scope

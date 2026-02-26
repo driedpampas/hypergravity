@@ -5,6 +5,18 @@
     --hg-font-family-mono: "Google Sans Mono", "Roboto Mono", monospace;
 }
 
+#hypergravity-root,
+#hypergravity-root :where(button, input, select, textarea),
+#hypergravity-chat-tools-root,
+#hypergravity-chat-tools-root :where(button, input, select, textarea),
+#hypergravity-btn,
+.hg-header-btn,
+.hg-export-overlay,
+.hg-folder-select-overlay,
+.hg-toast {
+    font-family: var(--hg-font-family) !important;
+}
+
 #hypergravity-btn {
     display: flex;
     align-items: center;
