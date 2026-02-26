@@ -1,81 +1,73 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>hypergravity</title>
-        <link rel="stylesheet" href="popup.css" />
-    </head>
-    <body>
-        <div class="hg-popup">
-            <div class="hg-popup-header">
-                <img
-                    src="/icons/icon48.png"
-                    alt="hypergravity"
-                    class="hg-popup-icon"
-                />
-                <div class="hg-popup-title-group">
-                    <h1 class="hg-popup-title">hypergravity</h1>
-                    <span class="hg-popup-version" id="hg-version"></span>
-                </div>
-            </div>
-
-            <div class="hg-popup-enable-row" id="hg-enabled-row">
-                <span class="hg-popup-enable-label">Enable Hypergravity</span>
-                <div class="hg-toggle" id="hg-toggle-ui">
-                    <input type="checkbox" id="hg-enabled-toggle" hidden />
-                    <div class="hg-toggle-knob"></div>
-                </div>
-            </div>
-
-            <div class="hg-popup-stats">
-                <div class="hg-popup-stat-row">
-                    <span class="hg-popup-stat-label">Cached token counts</span>
-                    <span class="hg-popup-stat-value" id="hg-cache-entries"
-                        >—</span
-                    >
-                </div>
-            </div>
-
-            <div class="hg-popup-actions">
-                <button class="hg-popup-btn" id="hg-export-btn">
-                    <span class="hg-popup-btn-icon" id="hg-export-icon"></span>
-                    Export Data
-                </button>
-                <button class="hg-popup-btn" id="hg-import-btn">
-                    <span class="hg-popup-btn-icon" id="hg-import-icon"></span>
-                    Import Data
-                </button>
-                <button class="hg-popup-btn" id="hg-clear-cache-btn">
-                    Clear Cache
-                </button>
-                <input type="file" id="hg-import-input" accept=".gz" hidden />
-            </div>
-
-            <div class="hg-popup-status" id="hg-status"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>hypergravity</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="hg-popup">
+      <div class="hg-popup-header">
+        <img src="/icons/icon48.png" alt="hypergravity" class="hg-popup-icon" />
+        <div class="hg-popup-title-group">
+          <h1 class="hg-popup-title">hypergravity</h1>
+          <span class="hg-popup-version" id="hg-version"></span>
         </div>
+      </div>
 
-        <!-- Custom confirmation modal for the popup -->
-        <div class="hg-popup-modal-overlay" id="hg-modal-overlay">
-            <div class="hg-popup-modal">
-                <div class="hg-popup-modal-title">Reload Required</div>
-                <div class="hg-popup-modal-body" id="hg-modal-body">
-                    Changes will take effect after reloading the current tab.
-                </div>
-                <div class="hg-popup-modal-actions">
-                    <button class="hg-popup-modal-btn" id="hg-modal-cancel">
-                        Later
-                    </button>
-                    <button
-                        class="hg-popup-modal-btn hg-popup-modal-btn--primary"
-                        id="hg-modal-confirm"
-                    >
-                        Reload Now
-                    </button>
-                </div>
-            </div>
+      <div class="hg-popup-enable-row" id="hg-enabled-row">
+        <span class="hg-popup-enable-label">Enable Hypergravity</span>
+        <div class="hg-toggle" id="hg-toggle-ui">
+          <input type="checkbox" id="hg-enabled-toggle" hidden />
+          <div class="hg-toggle-knob"></div>
         </div>
+      </div>
 
-        <script src="popup.js" type="module"></script>
-    </body>
+      <div class="hg-popup-stats">
+        <div class="hg-popup-stat-row">
+          <span class="hg-popup-stat-label">Cached token counts</span>
+          <span class="hg-popup-stat-value" id="hg-cache-entries">—</span>
+        </div>
+      </div>
+
+      <div class="hg-popup-actions">
+        <button class="hg-popup-btn" id="hg-export-btn">
+          <span class="hg-popup-btn-icon" id="hg-export-icon"></span>
+          Export Data
+        </button>
+        <button class="hg-popup-btn" id="hg-import-btn">
+          <span class="hg-popup-btn-icon" id="hg-import-icon"></span>
+          Import Data
+        </button>
+        <button class="hg-popup-btn" id="hg-clear-cache-btn">
+          Clear Cache
+        </button>
+        <input type="file" id="hg-import-input" accept=".gz" hidden />
+      </div>
+
+      <div class="hg-popup-status" id="hg-status"></div>
+    </div>
+
+    <!-- Custom confirmation modal for the popup -->
+    <div class="hg-popup-modal-overlay" id="hg-modal-overlay">
+      <div class="hg-popup-modal">
+        <div class="hg-popup-modal-title">Reload Required</div>
+        <div class="hg-popup-modal-body" id="hg-modal-body">
+          Changes will take effect after reloading the current tab.
+        </div>
+        <div class="hg-popup-modal-actions">
+          <button class="hg-popup-modal-btn" id="hg-modal-cancel">Later</button>
+          <button
+            class="hg-popup-modal-btn hg-popup-modal-btn--primary"
+            id="hg-modal-confirm"
+          >
+            Reload Now
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.ts" type="module"></script>
+  </body>
 </html>

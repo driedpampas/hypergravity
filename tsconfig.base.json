@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        "noEmit": true,
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "target": "ES2022",
+        "jsx": "react-jsx",
+        "jsxImportSource": "preact",
+        "skipLibCheck": true,
+        "types": ["chrome", "vite/client"],
+        "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+        "baseUrl": ".",
+        "paths": {
+            "@src/*": ["src/*"],
+            "@content/*": ["src/content/*"],
+            "@features/*": ["src/features/*"],
+            "@hooks/*": ["src/hooks/*"],
+            "@icons": ["src/icons/index.ts"],
+            "@icons/*": ["src/icons/*"],
+            "@managers/*": ["src/managers/*"],
+            "@modules/*": ["src/modules/*"],
+            "@tools/*": ["src/tools/*"],
+            "@utils/*": ["src/utils/*"]
+        }
+    }
+}

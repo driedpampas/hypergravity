@@ -22,7 +22,7 @@ async function collectFiles(dirPath, files = []) {
             continue;
         }
 
-        if (entry.isFile() && /\.(js|jsx)$/i.test(entry.name)) {
+        if (entry.isFile() && /\.(js|jsx|ts|tsx)$/i.test(entry.name)) {
             files.push(fullPath);
         }
     }
@@ -51,8 +51,7 @@ function findViolations(source, absolutePath) {
             const specifier = match[1];
 
             if (
-                specifier &&
-                specifier.startsWith('.') &&
+                specifier?.startsWith('.') &&
                 !shouldAllowRelativeImport(specifier)
             ) {
                 violations.push({
@@ -83,7 +82,7 @@ async function main() {
         return;
     }
 
-    console.error('✗ Relative JS/JSX imports are not allowed. Use namespace aliases.');
+    console.error('✗ Relative JS/JSX/TS/TSX imports are not allowed. Use namespace aliases.');
     for (const violation of violations) {
         console.error(
             `  - ${violation.file}:${violation.line} -> ${violation.specifier}`

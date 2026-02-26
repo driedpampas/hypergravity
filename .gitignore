@@ -4,3 +4,4 @@
 **/*.gz
 request.json
 /.old
+/.tmp

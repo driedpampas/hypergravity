@@ -1,25 +1,12 @@
 {
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "allowJs": true,
-        "checkJs": false,
-        "noEmit": true,
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "target": "ES2022",
-        "jsx": "react-jsx",
-        "jsxImportSource": "preact",
-        "baseUrl": ".",
-        "paths": {
-            "@src/*": ["src/*"],
-            "@content/*": ["src/content/*"],
-            "@features/*": ["src/features/*"],
-            "@hooks/*": ["src/hooks/*"],
-            "@icons/*": ["src/icons/*"],
-            "@managers/*": ["src/managers/*"],
-            "@modules/*": ["src/modules/*"],
-            "@tools/*": ["src/tools/*"],
-            "@utils/*": ["src/utils/*"]
-        }
+        "allowJs": false
     },
-    "include": ["src/**/*.js", "src/**/*.jsx", "vite.config.js"]
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.d.ts"
+    ],
+    "exclude": ["dist", "node_modules", ".local", ".old", ".tmp"]
 }

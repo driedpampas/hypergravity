@@ -28,7 +28,7 @@ export default defineConfig(({ command, mode }) => {
             preact(),
             isUserscript
                 ? monkey({
-                      entry: 'src/content.jsx',
+                      entry: 'src/content.tsx',
                       userscript: {
                           name: manifest.name,
                           version: manifest.version,
