@@ -143,12 +143,29 @@ function getNodeTextExcludingThoughts(node) {
         return '';
     }
 
+    if (node.classList?.contains('cdk-visually-hidden')) {
+        return '';
+    }
+
+    const ownMathText = (node.getAttribute?.('data-math') || '').trim();
+    if (ownMathText) {
+        return ownMathText;
+    }
+
     const clone = node.cloneNode(true);
     clone
         .querySelectorAll(
-            'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts'
+            'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts, .cdk-visually-hidden'
         )
         .forEach((el) => el.remove());
+
+    clone.querySelectorAll('[data-math]').forEach((el) => {
+        const mathText = (el.getAttribute('data-math') || '').trim();
+        const replacement = document.createTextNode(
+            mathText ? ` ${mathText} ` : ' '
+        );
+        el.replaceWith(replacement);
+    });
 
     return getNodeText(clone);
 }
@@ -157,7 +174,7 @@ function resolveNodesByPriority(conversationContainer, selectorGroups) {
     for (const selectors of selectorGroups) {
         const nodes = uniqueTopLevelNodes(
             Array.from(conversationContainer.querySelectorAll(selectors))
-        ).filter((node) => getNodeText(node).length > 0);
+        ).filter((node) => getNodeTextExcludingThoughts(node).length > 0);
 
         if (nodes.length > 0) {
             return { nodes, selectors };
