@@ -1,4 +1,4 @@
-import { BackArrowIcon } from './CommonIcons';
+import { BackArrowIcon } from '@icons/CommonIcons';
 
 export function FolderBackIcon(props) {
     return <BackArrowIcon {...props} />;

@@ -2,11 +2,11 @@ import {
     getStorageValue,
     summarizeChatMemory,
     isExtension,
-} from '../utils/browserEnv';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
-import { getIdbValue, setIdbValue } from '../utils/idbStorage';
-import { sanitizeMessageText, hashText } from '../utils/tokenHashCache';
-import { debugLog as _debugLog } from '../utils/debug';
+} from '@utils/browserEnv';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { getIdbValue, setIdbValue } from '@utils/idbStorage';
+import { sanitizeMessageText, hashText } from '@utils/tokenHashCache';
+import { debugLog as _debugLog } from '@utils/debug';
 
 const debugLog = (...args) => _debugLog('ChatMemory', ...args);
 

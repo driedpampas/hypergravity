@@ -1,7 +1,7 @@
 import { render } from 'preact';
 
-import { Sidebar } from '../modules/sidebar';
-import { ChatTools } from '../ChatTools';
+import { Sidebar } from '@modules/sidebar';
+import { ChatTools } from '@src/ChatTools';
 
 /**
  * Identifies the sidebar injection point and inserts the Hypergravity sidebar root.

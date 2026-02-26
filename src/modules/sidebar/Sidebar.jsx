@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'preact/hooks';
 
-import { useStorage } from '../../hooks/useStorage';
-import { SettingsModal } from '../../SettingsModal';
-import { WelcomeModal } from '../../WelcomeModal';
+import { useStorage } from '@hooks/useStorage';
+import { SettingsModal } from '@src/SettingsModal';
+import { WelcomeModal } from '@src/WelcomeModal';
 import {
     ChevronRightIcon,
     WelcomeHandIcon,
     FolderEmptyIcon,
     SettingsGearIcon,
-} from '../../icons';
-import { WELCOME_SEEN_KEY } from '../../utils/constants';
-import { FoldersManager } from './FoldersManager';
+} from '@icons';
+import { WELCOME_SEEN_KEY } from '@utils/constants';
+import { FoldersManager } from '@modules/sidebar/FoldersManager';
 import './Sidebar.css';
 
 export function Sidebar() {

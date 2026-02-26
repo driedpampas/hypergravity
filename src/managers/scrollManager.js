@@ -1,4 +1,4 @@
-import { chatBoxManager } from './chatBoxManager';
+import { chatBoxManager } from '@managers/chatBoxManager';
 
 /**
  * Perform a smooth scroll to a target position.

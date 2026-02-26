@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { ChevronDownIcon, ChevronUpIcon } from '../icons';
-import { useStorage } from '../hooks/useStorage';
-import { createScrollManager } from '../managers/scrollManager';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
+import { ChevronDownIcon, ChevronUpIcon } from '@icons';
+import { useStorage } from '@hooks/useStorage';
+import { createScrollManager } from '@managers/scrollManager';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 
 export function ScrollButtons() {
     const [settings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);

@@ -1,9 +1,9 @@
 import './ChatTools.css';
-import { WordCounter } from './tools/WordCounter';
-import { OptimizeButton } from './tools/OptimizeButton';
-import { TokenCounter } from './tools/TokenCounter';
-import { QuickActions } from './tools/QuickActions';
-import { ScrollButtons } from './tools/ScrollButtons';
+import { WordCounter } from '@tools/WordCounter';
+import { OptimizeButton } from '@tools/OptimizeButton';
+import { TokenCounter } from '@tools/TokenCounter';
+import { QuickActions } from '@tools/QuickActions';
+import { ScrollButtons } from '@tools/ScrollButtons';
 
 const TOOLS = [
     { component: WordCounter, align: 'left', weight: 0 },

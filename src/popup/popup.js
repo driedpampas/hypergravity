@@ -3,15 +3,15 @@ import {
     getStorageValue,
     setStorageValue,
     getVersion,
-} from '../utils/browserEnv';
-import { ExportDataIcon, ImportDataIcon } from '../icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
+} from '@utils/browserEnv';
+import { ExportDataIcon, ImportDataIcon } from '@icons';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import {
     getAllCacheData,
     importCacheData,
     getCacheStats,
     clearCacheData,
-} from '../utils/tokenHashCache';
+} from '@utils/tokenHashCache';
 
 function showStatus(message, type = '') {
     const el = document.getElementById('hg-status');

@@ -1,6 +1,6 @@
-import { topBarManager } from '../managers/topBarManager';
+import { topBarManager } from '@managers/topBarManager';
 import { h } from 'preact';
-import { ExportIcon, ExpandIcon, CollapseIcon } from '../icons';
+import { ExportIcon, ExpandIcon, CollapseIcon } from '@icons';
 
 /**
  * Factory for the Wide Layout engine which allows Gemini chat content to span the full width of the screen.

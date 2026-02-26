@@ -1,6 +1,6 @@
-import { useStorage } from './hooks/useStorage';
-import { BackArrowIcon } from './icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
+import { useStorage } from '@hooks/useStorage';
+import { BackArrowIcon } from '@icons';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import './SettingsModal.css';
 
 export function SettingsModal({ onClose }) {

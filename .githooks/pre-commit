@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+BUN_BIN="${BUN_BIN:-}"
+
+if [ -z "$BUN_BIN" ]; then
+	if command -v bun >/dev/null 2>&1; then
+		BUN_BIN="$(command -v bun)"
+	elif [ -x "$HOME/.bun/bin/bun" ]; then
+		BUN_BIN="$HOME/.bun/bin/bun"
+	else
+		echo "bun is required for pre-commit but was not found in PATH or at ~/.bun/bin/bun" >&2
+		exit 127
+	fi
+fi
+
+"$BUN_BIN" scripts/update-version-from-commits.mjs
+
+git add package.json manifest.json

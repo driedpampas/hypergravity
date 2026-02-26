@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { countText } from '../utils/textStats';
-import { useStorage } from '../hooks/useStorage';
-import { InputArrowIcon, OutputArrowIcon, TotalPieIcon } from '../icons';
+import { countText } from '@utils/textStats';
+import { useStorage } from '@hooks/useStorage';
+import { InputArrowIcon, OutputArrowIcon, TotalPieIcon } from '@icons';
 import {
     sanitizeMessageText,
     hashText,
     getCachedTokenCount,
     setCachedTokenCount,
     forceFlush,
-} from '../utils/tokenHashCache';
-import { debugLog as _debugLog } from '../utils/debug';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../utils/constants';
+} from '@utils/tokenHashCache';
+import { debugLog as _debugLog } from '@utils/debug';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import './TokenCounter.css';
 
 const debugLog = (...args) => _debugLog('TokenCounter', ...args);

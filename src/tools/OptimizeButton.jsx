@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { CheckIcon, CloseIcon, OptimizeSparkleIcon } from '../icons';
-import { createPromptOptimizer } from '../features/promptOptimizer';
+import { CheckIcon, CloseIcon, OptimizeSparkleIcon } from '@icons';
+import { createPromptOptimizer } from '@features/promptOptimizer';
 
 function showToast(message, type = 'info') {
     const existing = document.querySelector('#hg-toast');

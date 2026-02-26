@@ -3,7 +3,7 @@ import {
     getAllCacheData,
     importCacheData,
     clearCacheData,
-} from '../../utils/tokenHashCache';
+} from '@utils/tokenHashCache';
 
 export function registerTokenCacheMessageHandler() {
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

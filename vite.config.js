@@ -3,11 +3,27 @@ import { crx } from '@crxjs/vite-plugin';
 import preact from '@preact/preset-vite';
 import manifest from './manifest.json';
 import monkey from 'vite-plugin-monkey';
+import { fileURLToPath, URL } from 'node:url';
+
+const srcPath = fileURLToPath(new URL('./src', import.meta.url));
 
 export default defineConfig(({ command, mode }) => {
     const isUserscript = process.env.BUILD_TARGET === 'userscript';
 
     return {
+        resolve: {
+            alias: {
+                '@src': srcPath,
+                '@content': fileURLToPath(new URL('./src/content', import.meta.url)),
+                '@features': fileURLToPath(new URL('./src/features', import.meta.url)),
+                '@hooks': fileURLToPath(new URL('./src/hooks', import.meta.url)),
+                '@icons': fileURLToPath(new URL('./src/icons', import.meta.url)),
+                '@managers': fileURLToPath(new URL('./src/managers', import.meta.url)),
+                '@modules': fileURLToPath(new URL('./src/modules', import.meta.url)),
+                '@tools': fileURLToPath(new URL('./src/tools', import.meta.url)),
+                '@utils': fileURLToPath(new URL('./src/utils', import.meta.url)),
+            },
+        },
         plugins: [
             preact(),
             isUserscript

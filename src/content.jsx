@@ -1,26 +1,26 @@
 import './content.css';
 
-import { addStorageListener } from './utils/browserEnv';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
-import { ChatExportController } from './features/chatExport';
-import { createChatMemoryManager } from './features/chatMemoryManager';
-import { createTopBarToolsManager } from './features/topBarToolsManager';
+import { addStorageListener } from '@utils/browserEnv';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { ChatExportController } from '@features/chatExport';
+import { createChatMemoryManager } from '@features/chatMemoryManager';
+import { createTopBarToolsManager } from '@features/topBarToolsManager';
 import {
     applyChatboxHeaderStyleSetting,
     getSettings,
     updateSettings,
-} from './content/helpers/settings';
+} from '@content/helpers/settings';
 import {
     getAccountAwareUrl,
     findActiveChatInfo,
-} from './content/helpers/chatInfo';
-import { showToast } from './content/helpers/toast';
+} from '@content/helpers/chatInfo';
+import { showToast } from '@content/helpers/toast';
 import {
     insertHypergravitySidebar,
     insertChatTools,
-} from './content/domInjection';
-import { createFoldersMenuManager } from './content/features/foldersMenu';
-import { registerTokenCacheMessageHandler } from './content/features/tokenCacheMessageHandler';
+} from '@content/domInjection';
+import { createFoldersMenuManager } from '@content/features/foldersMenu';
+import { registerTokenCacheMessageHandler } from '@content/features/tokenCacheMessageHandler';
 
 let lastWideChatUrl = window.location.href;
 let chatExportController = null;

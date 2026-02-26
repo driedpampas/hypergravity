@@ -1,5 +1,5 @@
-import { useStorage } from '../hooks/useStorage';
-import { chatBoxManager } from '../managers/chatBoxManager';
+import { useStorage } from '@hooks/useStorage';
+import { chatBoxManager } from '@managers/chatBoxManager';
 
 export function QuickActions() {
     const [quickActions] = useStorage('quickActions', []);

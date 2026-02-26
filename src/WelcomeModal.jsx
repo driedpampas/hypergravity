@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { useStorage } from './hooks/useStorage';
+import { useStorage } from '@hooks/useStorage';
 import {
     BackArrowIcon,
     ChatKeyIcon,
@@ -10,8 +10,8 @@ import {
     InfoAlertCircleIcon,
     LockIcon,
     MenuLinesIcon,
-} from './icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from './utils/constants';
+} from '@icons';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 import './WelcomeModal.css';
 
 const TOTAL_STEPS = 3;

@@ -1,5 +1,5 @@
-import { getStorageValue, setStorageValue } from '../../utils/browserEnv';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '../../utils/constants';
+import { getStorageValue, setStorageValue } from '@utils/browserEnv';
+import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
 
 /**
  * Applies CSS classes to the document body based on chatbox style settings.

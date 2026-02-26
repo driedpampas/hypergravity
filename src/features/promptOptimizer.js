@@ -1,5 +1,5 @@
-import { chatBoxManager } from '../managers/chatBoxManager';
-import { optimizePrompt, cancelOptimization } from '../utils/browserEnv';
+import { chatBoxManager } from '@managers/chatBoxManager';
+import { optimizePrompt, cancelOptimization } from '@utils/browserEnv';
 
 const getPromptText = () => chatBoxManager.getInputText();
 const setPromptText = (text) => chatBoxManager.setInputText(text);

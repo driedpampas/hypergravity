@@ -1,11 +1,12 @@
 {
     "name": "hypergravity",
-    "version": "36",
+    "version": "44",
     "type": "module",
     "scripts": {
         "dev": "vite",
         "build:ext": "vite build",
         "build:user": "BUILD_TARGET=userscript vite build",
+        "lint:imports": "node scripts/lint-import-aliases.mjs",
         "preview": "vite preview",
         "version:commits": "bun scripts/update-version-from-commits.mjs",
         "prepare": "bun scripts/setup-git-hooks.mjs"

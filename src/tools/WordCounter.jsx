@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'preact/hooks';
-import { countText } from '../utils/textStats';
-import { chatBoxManager } from '../managers/chatBoxManager';
+import { countText } from '@utils/textStats';
+import { chatBoxManager } from '@managers/chatBoxManager';
 
 export function WordCounter() {
     const [textStats, setTextStats] = useState(countText(''));

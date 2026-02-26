@@ -1,14 +1,14 @@
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
 
-import { FolderAddIcon, CloseIcon } from '../../icons';
-import { getStorageValue, setStorageValue } from '../../utils/browserEnv';
-import { FOLDERS_KEY } from '../../utils/constants';
+import { FolderAddIcon, CloseIcon } from '@icons';
+import { getStorageValue, setStorageValue } from '@utils/browserEnv';
+import { FOLDERS_KEY } from '@utils/constants';
 import {
     normalizeFoldersData,
     withUpdatedFolders,
-} from '../../utils/foldersData';
-import { inferChatInfoFromConversationRow } from '../helpers/chatInfo';
+} from '@utils/foldersData';
+import { inferChatInfoFromConversationRow } from '@content/helpers/chatInfo';
 
 function FolderSelectModal({
     chatInfo,

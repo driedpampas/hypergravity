@@ -1,2 +1,2 @@
-export { Sidebar } from './Sidebar';
-export { FoldersManager } from './FoldersManager';
+export { Sidebar } from '@modules/sidebar/Sidebar';
+export { FoldersManager } from '@modules/sidebar/FoldersManager';

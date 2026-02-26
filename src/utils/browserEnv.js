@@ -5,7 +5,7 @@ import {
     setIdbValues,
     getIdbValues,
     getAllIdbValues,
-} from './idbStorage';
+} from '@utils/idbStorage';
 
 const localListeners = new Map();
 const storageContextId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;

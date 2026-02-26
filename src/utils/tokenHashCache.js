@@ -1,6 +1,6 @@
-import { getStorageValue, removeStorageValue } from './browserEnv';
-import { getAllIdbValues, setIdbValues, removeIdbValues } from './idbStorage';
-import { debugLog as _debugLog } from './debug';
+import { getStorageValue, removeStorageValue } from '@utils/browserEnv';
+import { getAllIdbValues, setIdbValues, removeIdbValues } from '@utils/idbStorage';
+import { debugLog as _debugLog } from '@utils/debug';
 
 const CACHE_KEY = 'hg_token_hash_cache';
 const CACHE_PREFIX = `${CACHE_KEY}:`;

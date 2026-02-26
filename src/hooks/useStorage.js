@@ -3,7 +3,7 @@ import {
     getStorageValue,
     setStorageValue,
     addStorageListener,
-} from '../utils/browserEnv';
+} from '@utils/browserEnv';
 
 /**
  * Deep merge a stored object with default object values.

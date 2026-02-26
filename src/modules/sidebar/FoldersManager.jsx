@@ -1,24 +1,24 @@
 import { useMemo, useState } from 'preact/hooks';
 
-import { useStorage } from '../../hooks/useStorage';
+import { useStorage } from '@hooks/useStorage';
 import {
     findActiveChatInfo,
     getAccountAwareUrl,
     inferChatInfoFromConversationRow,
-} from '../../content/helpers/chatInfo';
-import { showToast } from '../../content/helpers/toast';
-import { FOLDERS_KEY } from '../../utils/constants';
+} from '@content/helpers/chatInfo';
+import { showToast } from '@content/helpers/toast';
+import { FOLDERS_KEY } from '@utils/constants';
 import {
     normalizeFoldersData,
     withUpdatedFolders,
-} from '../../utils/foldersData';
+} from '@utils/foldersData';
 import {
     FolderBackIcon,
     FolderAddIcon,
     FolderEmptyIcon,
     FolderFilledIcon,
     FolderDeleteIcon,
-} from '../../icons';
+} from '@icons';
 import './FoldersManager.css';
 
 export function FoldersManager({ onClose }) {
