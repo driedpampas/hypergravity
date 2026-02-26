@@ -20,13 +20,7 @@ if git diff --quiet -- package.json manifest.json; then
     exit 0
 fi
 
-git add package.json manifest.json
+git commit --amend --no-edit --only -- package.json manifest.json
 
-if git diff --cached --quiet -- package.json manifest.json; then
-    exit 0
-fi
-
-git commit -m "chore: bump version"
-
-echo "Created version bump commit. Re-run git push to include it." >&2
+echo "Amended HEAD with version update. Re-run git push to include the amended commit." >&2
 exit 1
