@@ -1,6 +1,6 @@
 import { getStorageValue, removeStorageValue } from '@utils/browserEnv';
-import { getAllIdbValues, setIdbValues, removeIdbValues } from '@utils/idbStorage';
 import { debugLog as _debugLog } from '@utils/debug';
+import { getAllIdbValues, removeIdbValues, setIdbValues } from '@utils/idbStorage';
 
 const CACHE_KEY = 'hg_token_hash_cache';
 const CACHE_PREFIX = `${CACHE_KEY}:`;
@@ -79,10 +79,7 @@ async function ensureLegacyCacheMigration(): Promise<void> {
             if (hash) existingHashes.add(hash);
         }
 
-        const legacyMaps = [
-            await getStorageValue(CACHE_KEY, null),
-            readLegacyLocalStorageMap(),
-        ];
+        const legacyMaps = [await getStorageValue(CACHE_KEY, null), readLegacyLocalStorageMap()];
 
         const batch: Record<string, unknown> = {};
         let migratedCount = 0;
@@ -179,10 +176,7 @@ const MODEL_PREFIXES = [
  * @param {'input'|'output'} role - The source of the message.
  * @returns {string} Cleaned text.
  */
-export function sanitizeMessageText(
-    text: string,
-    role: 'input' | 'output'
-): string {
+export function sanitizeMessageText(text: string, role: 'input' | 'output'): string {
     if (!text) return '';
     let cleaned = text;
     const prefixes = role === 'input' ? USER_PREFIXES : MODEL_PREFIXES;
@@ -232,9 +226,7 @@ export async function getCachedTokenCount(hash: string): Promise<number | null> 
         }
     }
 
-    debugLog(
-        result !== null ? `Cache HIT ${hash} → ${result}` : `Cache MISS ${hash}`
-    );
+    debugLog(result !== null ? `Cache HIT ${hash} → ${result}` : `Cache MISS ${hash}`);
     return result;
 }
 
@@ -243,10 +235,7 @@ export async function getCachedTokenCount(hash: string): Promise<number | null> 
  * @param {string} hash
  * @param {number} count
  */
-export async function setCachedTokenCount(
-    hash: string,
-    count: number
-): Promise<void> {
+export async function setCachedTokenCount(hash: string, count: number): Promise<void> {
     const cache = await loadCache();
     cache[hash] = count;
     dirtyHashes.add(hash);

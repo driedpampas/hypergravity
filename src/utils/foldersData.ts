@@ -34,8 +34,7 @@ function normalizeChat(chat: unknown): StoredChat | null {
 
     return {
         id,
-        title:
-            String(chatObj.title || 'Untitled Chat').trim() || 'Untitled Chat',
+        title: String(chatObj.title || 'Untitled Chat').trim() || 'Untitled Chat',
         url: String(chatObj.url || '').trim(),
         pinned: Boolean(chatObj.pinned),
     };
@@ -49,9 +48,7 @@ function normalizeFolder(folder: unknown): StoredFolder | null {
     if (!id || !name) return null;
 
     const chats = Array.isArray(folderObj.chats)
-        ? folderObj.chats
-              .map(normalizeChat)
-              .filter((chat): chat is StoredChat => chat !== null)
+        ? folderObj.chats.map(normalizeChat).filter((chat): chat is StoredChat => chat !== null)
         : [];
 
     return {
@@ -86,19 +83,14 @@ export function normalizeFoldersData(value: unknown): FoldersData {
                   .map(normalizeFolder)
                   .filter((folder): folder is StoredFolder => folder !== null)
             : [],
-        recycleBin: Array.isArray(valueObj.recycleBin)
-            ? valueObj.recycleBin
-            : [],
+        recycleBin: Array.isArray(valueObj.recycleBin) ? valueObj.recycleBin : [],
         permanentlyDeleted: Array.isArray(valueObj.permanentlyDeleted)
             ? valueObj.permanentlyDeleted
             : [],
     };
 }
 
-export function withUpdatedFolders(
-    previousValue: unknown,
-    nextFolders: unknown
-): FoldersData {
+export function withUpdatedFolders(previousValue: unknown, nextFolders: unknown): FoldersData {
     const base = normalizeFoldersData(previousValue);
     return {
         ...base,

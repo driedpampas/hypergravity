@@ -1,14 +1,24 @@
-// @ts-nocheck
 import {
-    getCacheStats,
-    getAllCacheData,
-    importCacheData,
     clearCacheData,
+    getAllCacheData,
+    getCacheStats,
+    importCacheData,
 } from '@utils/tokenHashCache';
 
-export function registerTokenCacheMessageHandler() {
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        if (message?.type === 'HG_TOKEN_CACHE_GET_STATS') {
+type TokenCacheMessage = {
+    type:
+        | 'HG_TOKEN_CACHE_GET_STATS'
+        | 'HG_TOKEN_CACHE_GET_ALL'
+        | 'HG_TOKEN_CACHE_IMPORT'
+        | 'HG_TOKEN_CACHE_CLEAR';
+    data?: unknown;
+};
+
+export function registerTokenCacheMessageHandler(): void {
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        const typedMessage = message as TokenCacheMessage | undefined;
+
+        if (typedMessage?.type === 'HG_TOKEN_CACHE_GET_STATS') {
             getCacheStats()
                 .then((stats) => sendResponse({ success: true, ...stats }))
                 .catch((error) =>
@@ -20,7 +30,7 @@ export function registerTokenCacheMessageHandler() {
             return true;
         }
 
-        if (message?.type === 'HG_TOKEN_CACHE_GET_ALL') {
+        if (typedMessage?.type === 'HG_TOKEN_CACHE_GET_ALL') {
             getAllCacheData()
                 .then((data) => sendResponse({ success: true, data }))
                 .catch((error) =>
@@ -32,8 +42,8 @@ export function registerTokenCacheMessageHandler() {
             return true;
         }
 
-        if (message?.type === 'HG_TOKEN_CACHE_IMPORT') {
-            importCacheData(message?.data)
+        if (typedMessage?.type === 'HG_TOKEN_CACHE_IMPORT') {
+            importCacheData(typedMessage?.data)
                 .then((imported) => sendResponse({ success: true, imported }))
                 .catch((error) =>
                     sendResponse({
@@ -44,7 +54,7 @@ export function registerTokenCacheMessageHandler() {
             return true;
         }
 
-        if (message?.type === 'HG_TOKEN_CACHE_CLEAR') {
+        if (typedMessage?.type === 'HG_TOKEN_CACHE_CLEAR') {
             clearCacheData()
                 .then((cleared) => sendResponse({ success: true, cleared }))
                 .catch((error) =>

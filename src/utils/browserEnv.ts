@@ -1,10 +1,10 @@
 import {
-    getIdbValue,
-    setIdbValue,
-    removeIdbValue,
-    setIdbValues,
-    getIdbValues,
     getAllIdbValues,
+    getIdbValue,
+    getIdbValues,
+    removeIdbValue,
+    setIdbValue,
+    setIdbValues,
 } from '@utils/idbStorage';
 
 type StorageListener = (value: unknown) => void;
@@ -58,9 +58,7 @@ if (storageChannel) {
  * @returns {boolean}
  */
 export function isExtension() {
-    return (
-        typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id
-    );
+    return typeof chrome !== 'undefined' && chrome.runtime && !!chrome.runtime.id;
 }
 
 /**
@@ -150,10 +148,7 @@ export async function getStorageValue<T = unknown>(
  * @param {*} value
  * @returns {Promise<void>}
  */
-export async function setStorageValue(
-    key: string,
-    value: unknown
-): Promise<void> {
+export async function setStorageValue(key: string, value: unknown): Promise<void> {
     await setIdbValue(key, value);
 
     if (hasChromeStorage()) {
@@ -194,10 +189,7 @@ export async function removeStorageValue(key: string): Promise<void> {
     return Promise.resolve();
 }
 
-export function addStorageListener(
-    key: string,
-    callback: StorageListener
-): () => void {
+export function addStorageListener(key: string, callback: StorageListener): () => void {
     if (hasChromeStorage()) {
         const listener = (
             changes: Record<string, chrome.storage.StorageChange>,
@@ -212,12 +204,9 @@ export function addStorageListener(
     }
 
     if (isUserscript() && typeof GM_addValueChangeListener === 'function') {
-        const listenerId = GM_addValueChangeListener(
-            key,
-            (_name, _oldValue, newValue, _remote) => {
-                callback(newValue);
-            }
-        );
+        const listenerId = GM_addValueChangeListener(key, (_name, _oldValue, newValue, _remote) => {
+            callback(newValue);
+        });
         return () => GM_removeValueChangeListener(listenerId);
     }
 
@@ -235,9 +224,7 @@ export function addStorageListener(
     };
 }
 
-export async function getAllStorageData(
-    keys?: string[]
-): Promise<Record<string, unknown>> {
+export async function getAllStorageData(keys?: string[]): Promise<Record<string, unknown>> {
     if (hasChromeStorage()) {
         return new Promise<Record<string, unknown>>((resolve) => {
             chrome.storage.local.get(keys ?? null, async (result) => {
@@ -294,8 +281,7 @@ export async function optimizePrompt(promptText: string): Promise<unknown> {
     }
 
     if (isUserscript() && typeof GM_openInTab === 'function') {
-        const requestId =
-            Date.now().toString() + Math.random().toString().slice(2);
+        const requestId = Date.now().toString() + Math.random().toString().slice(2);
 
         return new Promise<unknown>((resolve, reject) => {
             // Setup listener for the result
@@ -314,10 +300,10 @@ export async function optimizePrompt(promptText: string): Promise<unknown> {
             GM_setValue(`hg_opt_req_${requestId}`, { prompt: promptText });
 
             // Open gemini in a background tab with a hash to trigger worker mode
-            GM_openInTab(
-                `https://gemini.google.com/app#hg_worker=${requestId}`,
-                { active: false, insert: true }
-            );
+            GM_openInTab(`https://gemini.google.com/app#hg_worker=${requestId}`, {
+                active: false,
+                insert: true,
+            });
 
             // Timeout
             setTimeout(() => {
@@ -336,9 +322,7 @@ export async function cancelOptimization() {
     }
 }
 
-export async function summarizeChatMemory(
-    payload: Record<string, unknown>
-): Promise<unknown> {
+export async function summarizeChatMemory(payload: Record<string, unknown>): Promise<unknown> {
     if (isExtension()) {
         return chrome.runtime.sendMessage({
             type: 'SUMMARIZE_CHAT_MEMORY',

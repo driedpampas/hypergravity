@@ -359,10 +359,7 @@ body.hg-chatbox-header-style-enabled .hg-optimize-btn {
 }
 
 body.hg-chatbox-header-style-enabled .hg-optimize-btn:hover {
-    background: var(
-        --gem-sys-color--surface-container-high,
-        #28292a
-    ) !important;
+    background: var(--gem-sys-color--surface-container-high, #28292a) !important;
     color: var(--gem-sys-color--primary, #8ab4f8);
 }
 

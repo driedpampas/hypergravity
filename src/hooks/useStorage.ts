@@ -1,10 +1,7 @@
-// @ts-nocheck
-import { useEffect, useState, useRef } from 'preact/hooks';
-import {
-    getStorageValue,
-    setStorageValue,
-    addStorageListener,
-} from '@utils/browserEnv';
+import { addStorageListener, getStorageValue, setStorageValue } from '@utils/browserEnv';
+import { useEffect, useRef, useState } from 'preact/hooks';
+
+type PlainObject = Record<string, unknown>;
 
 /**
  * Deep merge a stored object with default object values.
@@ -12,7 +9,7 @@ import {
  * @param {Object} defaults - The fallback/default values.
  * @returns {Object}
  */
-function mergeWithDefaults(stored, defaults) {
+function mergeWithDefaults<T>(stored: T, defaults: T): T {
     if (
         defaults &&
         typeof defaults === 'object' &&
@@ -21,7 +18,10 @@ function mergeWithDefaults(stored, defaults) {
         typeof stored === 'object' &&
         !Array.isArray(stored)
     ) {
-        return { ...defaults, ...stored };
+        return {
+            ...(defaults as PlainObject),
+            ...(stored as PlainObject),
+        } as T;
     }
     return stored;
 }
@@ -33,19 +33,19 @@ function mergeWithDefaults(stored, defaults) {
  * @param {*} initialValue - The initial/default value.
  * @returns {[*, Function, boolean]} State value, setter function, and loaded status.
  */
-export function useStorage(key, initialValue) {
+export function useStorage<T>(key: string, initialValue: T): [T, (newValue: T) => void, boolean] {
     const [value, setValue] = useState(initialValue);
     const [isLoaded, setIsLoaded] = useState(false);
     const defaultsRef = useRef(initialValue);
 
     useEffect(() => {
         let isMounted = true;
-        let unsubscribe = null;
+        let unsubscribe: (() => void) | null = null;
 
-        getStorageValue(key).then((storedValue) => {
+        getStorageValue<T>(key).then((storedValue) => {
             if (!isMounted) return;
             const merged = mergeWithDefaults(
-                storedValue !== undefined ? storedValue : initialValue,
+                (storedValue !== undefined ? storedValue : initialValue) as T,
                 defaultsRef.current
             );
             setValue(merged);
@@ -56,7 +56,7 @@ export function useStorage(key, initialValue) {
         unsubscribe = addStorageListener(key, (newValue) => {
             if (!isMounted) return;
             if (newValue !== undefined) {
-                const merged = mergeWithDefaults(newValue, defaultsRef.current);
+                const merged = mergeWithDefaults<T>(newValue as T, defaultsRef.current);
                 setValue(merged);
             }
         });
@@ -67,9 +67,9 @@ export function useStorage(key, initialValue) {
         };
     }, [key, initialValue]);
 
-    const setStoredValue = (newValue) => {
+    const setStoredValue = (newValue: T) => {
         setValue(newValue);
-        setStorageValue(key, newValue);
+        void setStorageValue(key, newValue);
     };
 
     return [value, setStoredValue, isLoaded];

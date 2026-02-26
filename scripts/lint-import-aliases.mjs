@@ -6,9 +6,9 @@ const SRC_DIR = path.join(ROOT, 'src');
 const ALLOWED_RELATIVE_EXTENSIONS = new Set(['.css']);
 
 const IMPORT_PATTERNS = [
-    /(?:import|export)\s+[\s\S]*?\sfrom\s+['\"]([^'\"]+)['\"]/g,
-    /import\s+['\"]([^'\"]+)['\"]/g,
-    /import\(\s*['\"]([^'\"]+)['\"]\s*\)/g,
+    /(?:import|export)\s+[\s\S]*?\sfrom\s+['"]([^'"]+)['"]/g,
+    /import\s+['"]([^'"]+)['"]/g,
+    /import\(\s*['"]([^'"]+)['"]\s*\)/g,
 ];
 
 async function collectFiles(dirPath, files = []) {
@@ -50,10 +50,7 @@ function findViolations(source, absolutePath) {
         while (match) {
             const specifier = match[1];
 
-            if (
-                specifier?.startsWith('.') &&
-                !shouldAllowRelativeImport(specifier)
-            ) {
+            if (specifier?.startsWith('.') && !shouldAllowRelativeImport(specifier)) {
                 violations.push({
                     file: relativePath,
                     line: getLineNumber(source, match.index),
@@ -84,9 +81,7 @@ async function main() {
 
     console.error('✗ Relative JS/JSX/TS/TSX imports are not allowed. Use namespace aliases.');
     for (const violation of violations) {
-        console.error(
-            `  - ${violation.file}:${violation.line} -> ${violation.specifier}`
-        );
+        console.error(`  - ${violation.file}:${violation.line} -> ${violation.specifier}`);
     }
 
     process.exitCode = 1;

@@ -1,5 +1,5 @@
-import { render } from 'preact';
 import type { VNode } from 'preact';
+import { render } from 'preact';
 
 const TOP_BAR_SELECTOR = 'top-bar-actions .right-section .buttons-container';
 
@@ -66,7 +66,7 @@ function ensureButton({
 
         for (const node of Array.from(docHtml.body.childNodes)) {
             button.appendChild(node);
-        };
+        }
     }
 
     if (button.parentElement !== topBar) {

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'preact/hooks';
-import { countText } from '@utils/textStats';
 import { chatBoxManager } from '@managers/chatBoxManager';
+import { countText } from '@utils/textStats';
+import { useEffect, useState } from 'preact/hooks';
 
 export function WordCounter() {
     const [textStats, setTextStats] = useState(countText(''));
@@ -25,11 +25,18 @@ export function WordCounter() {
     }, []);
 
     return (
-        <div
+        <button
+            type="button"
             id="hg-word-counter"
             class={isExpanded ? 'expanded' : ''}
             onClick={() => setIsExpanded(!isExpanded)}
             tabIndex={0}
+            onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setIsExpanded(!isExpanded);
+                }
+            }}
         >
             <div class="hg-counter-summary">
                 <strong>{textStats.words}</strong>&nbsp;words /&nbsp;
@@ -41,29 +48,25 @@ export function WordCounter() {
                         <span>Chars:</span> <strong>{textStats.chars}</strong>
                     </div>
                     <div class="hg-stat-row">
-                        <span>Chars (w/o spaces):</span>{' '}
-                        <strong>{textStats.charsNoSpace}</strong>
+                        <span>Chars (w/o spaces):</span> <strong>{textStats.charsNoSpace}</strong>
                     </div>
                     <div class="hg-stat-row">
                         <span>Words:</span> <strong>{textStats.words}</strong>
                     </div>
                     <div class="hg-stat-row">
-                        <span>Sentences:</span>{' '}
-                        <strong>{textStats.sentences}</strong>
+                        <span>Sentences:</span> <strong>{textStats.sentences}</strong>
                     </div>
                     <div class="hg-stat-row">
-                        <span>Paragraphs:</span>{' '}
-                        <strong>{textStats.paragraphs}</strong>
+                        <span>Paragraphs:</span> <strong>{textStats.paragraphs}</strong>
                     </div>
                     <div class="hg-stat-row">
                         <span>Lines:</span> <strong>{textStats.lines}</strong>
                     </div>
                     <div class="hg-stat-row">
-                        <span>Tokens (~est):</span>{' '}
-                        <strong>{textStats.tokens}</strong>
+                        <span>Tokens (~est):</span> <strong>{textStats.tokens}</strong>
                     </div>
                 </div>
             )}
-        </div>
+        </button>
     );
 }

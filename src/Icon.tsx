@@ -1,5 +1,6 @@
-// @ts-nocheck
-const SvgComponent = (props) => (
+import type { JSX } from 'preact';
+
+const SvgComponent = (props: JSX.SVGAttributes<SVGSVGElement>) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -7,9 +8,11 @@ const SvgComponent = (props) => (
         height={20}
         fill="none"
         strokeWidth={1.5}
-        color="currentColor"
+        stroke="currentColor"
         {...props}
+        aria-hidden="true"
     >
+        <title>Icon graphic</title>
         <path
             stroke="currentColor"
             strokeLinecap="round"

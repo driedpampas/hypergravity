@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
+import { fileURLToPath, URL } from 'node:url';
 import { crx } from '@crxjs/vite-plugin';
 import preact from '@preact/preset-vite';
-import manifest from './manifest.json';
+import { defineConfig } from 'vite';
 import monkey from 'vite-plugin-monkey';
-import { fileURLToPath, URL } from 'node:url';
+import manifest from './manifest.json';
 
 const srcPath = fileURLToPath(new URL('./src', import.meta.url));
 

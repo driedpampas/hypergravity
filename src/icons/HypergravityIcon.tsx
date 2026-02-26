@@ -1,5 +1,6 @@
-// @ts-nocheck
-export function HypergravityIcon(props) {
+import type { JSX } from 'preact';
+
+export function HypergravityIcon(props: JSX.SVGAttributes<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -7,7 +8,9 @@ export function HypergravityIcon(props) {
             height="24"
             viewBox="0 0 4.2333332 4.2333333"
             version="1.1"
+            aria-hidden="true"
         >
+            <title>Hypergravity icon</title>
             <defs id="defs1" />
             <g id="layer1">
                 <g id="g1">

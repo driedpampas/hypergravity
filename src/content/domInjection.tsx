@@ -1,8 +1,6 @@
-// @ts-nocheck
-import { render } from 'preact';
-
 import { Sidebar } from '@modules/sidebar';
 import { ChatTools } from '@src/ChatTools';
+import { render } from 'preact';
 
 /**
  * Identifies the sidebar injection point and inserts the Hypergravity sidebar root.
@@ -10,8 +8,8 @@ import { ChatTools } from '@src/ChatTools';
 export function insertHypergravitySidebar() {
     if (document.querySelector('#hypergravity-root')) return;
 
-    let target = document.querySelector('conversations-list');
-    let insertMode = 'prepend'; // 'prepend' | 'afterend' | 'before'
+    let target: Element | null = document.querySelector('conversations-list');
+    let insertMode: 'prepend' | 'afterend' | 'before' = 'prepend';
 
     if (!target) {
         const gemsList = document.querySelector('.gems-list-container');
@@ -21,9 +19,7 @@ export function insertHypergravitySidebar() {
         } else {
             const sideNav =
                 document.querySelector('bard-sidenav infinite-scroller') ||
-                document.querySelector(
-                    'infinite-scroller[scrollable="true"]'
-                ) ||
+                document.querySelector('infinite-scroller[scrollable="true"]') ||
                 document.querySelector('.conversations-container');
             if (sideNav) {
                 target = sideNav;
@@ -36,8 +32,7 @@ export function insertHypergravitySidebar() {
 
     const rootElement = document.createElement('div');
     rootElement.id = 'hypergravity-root';
-    rootElement.style.cssText =
-        'overflow: visible; transition: margin-top 0.2s ease;';
+    rootElement.style.cssText = 'overflow: visible; transition: margin-top 0.2s ease;';
 
     if (insertMode === 'afterend') {
         target.insertAdjacentElement('afterend', rootElement);
@@ -54,7 +49,7 @@ export function insertHypergravitySidebar() {
  * Identifies the message input area and injects the ChatTools component.
  */
 export function insertChatTools() {
-    const chatContainer =
+    const chatContainer: HTMLElement | null =
         document.querySelector('.text-input-field') ||
         document.querySelector('.leading-actions-wrapper');
     if (!chatContainer) return;
@@ -63,7 +58,7 @@ export function insertChatTools() {
         chatContainer.style.position = 'relative';
     }
 
-    let toolsRoot = document.querySelector('#hypergravity-chat-tools-root');
+    let toolsRoot = document.querySelector<HTMLElement>('#hypergravity-chat-tools-root');
     if (!toolsRoot) {
         toolsRoot = document.createElement('div');
         toolsRoot.id = 'hypergravity-chat-tools-root';

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getIdbValue, setIdbValue, setIdbValues } from '@utils/idbStorage';
 
 const OPTIMIZATION_SYSTEM_PROMPT =
@@ -29,7 +28,7 @@ const CHAT_MEMORY_SUMMARY_PROMPT =
 const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
 const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';
 
-let currentOptimizationTabId = null;
+let currentOptimizationTabId: number | null = null;
 let chatMemoryMigrationDone = false;
 
 const DEFAULT_POLL_INTERVAL_MS = 200;
@@ -47,11 +46,15 @@ const FLASH_WORKFLOW_TIMEOUTS = {
  * @param {number} ms - Milliseconds to wait.
  * @returns {Promise<void>}
  */
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number): Promise<void> {
+    return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
-async function executeInTab(tabId, func, args = []) {
+async function executeInTab(
+    tabId: number,
+    func: (...args: any[]) => any,
+    args: any[] = []
+): Promise<any> {
     const results = await chrome.scripting.executeScript({
         target: { tabId },
         func,
@@ -66,6 +69,12 @@ async function retryWithTimeout({
     intervalMs = DEFAULT_POLL_INTERVAL_MS,
     shouldStop = (value) => Boolean(value),
     onSuccess,
+}: {
+    task: () => Promise<any>;
+    timeoutMs: number;
+    intervalMs?: number;
+    shouldStop?: (value: any) => boolean;
+    onSuccess?: (value: any) => Promise<void> | void;
 }) {
     const endAt = Date.now() + timeoutMs;
     while (Date.now() < endAt) {
@@ -83,21 +92,21 @@ async function retryWithTimeout({
     return { success: false, value: null };
 }
 
-function getStorageObject(key) {
-    return new Promise((resolve) => {
+function getStorageObject(key: string): Promise<Record<string, unknown> | null> {
+    return new Promise<Record<string, unknown> | null>((resolve) => {
         chrome.storage.local.get([key], (result) => {
             if (chrome.runtime?.lastError) {
                 resolve(null);
                 return;
             }
             const value = result?.[key];
-            resolve(value && typeof value === 'object' ? value : null);
+            resolve(value && typeof value === 'object' ? (value as Record<string, unknown>) : null);
         });
     });
 }
 
-function removeStorageKeys(keys) {
-    return new Promise((resolve) => {
+function removeStorageKeys(keys: string[]): Promise<void> {
+    return new Promise<void>((resolve) => {
         chrome.storage.local.remove(keys, () => resolve());
     });
 }
@@ -107,7 +116,7 @@ function removeStorageKeys(keys) {
  * @param {string} text - The raw text from Gemini's response.
  * @returns {string} The cleaned prompt text.
  */
-function cleanOptimizedPrompt(text) {
+function cleanOptimizedPrompt(text: string) {
     if (!text) return text;
     const prefixes = [
         /^optimized prompt:\s*/i,
@@ -140,7 +149,7 @@ function cleanOptimizedPrompt(text) {
     return result.trim();
 }
 
-function cleanMemorySummary(text) {
+function cleanMemorySummary(text: string) {
     if (!text) return text;
     return text
         .replace(/^summary:\s*/i, '')
@@ -154,16 +163,16 @@ function cleanMemorySummary(text) {
  * @param {string} text - The text to enter.
  * @returns {boolean} True if successful.
  */
-function enterPrompt(text) {
+function enterPrompt(text: string): boolean {
     const selectors = [
         'rich-textarea .ql-editor',
         '.ql-editor.textarea',
         '.ql-editor[contenteditable="true"]',
         'div[contenteditable="true"][role="textbox"]',
     ];
-    let input = null;
+    let input: HTMLElement | null = null;
     for (const sel of selectors) {
-        input = document.querySelector(sel);
+        input = document.querySelector<HTMLElement>(sel);
         if (input) break;
     }
     if (!input) return false;
@@ -173,10 +182,10 @@ function enterPrompt(text) {
     }
 
     const lines = text.split('\n');
-    lines.forEach((l) => {
+    lines.forEach((line: string) => {
         const p = document.createElement('p');
-        if (l) {
-            p.textContent = l;
+        if (line) {
+            p.textContent = line;
         } else {
             p.appendChild(document.createElement('br'));
         }
@@ -194,7 +203,7 @@ function enterPrompt(text) {
  * Locates and clicks the "Send" button in the Gemini UI.
  * @returns {boolean} True if button found and clicked.
  */
-function clickSubmit() {
+function clickSubmit(): boolean {
     const selectors = [
         'button[aria-label*="Send"]',
         'button[aria-label*="send"]',
@@ -203,18 +212,16 @@ function clickSubmit() {
         'button.send-button',
     ];
     for (const sel of selectors) {
-        const btn = document.querySelector(sel);
+        const btn = document.querySelector<HTMLButtonElement>(sel);
         if (btn && btn.offsetParent !== null && !btn.disabled) {
             btn.click();
             return true;
         }
     }
-    const all = document.querySelectorAll('button');
+    const all = document.querySelectorAll<HTMLButtonElement>('button');
     for (const btn of all) {
         if (
-            (btn.getAttribute('aria-label') || '')
-                .toLowerCase()
-                .includes('send') &&
+            (btn.getAttribute('aria-label') || '').toLowerCase().includes('send') &&
             btn.offsetParent !== null &&
             !btn.disabled
         ) {
@@ -229,15 +236,15 @@ function clickSubmit() {
  * Locates and clicks the "Temporary Chat" button to ensure session isn't saved.
  * @returns {boolean} True if successful.
  */
-function clickTemporaryChatButton() {
+function clickTemporaryChatButton(): boolean {
     const btn =
-        document.querySelector('[data-test-id="temp-chat-button"]') ||
-        document.querySelector('button.temp-chat-button');
+        document.querySelector<HTMLElement>('[data-test-id="temp-chat-button"]') ||
+        document.querySelector<HTMLElement>('button.temp-chat-button');
     if (btn) {
         btn.click();
         return true;
     }
-    const all = document.querySelectorAll('button, [role="button"]');
+    const all = document.querySelectorAll<HTMLElement>('button, [role="button"]');
     for (const el of all) {
         const text = (el.textContent || '').toLowerCase().trim();
         const label = (el.getAttribute('aria-label') || '').toLowerCase();
@@ -253,11 +260,11 @@ function clickTemporaryChatButton() {
  * Ensures the Gemini side navigation is open.
  * @returns {string} Status of the operation ('ALREADY_OPEN', 'OPENED', 'NOT_FOUND').
  */
-function openSidebarIfClosed() {
-    const app = document.querySelector('chat-app#app-root, chat-app');
+function openSidebarIfClosed(): 'ALREADY_OPEN' | 'OPENED' | 'NOT_FOUND' {
+    const app = document.querySelector<HTMLElement>('chat-app#app-root, chat-app');
     if (app) {
         if (app.classList.contains('side-nav-open')) return 'ALREADY_OPEN';
-        const btn = document.querySelector(
+        const btn = document.querySelector<HTMLElement>(
             'side-nav-menu-button button, [data-test-id="side-nav-menu-button"] button, button[aria-label*="menu"], button[aria-label*="Menu"]'
         );
         return btn ? (btn.click(), 'OPENED') : 'NOT_FOUND';
@@ -270,8 +277,8 @@ function openSidebarIfClosed() {
  * @param {string} mode - The target mode.
  * @returns {string} Operation status.
  */
-function setTargetModel(mode) {
-    const modeButton = document.querySelector(
+function setTargetModel(mode: 'flash' | 'thinking' | 'pro' | string) {
+    const modeButton = document.querySelector<HTMLElement>(
         '[data-test-id="bard-mode-menu-button"]'
     );
     if (!modeButton) return 'NOT_FOUND';
@@ -281,38 +288,34 @@ function setTargetModel(mode) {
         thinking: { patterns: ['thinking', 'gemini thinking'], index: 1 },
         pro: { patterns: ['pro', 'gemini pro'], index: 2 },
     };
-    const cfg = configs[mode] || configs.flash;
+    const cfg = configs[mode as keyof typeof configs] || configs.flash;
 
-    const options = document.querySelectorAll(
-        '[data-test-id^="bard-mode-option-"]'
-    );
+    const options = document.querySelectorAll<HTMLElement>('[data-test-id^="bard-mode-option-"]');
     if (options.length > 0) {
         for (const opt of options) {
             const text = (opt.textContent || '').toLowerCase().trim();
             if (
-                cfg.patterns.some((p) => text.startsWith(p) || text.includes(p))
+                cfg.patterns.some((pattern) => text.startsWith(pattern) || text.includes(pattern))
             ) {
-                if (opt.getAttribute('aria-checked') === 'true')
-                    return 'ALREADY_SELECTED';
+                if (opt.getAttribute('aria-checked') === 'true') return 'ALREADY_SELECTED';
                 opt.click();
                 return 'CLICKED';
             }
         }
         const fallback = options[cfg.index];
         if (fallback) {
-            if (fallback.getAttribute('aria-checked') === 'true')
-                return 'ALREADY_SELECTED';
+            if (fallback.getAttribute('aria-checked') === 'true') return 'ALREADY_SELECTED';
             fallback.click();
             return 'CLICKED';
         }
     }
 
     const text = (modeButton.textContent || '').toLowerCase();
-    if (cfg.patterns.some((p) => text.includes(p))) return 'ALREADY_SELECTED';
+    if (cfg.patterns.some((pattern) => text.includes(pattern))) return 'ALREADY_SELECTED';
 
     const inner =
-        modeButton.querySelector('button.input-area-switch') ||
-        modeButton.querySelector('button') ||
+        modeButton.querySelector<HTMLElement>('button.input-area-switch') ||
+        modeButton.querySelector<HTMLElement>('button') ||
         modeButton;
     inner.click();
     return 'MENU_OPENED';
@@ -323,27 +326,25 @@ function setTargetModel(mode) {
  * @param {string} promptText - The prompt that was sent.
  * @returns {Object} { isGenerating: boolean, response: string|null }
  */
-function checkResponseStatus(promptText) {
+function checkResponseStatus(_promptText: string) {
     const isGenerating = (() => {
-        const stopBtn = document.querySelector(
+        const stopBtn = document.querySelector<HTMLElement>(
             'button[aria-label*="Stop"], button[aria-label*="stop"]'
         );
         if (stopBtn && stopBtn.offsetParent !== null) return true;
-        return (
-            document.querySelectorAll('.loading, .spinner, [aria-busy="true"]')
-                .length > 0
-        );
+        return document.querySelectorAll('.loading, .spinner, [aria-busy="true"]').length > 0;
     })();
 
     const response = (() => {
-        const extractText = (el) => {
+        const extractText = (el: Element | null): string => {
             if (!el) return '';
             let out = '';
-            const walk = (node) => {
+            const walk = (node: Node) => {
                 if (node.nodeType === Node.TEXT_NODE) {
                     out += node.textContent;
                 } else if (node.nodeType === Node.ELEMENT_NODE) {
-                    const tag = node.tagName.toLowerCase();
+                    const element = node as Element;
+                    const tag = element.tagName.toLowerCase();
                     const blocks = [
                         'p',
                         'div',
@@ -358,23 +359,17 @@ function checkResponseStatus(promptText) {
                         'tr',
                     ];
                     if (
-                        node.classList &&
-                        (node.classList.contains('thoughts-container') ||
-                            node.classList.contains('thoughts-content') ||
-                            node.classList.contains('cdk-visually-hidden') ||
-                            node.tagName.toLowerCase() === 'model-thoughts')
+                        element.classList &&
+                        (element.classList.contains('thoughts-container') ||
+                            element.classList.contains('thoughts-content') ||
+                            element.classList.contains('cdk-visually-hidden') ||
+                            element.tagName.toLowerCase() === 'model-thoughts')
                     )
                         return;
-                    if (
-                        blocks.includes(tag) &&
-                        out.length > 0 &&
-                        !out.endsWith('\n')
-                    )
-                        out += '\n';
+                    if (blocks.includes(tag) && out.length > 0 && !out.endsWith('\n')) out += '\n';
                     if (tag === 'li') out += '- ';
-                    for (const child of node.childNodes) walk(child);
-                    if (blocks.includes(tag) && !out.endsWith('\n'))
-                        out += '\n';
+                    for (const child of element.childNodes) walk(child);
+                    if (blocks.includes(tag) && !out.endsWith('\n')) out += '\n';
                 }
             };
             walk(el);
@@ -388,7 +383,7 @@ function checkResponseStatus(promptText) {
             '.model-response-text',
         ];
         for (const sel of selectors) {
-            const els = document.querySelectorAll(sel);
+            const els = document.querySelectorAll<Element>(sel);
             if (els.length > 0) {
                 const text = extractText(els[els.length - 1]);
                 if (text && text.length > 0) return text;
@@ -405,14 +400,14 @@ function checkResponseStatus(promptText) {
  * @param {number} tabId - The ID of the tab to watch.
  * @returns {Promise<void>} Resolves when status is 'complete'.
  */
-async function waitForTabLoad(tabId) {
-    return new Promise((resolve, reject) => {
+async function waitForTabLoad(tabId: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
             chrome.tabs.onUpdated.removeListener(listener);
             reject(new Error('Tab load timeout'));
         }, TAB_LOAD_TIMEOUT_MS);
 
-        const listener = (id, changeInfo) => {
+        const listener = (id: number, changeInfo: any) => {
             if (id === tabId && changeInfo.status === 'complete') {
                 clearTimeout(timeout);
                 chrome.tabs.onUpdated.removeListener(listener);
@@ -430,7 +425,11 @@ async function waitForTabLoad(tabId) {
  * @param {string} promptText - The original prompt (used for comparison if needed).
  * @returns {Promise<string>} The extracted response text.
  */
-async function pollForResponse(tabId, timeout, promptText) {
+async function pollForResponse(
+    tabId: number,
+    timeout: number,
+    promptText: string
+): Promise<string> {
     const start = Date.now();
     let lastLength = 0;
     let stableCount = 0;
@@ -455,7 +454,7 @@ async function pollForResponse(tabId, timeout, promptText) {
                     }
                 }
             }
-        } catch (e) {
+        } catch (e: unknown) {
             console.error('[hypergravity] Poll error:', e);
         }
         await sleep(DEFAULT_POLL_INTERVAL_MS);
@@ -463,8 +462,8 @@ async function pollForResponse(tabId, timeout, promptText) {
     throw new Error('Optimization timeout');
 }
 
-async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
-    let tabId = null;
+async function runFlashBackgroundPrompt(fullPrompt: string, pollTimeout = 60000): Promise<string> {
+    let tabId: number | null = null;
     try {
         const [currentTab] = await chrome.tabs.query({
             active: true,
@@ -477,24 +476,27 @@ async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
             active: false,
             index,
         });
-        tabId = tab.id;
+        tabId = tab.id ?? null;
+        if (tabId === null) {
+            throw new Error('Failed to create optimization tab');
+        }
+        const activeTabId = tabId;
         currentOptimizationTabId = tabId;
 
-        await waitForTabLoad(tabId);
+        await waitForTabLoad(activeTabId);
 
         await retryWithTimeout({
-            task: () => executeInTab(tabId, openSidebarIfClosed),
+            task: () => executeInTab(activeTabId, openSidebarIfClosed),
             timeoutMs: FLASH_WORKFLOW_TIMEOUTS.sidebar,
             intervalMs: 150,
-            shouldStop: (status) =>
-                status === 'ALREADY_OPEN' || status === 'OPENED',
+            shouldStop: (status) => status === 'ALREADY_OPEN' || status === 'OPENED',
             onSuccess: async (status) => {
                 if (status === 'OPENED') await sleep(200);
             },
         });
 
         await retryWithTimeout({
-            task: () => executeInTab(tabId, clickTemporaryChatButton),
+            task: () => executeInTab(activeTabId, clickTemporaryChatButton),
             timeoutMs: FLASH_WORKFLOW_TIMEOUTS.temporaryChat,
             shouldStop: (clicked) => clicked === true,
             onSuccess: async () => {
@@ -503,18 +505,17 @@ async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
         });
 
         await retryWithTimeout({
-            task: () => executeInTab(tabId, setTargetModel, ['flash']),
+            task: () => executeInTab(activeTabId, setTargetModel, ['flash']),
             timeoutMs: FLASH_WORKFLOW_TIMEOUTS.modeSwitch,
             intervalMs: 150,
-            shouldStop: (status) =>
-                status === 'CLICKED' || status === 'ALREADY_SELECTED',
+            shouldStop: (status) => status === 'CLICKED' || status === 'ALREADY_SELECTED',
             onSuccess: async (status) => {
                 if (status === 'CLICKED') await sleep(200);
             },
         });
 
         const enterResult = await retryWithTimeout({
-            task: () => executeInTab(tabId, enterPrompt, [fullPrompt]),
+            task: () => executeInTab(activeTabId, enterPrompt, [fullPrompt]),
             timeoutMs: FLASH_WORKFLOW_TIMEOUTS.enterPrompt,
             shouldStop: (entered) => entered === true,
         });
@@ -523,9 +524,9 @@ async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
         }
 
         await sleep(200);
-        await executeInTab(tabId, clickSubmit);
+        await executeInTab(activeTabId, clickSubmit);
 
-        return await pollForResponse(tabId, pollTimeout, fullPrompt);
+        return await pollForResponse(activeTabId, pollTimeout, fullPrompt);
     } finally {
         if (tabId) {
             try {
@@ -536,8 +537,8 @@ async function runFlashBackgroundPrompt(fullPrompt, pollTimeout = 60000) {
     }
 }
 
-function formatTranscript(messages) {
-    const lines = [];
+function formatTranscript(messages: any[]): string {
+    const lines: string[] = [];
     for (const msg of messages) {
         const role = msg?.role === 'model' ? 'MODEL' : 'USER';
         const text = String(msg?.text || '').trim();
@@ -547,7 +548,7 @@ function formatTranscript(messages) {
     return lines.join('\n\n');
 }
 
-function getChatMemoryKey(chatId) {
+function getChatMemoryKey(chatId: string): string {
     return `${CHAT_MEMORY_PREFIX}${chatId}`;
 }
 
@@ -557,7 +558,7 @@ async function migrateLegacyChatMemoriesToIdb() {
     const legacyMemories = await getStorageObject(CHAT_MEMORIES_KEY);
 
     if (legacyMemories && Object.keys(legacyMemories).length > 0) {
-        const batch = {};
+        const batch: Record<string, unknown> = {};
         for (const [chatId, memory] of Object.entries(legacyMemories)) {
             if (!chatId || !memory || typeof memory !== 'object') continue;
             batch[getChatMemoryKey(chatId)] = memory;
@@ -570,12 +571,12 @@ async function migrateLegacyChatMemoriesToIdb() {
     chatMemoryMigrationDone = true;
 }
 
-async function getChatMemory(chatId) {
+async function getChatMemory(chatId: string): Promise<any> {
     await migrateLegacyChatMemoriesToIdb();
     return getIdbValue(getChatMemoryKey(chatId), null);
 }
 
-async function setChatMemory(chatId, memory) {
+async function setChatMemory(chatId: string, memory: Record<string, unknown>) {
     await migrateLegacyChatMemoriesToIdb();
     await setIdbValue(getChatMemoryKey(chatId), memory);
 }
@@ -584,7 +585,7 @@ async function removeLegacyChatMemoryBlob() {
     return removeStorageKeys([CHAT_MEMORIES_KEY]);
 }
 
-async function handleSummarizeChatMemory(request) {
+async function handleSummarizeChatMemory(request: any) {
     const chatId = String(request?.chatId || '').trim();
     const messages = Array.isArray(request?.messages) ? request.messages : [];
     const sourceHash = String(request?.sourceHash || '').trim();
@@ -634,13 +635,14 @@ async function handleSummarizeChatMemory(request) {
         await removeLegacyChatMemoryBlob();
 
         return { success: true, memory };
-    } catch (e) {
+    } catch (e: unknown) {
         console.error('[hypergravity] Chat memory summarization failed:', e);
-        return { success: false, error: e.message || 'Unknown error' };
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        return { success: false, error: errorMessage };
     }
 }
 
-async function handleOptimizePrompt(request) {
+async function handleOptimizePrompt(request: any) {
     const prompt = String(request?.prompt || '').trim();
     if (!prompt) {
         return { success: false, error: 'Prompt is empty' };
@@ -654,14 +656,17 @@ async function handleOptimizePrompt(request) {
         return response
             ? { success: true, optimizedPrompt: response }
             : { success: false, error: 'Could not extract response' };
-    } catch (e) {
+    } catch (e: unknown) {
         console.error('[hypergravity] Optimization failed:', e);
-        return { success: false, error: e.message };
+        return {
+            success: false,
+            error: e instanceof Error ? e.message : 'Unknown error',
+        };
     }
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    const handlers = {
+chrome.runtime.onMessage.addListener((message: any, _sender, sendResponse) => {
+    const handlers: Record<string, (request: any) => Promise<any>> = {
         OPTIMIZE_PROMPT: handleOptimizePrompt,
         SUMMARIZE_CHAT_MEMORY: handleSummarizeChatMemory,
     };

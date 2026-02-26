@@ -1,66 +1,111 @@
-// @ts-nocheck
-import { useMemo, useState } from 'preact/hooks';
-
-import { useStorage } from '@hooks/useStorage';
 import {
     findActiveChatInfo,
     getAccountAwareUrl,
     inferChatInfoFromConversationRow,
 } from '@content/helpers/chatInfo';
 import { showToast } from '@content/helpers/toast';
-import { FOLDERS_KEY } from '@utils/constants';
+import { useStorage } from '@hooks/useStorage';
 import {
-    normalizeFoldersData,
-    withUpdatedFolders,
-} from '@utils/foldersData';
-import {
-    FolderBackIcon,
     FolderAddIcon,
+    FolderBackIcon,
+    FolderDeleteIcon,
     FolderEmptyIcon,
     FolderFilledIcon,
-    FolderDeleteIcon,
 } from '@icons';
+import { FOLDERS_KEY } from '@utils/constants';
+import {
+    type FoldersData,
+    normalizeFoldersData,
+    type StoredFolder,
+    withUpdatedFolders,
+} from '@utils/foldersData';
+import type { JSX } from 'preact';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import './FoldersManager.css';
 
-export function FoldersManager({ onClose }) {
-    const [storedFolders, setStoredFolders, isFoldersLoaded] = useStorage(
-        FOLDERS_KEY,
-        {
-            folders: [],
-            recycleBin: [],
-            permanentlyDeleted: [],
-        }
-    );
+type FoldersManagerProps = {
+    onClose: () => void;
+};
+
+type SidebarChatCandidate = {
+    id: string;
+    title: string;
+    url: string;
+};
+
+type RecycleChatEntry = {
+    id: string;
+    type: 'chat';
+    title?: string;
+    url?: string;
+    deletedAt: number;
+    originalFolderIds?: string[];
+};
+
+type RecycleFolderEntry = {
+    id: string;
+    type: 'folder';
+    title?: string;
+    deletedAt: number;
+    folders?: StoredFolder[];
+};
+
+type RecycleEntry = RecycleChatEntry | RecycleFolderEntry;
+
+export function FoldersManager({ onClose }: FoldersManagerProps) {
+    const [storedFolders, setStoredFolders] = useStorage<FoldersData>(FOLDERS_KEY, {
+        folders: [],
+        recycleBin: [],
+        permanentlyDeleted: [],
+    });
     const [newFolderName, setNewFolderName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
-    const [newFolderParentId, setNewFolderParentId] = useState(null);
-    const [selectedFolderId, setSelectedFolderId] = useState(null);
-    const [editingFolderId, setEditingFolderId] = useState(null);
+    const [newFolderParentId, setNewFolderParentId] = useState<string | null>(null);
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+    const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
     const [isRecycleView, setIsRecycleView] = useState(false);
     const [isBulkAddOpen, setIsBulkAddOpen] = useState(false);
     const [bulkSearch, setBulkSearch] = useState('');
-    const [bulkCandidates, setBulkCandidates] = useState([]);
-    const [bulkSelected, setBulkSelected] = useState(new Set());
+    const [bulkCandidates, setBulkCandidates] = useState<SidebarChatCandidate[]>([]);
+    const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+    const inputRef = useRef<HTMLInputElement>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!isAdding && !editingFolderId) {
+            modalRef.current?.focus();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isAdding || editingFolderId) {
+            setTimeout(() => inputRef.current?.focus(), 50);
+        }
+    }, [isAdding, editingFolderId]);
 
     const foldersData = normalizeFoldersData(storedFolders);
     const folders = foldersData.folders;
+    const recycleBin = foldersData.recycleBin as RecycleEntry[];
+    const permanentlyDeleted = foldersData.permanentlyDeleted as string[];
     const selectedFolder = folders.find((folder) => folder.id === selectedFolderId) || null;
     const selectedFolderChildren = selectedFolder
         ? folders.filter((folder) => (folder.parentId || null) === selectedFolder.id)
         : [];
-    const folderIds = useMemo(() => new Set(folders.map((folder) => folder.id)), [
-        folders,
-    ]);
+    const folderIds = useMemo(() => new Set(folders.map((folder) => folder.id)), [folders]);
 
-    const saveFolders = (nextFolders) => {
+    const saveFolders = (nextFolders: StoredFolder[]) => {
         setStoredFolders(withUpdatedFolders(storedFolders, nextFolders));
     };
 
     const saveFoldersData = ({
         nextFolders = folders,
-        nextRecycleBin = foldersData.recycleBin,
-        nextPermanentlyDeleted = foldersData.permanentlyDeleted,
+        nextRecycleBin = recycleBin,
+        nextPermanentlyDeleted = permanentlyDeleted,
+    }: {
+        nextFolders?: StoredFolder[];
+        nextRecycleBin?: RecycleEntry[];
+        nextPermanentlyDeleted?: string[];
     }) => {
         setStoredFolders({
             ...foldersData,
@@ -70,15 +115,16 @@ export function FoldersManager({ onClose }) {
         });
     };
 
-    const getDirectChildren = (parentId) =>
+    const getDirectChildren = (parentId: string | null) =>
         folders.filter((folder) => (folder.parentId || null) === (parentId || null));
 
-    const getDescendantIds = (folderId) => {
-        const ids = new Set([folderId]);
-        const stack = [folderId];
+    const getDescendantIds = (folderId: string): Set<string> => {
+        const ids = new Set<string>([folderId]);
+        const stack: string[] = [folderId];
 
         while (stack.length > 0) {
             const current = stack.pop();
+            if (!current) continue;
             folders.forEach((folder) => {
                 if ((folder.parentId || null) === current && !ids.has(folder.id)) {
                     ids.add(folder.id);
@@ -90,15 +136,15 @@ export function FoldersManager({ onClose }) {
         return ids;
     };
 
-    const getAllSidebarChats = () => {
+    const getAllSidebarChats = (): SidebarChatCandidate[] => {
         const rows = Array.from(
             document.querySelectorAll(
                 '.conversation, .conversation-list-item, [class*="conversation-item"], [data-test-id*="conversation"]'
             )
         );
 
-        const seenIds = new Set();
-        const chats = [];
+        const seenIds = new Set<string>();
+        const chats: SidebarChatCandidate[] = [];
 
         rows.forEach((row) => {
             const info = inferChatInfoFromConversationRow(row);
@@ -136,11 +182,7 @@ export function FoldersManager({ onClose }) {
             return;
         }
 
-        if (
-            folders.some(
-                (folder) => folder.name.toLowerCase() === folderName.toLowerCase()
-            )
-        ) {
+        if (folders.some((folder) => folder.name.toLowerCase() === folderName.toLowerCase())) {
             showToast('Folder name already exists', 'info');
             return;
         }
@@ -159,23 +201,21 @@ export function FoldersManager({ onClose }) {
         showToast(`Folder "${folderName}" created`, 'success');
     };
 
-    const startAddFolder = (parentId = null) => {
+    const startAddFolder = (parentId: string | null = null) => {
         setIsAdding(true);
         setNewFolderParentId(parentId);
         setIsBulkAddOpen(false);
     };
 
-    const toggleFolderExpanded = (folderId) => {
+    const toggleFolderExpanded = (folderId: string) => {
         saveFolders(
             folders.map((folder) =>
-                folder.id === folderId
-                    ? { ...folder, expanded: folder.expanded === false }
-                    : folder
+                folder.id === folderId ? { ...folder, expanded: folder.expanded === false } : folder
             )
         );
     };
 
-    const deleteFolder = (id) => {
+    const deleteFolder = (id: string) => {
         const folder = folders.find((item) => item.id === id);
         if (!folder) return;
 
@@ -188,14 +228,14 @@ export function FoldersManager({ onClose }) {
         if (!shouldDelete) return;
 
         const nextFolders = folders.filter((item) => !descendantIds.has(item.id));
-        const recycleEntry = {
+        const recycleEntry: RecycleFolderEntry = {
             id: `recycle_folder_${id}_${Date.now()}`,
             type: 'folder',
             title: folder.name,
             deletedAt: Date.now(),
             folders: affectedFolders,
         };
-        const nextRecycleBin = [...foldersData.recycleBin, recycleEntry];
+        const nextRecycleBin = [...recycleBin, recycleEntry];
 
         saveFoldersData({
             nextFolders,
@@ -214,12 +254,12 @@ export function FoldersManager({ onClose }) {
         showToast('Folder moved to recycle bin', 'success');
     };
 
-    const startRenameFolder = (folder) => {
+    const startRenameFolder = (folder: StoredFolder) => {
         setEditingFolderId(folder.id);
         setEditingName(folder.name);
     };
 
-    const saveRenameFolder = (id) => {
+    const saveRenameFolder = (id: string) => {
         const folderName = editingName.trim();
         if (!folderName) {
             showToast('Folder name is required', 'error');
@@ -229,8 +269,7 @@ export function FoldersManager({ onClose }) {
         if (
             folders.some(
                 (folder) =>
-                    folder.id !== id &&
-                    folder.name.toLowerCase() === folderName.toLowerCase()
+                    folder.id !== id && folder.name.toLowerCase() === folderName.toLowerCase()
             )
         ) {
             showToast('Folder name already exists', 'info');
@@ -238,9 +277,7 @@ export function FoldersManager({ onClose }) {
         }
 
         saveFolders(
-            folders.map((folder) =>
-                folder.id === id ? { ...folder, name: folderName } : folder
-            )
+            folders.map((folder) => (folder.id === id ? { ...folder, name: folderName } : folder))
         );
 
         setEditingFolderId(null);
@@ -248,7 +285,7 @@ export function FoldersManager({ onClose }) {
         showToast('Folder updated', 'success');
     };
 
-    const removeChatFromFolder = (folderId, chatId, sendToRecycle = true) => {
+    const removeChatFromFolder = (folderId: string, chatId: string, sendToRecycle = true) => {
         const folder = folders.find((item) => item.id === folderId);
         if (!folder) return;
 
@@ -267,14 +304,14 @@ export function FoldersManager({ onClose }) {
             return;
         }
 
-        const existingRecycleIndex = foldersData.recycleBin.findIndex(
+        const existingRecycleIndex = recycleBin.findIndex(
             (item) => item.type === 'chat' && item.id === removedChat.id
         );
 
-        const nextRecycleBin = [...foldersData.recycleBin];
+        const nextRecycleBin: RecycleEntry[] = [...recycleBin];
 
         if (existingRecycleIndex >= 0) {
-            const existing = nextRecycleBin[existingRecycleIndex];
+            const existing = nextRecycleBin[existingRecycleIndex] as RecycleChatEntry;
             const folderIdsForRestore = new Set(existing.originalFolderIds || []);
             folderIdsForRestore.add(folderId);
 
@@ -303,8 +340,8 @@ export function FoldersManager({ onClose }) {
         showToast('Chat removed from folder', 'success');
     };
 
-    const restoreRecycleItem = (recycleId) => {
-        const item = foldersData.recycleBin.find((entry) => entry.id === recycleId);
+    const restoreRecycleItem = (recycleId: string) => {
+        const item = recycleBin.find((entry) => entry.id === recycleId);
         if (!item) return;
 
         if (item.type === 'chat') {
@@ -331,9 +368,7 @@ export function FoldersManager({ onClose }) {
                 return { ...folder, chats };
             });
 
-            const nextRecycleBin = foldersData.recycleBin.filter(
-                (entry) => entry.id !== recycleId
-            );
+            const nextRecycleBin = recycleBin.filter((entry) => entry.id !== recycleId);
 
             saveFoldersData({
                 nextFolders,
@@ -357,11 +392,7 @@ export function FoldersManager({ onClose }) {
                 .filter((folder) => !existingIds.has(folder.id))
                 .map((folder) => {
                     let parentId = folder.parentId || null;
-                    if (
-                        parentId &&
-                        !existingIds.has(parentId) &&
-                        !subtreeIds.has(parentId)
-                    ) {
+                    if (parentId && !existingIds.has(parentId) && !subtreeIds.has(parentId)) {
                         parentId = null;
                     }
                     return {
@@ -377,9 +408,7 @@ export function FoldersManager({ onClose }) {
             }
 
             const nextFolders = [...folders, ...restorable];
-            const nextRecycleBin = foldersData.recycleBin.filter(
-                (entry) => entry.id !== recycleId
-            );
+            const nextRecycleBin = recycleBin.filter((entry) => entry.id !== recycleId);
 
             saveFoldersData({
                 nextFolders,
@@ -389,13 +418,9 @@ export function FoldersManager({ onClose }) {
         }
     };
 
-    const permanentlyDeleteRecycleItem = (recycleId) => {
-        const nextRecycleBin = foldersData.recycleBin.filter(
-            (entry) => entry.id !== recycleId
-        );
-        const nextPermanentlyDeleted = Array.from(
-            new Set([...foldersData.permanentlyDeleted, recycleId])
-        );
+    const permanentlyDeleteRecycleItem = (recycleId: string) => {
+        const nextRecycleBin = recycleBin.filter((entry) => entry.id !== recycleId);
+        const nextPermanentlyDeleted = Array.from(new Set([...permanentlyDeleted, recycleId]));
 
         saveFoldersData({
             nextRecycleBin,
@@ -429,7 +454,7 @@ export function FoldersManager({ onClose }) {
         setBulkSearch('');
     };
 
-    const toggleBulkSelection = (chatId) => {
+    const toggleBulkSelection = (chatId: string) => {
         const next = new Set(bulkSelected);
         if (next.has(chatId)) next.delete(chatId);
         else next.add(chatId);
@@ -471,7 +496,7 @@ export function FoldersManager({ onClose }) {
         chat.title.toLowerCase().includes(bulkSearch.toLowerCase())
     );
 
-    const renderFolderRows = (parentId = null, depth = 0) => {
+    const renderFolderRows = (parentId: string | null = null, depth = 0) => {
         const rows = getDirectChildren(parentId);
         return rows.map((folder) => {
             const children = getDirectChildren(folder.id);
@@ -479,10 +504,7 @@ export function FoldersManager({ onClose }) {
 
             return (
                 <div key={folder.id}>
-                    <div
-                        class="hg-folder-item"
-                        style={{ paddingLeft: `${24 + depth * 18}px` }}
-                    >
+                    <div class="hg-folder-item" style={{ paddingLeft: `${24 + depth * 18}px` }}>
                         <div class="hg-folder-info">
                             {children.length > 0 ? (
                                 <button
@@ -504,10 +526,11 @@ export function FoldersManager({ onClose }) {
 
                             {editingFolderId === folder.id ? (
                                 <input
+                                    ref={inputRef}
                                     class="hg-folder-rename-input"
                                     value={editingName}
-                                    onInput={(event) =>
-                                        setEditingName(event.target.value)
+                                    onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
+                                        setEditingName(event.currentTarget.value)
                                     }
                                     onKeyDown={(event) => {
                                         if (event.key === 'Enter') {
@@ -518,7 +541,6 @@ export function FoldersManager({ onClose }) {
                                             setEditingName('');
                                         }
                                     }}
-                                    autoFocus
                                 />
                             ) : (
                                 <button
@@ -534,9 +556,7 @@ export function FoldersManager({ onClose }) {
                                 </button>
                             )}
 
-                            <span class="hg-folder-count">
-                                {folder.chats?.length || 0} chats
-                            </span>
+                            <span class="hg-folder-count">{folder.chats?.length || 0} chats</span>
                         </div>
 
                         <div class="hg-folder-actions">
@@ -587,7 +607,7 @@ export function FoldersManager({ onClose }) {
         });
     };
 
-    const addActiveChatToFolder = (folderId) => {
+    const addActiveChatToFolder = (folderId: string) => {
         const folder = folders.find((item) => item.id === folderId);
         const chatInfo = findActiveChatInfo();
         if (!folder || !chatInfo) {
@@ -608,28 +628,49 @@ export function FoldersManager({ onClose }) {
             pinned: false,
         });
 
-        saveFolders(
-            folders.map((item) =>
-                item.id === folderId ? { ...item, chats } : item
-            )
-        );
+        saveFolders(folders.map((item) => (item.id === folderId ? { ...item, chats } : item)));
 
         showToast('Active chat added to folder', 'success');
     };
 
-    const handleNewFolderKeyDown = (event) => {
+    const handleNewFolderKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Enter') {
             addFolder();
         }
     };
 
     return (
-        <div class="hg-dialog-overlay" onClick={onClose}>
-            <div class="hg-folders-modal" onClick={(event) => event.stopPropagation()}>
+        // biome-ignore lint/a11y/useSemanticElements: it's a dialog.
+        <div
+            class="hg-dialog-overlay"
+            role="button"
+            tabIndex={0}
+            aria-label="Close dialog"
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    onClose();
+                }
+            }}
+            onKeyDown={(event) => {
+                if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onClose();
+                }
+            }}
+        >
+            <div
+                ref={modalRef}
+                class="hg-folders-modal"
+                tabIndex={-1}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="hg-folders-title"
+            >
                 <div class="hg-folders-header">
                     <div class="hg-folders-header-left">
                         <button
                             class="hg-back-btn"
+                            type="button"
                             onClick={
                                 selectedFolder
                                     ? () => {
@@ -643,7 +684,7 @@ export function FoldersManager({ onClose }) {
                         >
                             <FolderBackIcon width="20" height="20" />
                         </button>
-                        <h2>
+                        <h2 id="hg-folders-title">
                             {selectedFolder
                                 ? selectedFolder.name
                                 : isRecycleView
@@ -657,36 +698,35 @@ export function FoldersManager({ onClose }) {
                     {isRecycleView ? null : isAdding ? (
                         <div class="hg-add-folder-form">
                             <input
-                                autoFocus
+                                ref={inputRef}
                                 type="text"
                                 value={newFolderName}
-                                onInput={(event) =>
-                                    setNewFolderName(event.target.value)
+                                onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
+                                    setNewFolderName(event.currentTarget.value)
                                 }
                                 onKeyDown={handleNewFolderKeyDown}
                                 placeholder={
-                                    newFolderParentId
-                                        ? 'Subfolder name...'
-                                        : 'Folder name...'
+                                    newFolderParentId ? 'Subfolder name...' : 'Folder name...'
                                 }
                             />
-                            <button onClick={addFolder}>Save</button>
-                            <button onClick={resetAddFolderForm}>Cancel</button>
+                            <button type="button" onClick={addFolder}>
+                                Save
+                            </button>
+                            <button type="button" onClick={resetAddFolderForm}>
+                                Cancel
+                            </button>
                         </div>
                     ) : selectedFolder ? (
                         <>
                             <button
                                 class="hg-add-folder-btn"
+                                type="button"
                                 onClick={() => addActiveChatToFolder(selectedFolder.id)}
                             >
                                 <FolderAddIcon width="14" height="14" />
                                 Add Active Chat
                             </button>
-                            <button
-                                class="hg-add-folder-btn"
-                                type="button"
-                                onClick={openBulkAdd}
-                            >
+                            <button class="hg-add-folder-btn" type="button" onClick={openBulkAdd}>
                                 <FolderAddIcon width="14" height="14" />
                                 Add Multiple Chats
                             </button>
@@ -703,6 +743,7 @@ export function FoldersManager({ onClose }) {
                         <>
                             <button
                                 class="hg-add-folder-btn"
+                                type="button"
                                 onClick={() => startAddFolder(null)}
                             >
                                 <FolderAddIcon width="14" height="14" />
@@ -720,18 +761,14 @@ export function FoldersManager({ onClose }) {
                 </div>
 
                 <div class="hg-folder-list">
-                    {!isFoldersLoaded ? (
-                        <div class="hg-empty-state">
-                            <p>Loading folders...</p>
-                        </div>
-                    ) : isRecycleView ? (
-                        foldersData.recycleBin.length === 0 ? (
+                    {isRecycleView ? (
+                        recycleBin.length === 0 ? (
                             <div class="hg-empty-state">
                                 <p>Recycle bin is empty</p>
                             </div>
                         ) : (
                             <div class="hg-recycle-list">
-                                {foldersData.recycleBin.map((item) => (
+                                {recycleBin.map((item) => (
                                     <div key={item.id} class="hg-recycle-item">
                                         <div class="hg-recycle-item-content">
                                             <strong>{item.title || 'Untitled Item'}</strong>
@@ -772,9 +809,9 @@ export function FoldersManager({ onClose }) {
                                         type="text"
                                         placeholder="Search chats..."
                                         value={bulkSearch}
-                                        onInput={(event) =>
-                                            setBulkSearch(event.target.value)
-                                        }
+                                        onInput={(
+                                            event: JSX.TargetedEvent<HTMLInputElement, Event>
+                                        ) => setBulkSearch(event.currentTarget.value)}
                                     />
                                     <button
                                         class="hg-folder-action-btn"
@@ -782,9 +819,7 @@ export function FoldersManager({ onClose }) {
                                         onClick={() =>
                                             setBulkSelected(
                                                 new Set(
-                                                    visibleBulkCandidates.map(
-                                                        (chat) => chat.id
-                                                    )
+                                                    visibleBulkCandidates.map((chat) => chat.id)
                                                 )
                                             )
                                         }
@@ -804,14 +839,10 @@ export function FoldersManager({ onClose }) {
                                                 key={chat.id}
                                                 class="hg-bulk-item"
                                                 type="button"
-                                                onClick={() =>
-                                                    toggleBulkSelection(chat.id)
-                                                }
+                                                onClick={() => toggleBulkSelection(chat.id)}
                                             >
                                                 <span class="hg-folder-select-check">
-                                                    {bulkSelected.has(chat.id)
-                                                        ? '✓'
-                                                        : ''}
+                                                    {bulkSelected.has(chat.id) ? '✓' : ''}
                                                 </span>
                                                 <span class="hg-folder-select-name">
                                                     {chat.title}
@@ -842,9 +873,7 @@ export function FoldersManager({ onClose }) {
                             <div class="hg-folder-chats">
                                 {selectedFolderChildren.length > 0 && (
                                     <div class="hg-subfolder-section">
-                                        <div class="hg-subfolder-section-title">
-                                            Subfolders
-                                        </div>
+                                        <div class="hg-subfolder-section-title">Subfolders</div>
                                         {selectedFolderChildren.map((subfolder) => (
                                             <button
                                                 key={subfolder.id}

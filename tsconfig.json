@@ -3,10 +3,6 @@
     "compilerOptions": {
         "allowJs": false
     },
-    "include": [
-        "src/**/*.ts",
-        "src/**/*.tsx",
-        "src/**/*.d.ts"
-    ],
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
     "exclude": ["dist", "node_modules", ".local", ".old", ".tmp"]
 }

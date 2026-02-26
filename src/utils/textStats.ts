@@ -16,10 +16,7 @@ export function countText(text: string) {
         };
 
     const trimmed = text.trim();
-    const noSpaceStr = text
-        .replace(/\r\n/g, '')
-        .replace(/\r/g, '')
-        .replace(/\n/g, '');
+    const noSpaceStr = text.replace(/\r\n/g, '').replace(/\r/g, '').replace(/\n/g, '');
     const chars = noSpaceStr.length;
     const charsNoSpace = noSpaceStr.replace(/\s/g, '').length;
 
@@ -38,7 +35,7 @@ export function countText(text: string) {
     validWordMatches += (workStr.match(ips) || []).length;
     workStr = workStr.replace(ips, ' ');
 
-    const paths = /[a-zA-Z0-9_-]+(?:[\/\\][a-zA-Z0-9_.-]+)+/g;
+    const paths = /[a-zA-Z0-9_-]+(?:[/\\][a-zA-Z0-9_.-]+)+/g;
     validWordMatches += (workStr.match(paths) || []).length;
     workStr = workStr.replace(paths, ' ');
 
@@ -49,9 +46,7 @@ export function countText(text: string) {
     validWordMatches += (workStr.match(/[\w\d''-]+/gi) || []).length;
 
     const wordsCount = validWordMatches;
-    const sentencesCount =
-        (text.match(/[^\.!\?]+[\.!\?]+/g) || []).length ||
-        (wordsCount > 0 ? 1 : 0);
+    const sentencesCount = (text.match(/[^.!?]+[.!?]+/g) || []).length || (wordsCount > 0 ? 1 : 0);
 
     const linesCountRaw = trimmed
         .replace(/\r?\n\r?\n+/g, '\n\n')
@@ -62,16 +57,11 @@ export function countText(text: string) {
     const paragraphsCount =
         trimmed.length === 0
             ? 0
-            : trimmed
-                .split(/(?:\r?\n){3,}/)
-                .filter((e: string) => e.trim().length > 0)
-                  .length;
+            : trimmed.split(/(?:\r?\n){3,}/).filter((e: string) => e.trim().length > 0).length;
 
     const punctuationCount = (text.match(/[^\w\s]/g) || []).length;
     const tokens = Math.ceil(
-        wordsCount +
-            0.5 * punctuationCount +
-            0.3 * (charsNoSpace / 4 - wordsCount)
+        wordsCount + 0.5 * punctuationCount + 0.3 * (charsNoSpace / 4 - wordsCount)
     );
 
     return {

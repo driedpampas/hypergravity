@@ -1,6 +1,6 @@
+import { CollapseIcon, ExpandIcon, ExportIcon } from '@icons';
 import { topBarManager } from '@managers/topBarManager';
 import { h } from 'preact';
-import { ExportIcon, ExpandIcon, CollapseIcon } from '@icons';
 
 type SettingsShape = {
     wideModeEnabled?: boolean;
@@ -114,8 +114,7 @@ function createWideLayoutEngine() {
             )
         ).filter(
             (node): node is HTMLElement =>
-                node instanceof HTMLElement &&
-                !node.closest('.input-area-container.is-zero-state')
+                node instanceof HTMLElement && !node.closest('.input-area-container.is-zero-state')
         );
     }
 
@@ -125,9 +124,7 @@ function createWideLayoutEngine() {
 
         const messageSelectors = getMessageSelectors().join(', ');
         const messages = Array.from(
-            roots.flatMap((root) =>
-                Array.from(root.querySelectorAll(messageSelectors))
-            )
+            roots.flatMap((root) => Array.from(root.querySelectorAll(messageSelectors)))
         ).filter((node) => node instanceof HTMLElement);
 
         const candidates = new Set<HTMLElement>();
@@ -207,14 +204,11 @@ function createWideLayoutEngine() {
         const detectedTargets = collectNarrowAncestorsFromMessages();
         const inlineMaxWidthTargets = collectInlineMaxWidthTargets();
 
-        [
-            ...knownTargets,
-            ...inputTargets,
-            ...detectedTargets,
-            ...inlineMaxWidthTargets,
-        ].forEach((target) => {
-            markTarget(target);
-        });
+        [...knownTargets, ...inputTargets, ...detectedTargets, ...inlineMaxWidthTargets].forEach(
+            (target) => {
+                markTarget(target);
+            }
+        );
     }
 
     function setEnabled(nextEnabled: boolean): void {
@@ -269,8 +263,7 @@ export function createTopBarToolsManager({
     async function refresh() {
         const settings = await getSettings();
         const shouldApplyWide =
-            Boolean(settings.wideModeEnabled) &&
-            !window.location.pathname.includes('/gems/');
+            Boolean(settings.wideModeEnabled) && !window.location.pathname.includes('/gems/');
 
         wideLayoutEngine.setEnabled(shouldApplyWide);
 

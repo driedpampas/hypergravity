@@ -1,12 +1,8 @@
-import {
-    getStorageValue,
-    summarizeChatMemory,
-    isExtension,
-} from '@utils/browserEnv';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
-import { getIdbValue, setIdbValue } from '@utils/idbStorage';
-import { sanitizeMessageText, hashText } from '@utils/tokenHashCache';
+import { getStorageValue, isExtension, summarizeChatMemory } from '@utils/browserEnv';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import { debugLog as _debugLog } from '@utils/debug';
+import { getIdbValue, setIdbValue } from '@utils/idbStorage';
+import { hashText, sanitizeMessageText } from '@utils/tokenHashCache';
 
 type ChatMessage = { role: 'user' | 'model'; text: string };
 type ChatMemory = {
@@ -58,19 +54,13 @@ function isGenerating() {
     );
     if (stopBtn && stopBtn.offsetParent !== null) return true;
 
-    return (
-        document.querySelectorAll('.loading, .spinner, [aria-busy="true"]')
-            .length > 0
-    );
+    return document.querySelectorAll('.loading, .spinner, [aria-busy="true"]').length > 0;
 }
 
 function uniqueTopLevelNodes(nodes: Element[]): Element[] {
     return nodes.filter(
         (node, index, arr) =>
-            !arr.some(
-                (other, otherIndex) =>
-                    index !== otherIndex && other.contains(node)
-            )
+            !arr.some((other, otherIndex) => index !== otherIndex && other.contains(node))
     );
 }
 
@@ -85,19 +75,16 @@ function getNodeText(node: Element | null): string {
 function getNodeTextExcludingThoughts(node: Element | null): string {
     if (!node) return '';
 
-    if (
-        node.tagName?.toLowerCase() === 'model-thoughts' ||
-        node.matches?.('model-thoughts')
-    ) {
+    if (node.tagName?.toLowerCase() === 'model-thoughts' || node.matches?.('model-thoughts')) {
         return '';
     }
 
     const clone = node.cloneNode(true) as Element;
     clone
-        .querySelectorAll(
-            'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts'
-        )
-        .forEach((el: Element) => el.remove());
+        .querySelectorAll('model-thoughts, [data-test-id="model-thoughts"], .model-thoughts')
+        .forEach((el: Element) => {
+            el.remove();
+        });
 
     return getNodeText(clone);
 }
@@ -133,9 +120,7 @@ function collectTranscriptMessages(): ChatMessage[] {
 }
 
 function serializeTranscript(messages: ChatMessage[]): string {
-    return messages
-        .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
-        .join('\n\n');
+    return messages.map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`).join('\n\n');
 }
 
 export function createChatMemoryManager() {
@@ -193,10 +178,7 @@ export function createChatMemoryManager() {
                 return;
             }
 
-            latestSourceHashByChatId.set(
-                chatId,
-                result.memory?.sourceHash || sourceHash
-            );
+            latestSourceHashByChatId.set(chatId, result.memory?.sourceHash || sourceHash);
             await setIdbValue(getChatMemoryKey(chatId), result.memory);
         } catch (error) {
             debugLog('Memory summarization error', { chatId, error });

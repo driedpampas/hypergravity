@@ -1,5 +1,3 @@
-// @ts-nocheck
-import { useState } from 'preact/hooks';
 import { useStorage } from '@hooks/useStorage';
 import {
     BackArrowIcon,
@@ -12,17 +10,23 @@ import {
     LockIcon,
     MenuLinesIcon,
 } from '@icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
+import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import './WelcomeModal.css';
 
 const TOTAL_STEPS = 3;
 
-export function WelcomeModal({ onClose }) {
+type ModalProps = {
+    onClose: () => void;
+};
+
+export function WelcomeModal({ onClose }: ModalProps) {
     const [step, setStep] = useState(0);
     const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const [apiKeyDraft, setApiKeyDraft] = useState('');
     const [keyCopied, setKeyCopied] = useState(false);
-    const [wantsApiKey, setWantsApiKey] = useState(null);
+    const [wantsApiKey, setWantsApiKey] = useState<boolean | null>(null);
 
     const saveAndClose = () => {
         if (apiKeyDraft.trim()) {
@@ -31,8 +35,8 @@ export function WelcomeModal({ onClose }) {
         onClose();
     };
 
-    const handleApiKeyInput = (e) => {
-        setApiKeyDraft(e.target.value);
+    const handleApiKeyInput = (event: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+        setApiKeyDraft(event.currentTarget.value);
     };
 
     const handleApiKeySave = () => {
@@ -45,7 +49,7 @@ export function WelcomeModal({ onClose }) {
 
     const currentApiKey = apiKeyDraft || settings.geminiApiKey || '';
 
-    const setChatMemoryEnabled = (enabled) => {
+    const setChatMemoryEnabled = (enabled: boolean) => {
         setSettings({ ...settings, chatMemoryEnabled: enabled });
     };
 
@@ -57,8 +61,8 @@ export function WelcomeModal({ onClose }) {
                 </div>
                 <h2 class="hg-welcome-title">Welcome to Hypergravity</h2>
                 <p class="hg-welcome-subtitle">
-                    Hypergravity adds practical quality-of-life tools to Gemini
-                    so everyday chat workflows are faster and easier to manage.
+                    Hypergravity adds practical quality-of-life tools to Gemini so everyday chat
+                    workflows are faster and easier to manage.
                 </p>
             </div>
 
@@ -70,10 +74,9 @@ export function WelcomeModal({ onClose }) {
                     <div class="hg-welcome-feature-text">
                         <strong>Token Counter + Context Ring</strong>
                         <span>
-                            Estimates the number of tokens in your conversation
-                            so you know how close you are to your context limit.
-                            Uses a fast local estimate by default, or exact
-                            counts from the Gemini API when you add an API key.
+                            Estimates the number of tokens in your conversation so you know how
+                            close you are to your context limit. Uses a fast local estimate by
+                            default, or exact counts from the Gemini API when you add an API key.
                         </span>
                     </div>
                 </div>
@@ -85,9 +88,8 @@ export function WelcomeModal({ onClose }) {
                     <div class="hg-welcome-feature-text">
                         <strong>Chat Productivity Tools</strong>
                         <span>
-                            Includes quick actions, word counting, scroll
-                            controls, and optional prompt optimization directly
-                            near the chat input.
+                            Includes quick actions, word counting, scroll controls, and optional
+                            prompt optimization directly near the chat input.
                         </span>
                     </div>
                 </div>
@@ -99,9 +101,8 @@ export function WelcomeModal({ onClose }) {
                     <div class="hg-welcome-feature-text">
                         <strong>Organization + Layout Controls</strong>
                         <span>
-                            Use folders, wide mode, export actions, and
-                            sidebar/chatbox display settings to match your
-                            preferred Gemini workspace.
+                            Use folders, wide mode, export actions, and sidebar/chatbox display
+                            settings to match your preferred Gemini workspace.
                         </span>
                     </div>
                 </div>
@@ -113,9 +114,8 @@ export function WelcomeModal({ onClose }) {
                     <div class="hg-welcome-feature-text">
                         <strong>Private by Default</strong>
                         <span>
-                            Any Gemini API key you add is stored locally in your
-                            browser and only used for direct Gemini token
-                            counting requests.
+                            Any Gemini API key you add is stored locally in your browser and only
+                            used for direct Gemini token counting requests.
                         </span>
                     </div>
                 </div>
@@ -131,8 +131,8 @@ export function WelcomeModal({ onClose }) {
                 </div>
                 <h2 class="hg-welcome-title">Get a Gemini API Key</h2>
                 <p class="hg-welcome-subtitle">
-                    Want exact token counts instead of estimates? You can add a
-                    free Gemini API key now, or skip this and do it later.
+                    Want exact token counts instead of estimates? You can add a free Gemini API key
+                    now, or skip this and do it later.
                 </p>
             </div>
 
@@ -144,12 +144,14 @@ export function WelcomeModal({ onClose }) {
                     <div class="hg-welcome-choice-actions">
                         <button
                             class="hg-welcome-choice-btn hg-welcome-choice-btn--secondary"
+                            type="button"
                             onClick={() => setWantsApiKey(false)}
                         >
                             Not now
                         </button>
                         <button
                             class="hg-welcome-choice-btn hg-welcome-choice-btn--primary"
+                            type="button"
                             onClick={() => setWantsApiKey(true)}
                         >
                             Yes, show steps
@@ -159,122 +161,108 @@ export function WelcomeModal({ onClose }) {
             )}
 
             {wantsApiKey === true && (
-                <>
-                    <ol class="hg-welcome-steps">
-                        <li class="hg-welcome-step-item">
-                            <span class="hg-welcome-step-num">1</span>
-                            <div class="hg-welcome-step-body">
-                                <strong>Open Google AI Studio</strong>
-                                <span>
-                                    Go to your projects page and sign in with
-                                    your Google account.
-                                </span>
-                                <a
-                                    class="hg-welcome-link"
-                                    href="https://aistudio.google.com/projects"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                <ol class="hg-welcome-steps">
+                    <li class="hg-welcome-step-item">
+                        <span class="hg-welcome-step-num">1</span>
+                        <div class="hg-welcome-step-body">
+                            <strong>Open Google AI Studio</strong>
+                            <span>
+                                Go to your projects page and sign in with your Google account.
+                            </span>
+                            <a
+                                class="hg-welcome-link"
+                                href="https://aistudio.google.com/projects"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                aistudio.google.com/projects ↗
+                            </a>
+                        </div>
+                    </li>
+
+                    <li class="hg-welcome-step-item">
+                        <span class="hg-welcome-step-num">2</span>
+                        <div class="hg-welcome-step-body">
+                            <strong>Select or create a project</strong>
+                            <span>
+                                Each project has a <em>Keys</em> column. Click the key count for an
+                                existing project, or create a new project first.
+                            </span>
+                        </div>
+                    </li>
+
+                    <li class="hg-welcome-step-item">
+                        <span class="hg-welcome-step-num">3</span>
+                        <div class="hg-welcome-step-body">
+                            <strong>Copy or create a key</strong>
+                            <span>
+                                If the project already has API keys listed, click the copy icon next
+                                to one. If the list is empty, click <strong>Create API key</strong>{' '}
+                                and copy the value shown.
+                            </span>
+                        </div>
+                    </li>
+
+                    <li class="hg-welcome-step-item">
+                        <span class="hg-welcome-step-num">4</span>
+                        <div class="hg-welcome-step-body">
+                            <strong>Paste it below</strong>
+                            <span>
+                                The key starts with <code>AIza</code>. You can also update it later
+                                in Settings.
+                            </span>
+                            <div class="hg-welcome-key-row">
+                                <input
+                                    type="text"
+                                    class="hg-welcome-key-input"
+                                    value={currentApiKey}
+                                    onInput={handleApiKeyInput}
+                                    placeholder="AIza..."
+                                    spellcheck={false}
+                                    autoComplete="off"
+                                />
+                                <button
+                                    class={`hg-welcome-save-btn ${keyCopied ? 'hg-welcome-save-btn--saved' : ''}`}
+                                    type="button"
+                                    onClick={handleApiKeySave}
+                                    disabled={
+                                        !apiKeyDraft.trim() ||
+                                        apiKeyDraft.trim() === settings.geminiApiKey
+                                    }
                                 >
-                                    aistudio.google.com/projects ↗
-                                </a>
+                                    {keyCopied ? (
+                                        <>
+                                            <CheckIcon width="14" height="14" />
+                                            Saved
+                                        </>
+                                    ) : (
+                                        'Save'
+                                    )}
+                                </button>
                             </div>
-                        </li>
-
-                        <li class="hg-welcome-step-item">
-                            <span class="hg-welcome-step-num">2</span>
-                            <div class="hg-welcome-step-body">
-                                <strong>Select or create a project</strong>
-                                <span>
-                                    Each project has a <em>Keys</em> column.
-                                    Click the key count for an existing project,
-                                    or create a new project first.
+                            {settings.geminiApiKey && !apiKeyDraft && (
+                                <span class="hg-welcome-key-saved-note">
+                                    <CheckIcon width="12" height="12" />
+                                    API key is already saved
                                 </span>
-                            </div>
-                        </li>
-
-                        <li class="hg-welcome-step-item">
-                            <span class="hg-welcome-step-num">3</span>
-                            <div class="hg-welcome-step-body">
-                                <strong>Copy or create a key</strong>
-                                <span>
-                                    If the project already has API keys listed,
-                                    click the copy icon next to one. If the list
-                                    is empty, click{' '}
-                                    <strong>Create API key</strong> and copy the
-                                    value shown.
-                                </span>
-                            </div>
-                        </li>
-
-                        <li class="hg-welcome-step-item">
-                            <span class="hg-welcome-step-num">4</span>
-                            <div class="hg-welcome-step-body">
-                                <strong>Paste it below</strong>
-                                <span>
-                                    The key starts with <code>AIza</code>. You
-                                    can also update it later in Settings.
-                                </span>
-                                <div class="hg-welcome-key-row">
-                                    <input
-                                        type="text"
-                                        class="hg-welcome-key-input"
-                                        value={currentApiKey}
-                                        onInput={handleApiKeyInput}
-                                        placeholder="AIza..."
-                                        spellCheck={false}
-                                        autoComplete="off"
-                                    />
-                                    <button
-                                        class={`hg-welcome-save-btn ${keyCopied ? 'hg-welcome-save-btn--saved' : ''}`}
-                                        onClick={handleApiKeySave}
-                                        disabled={
-                                            !apiKeyDraft.trim() ||
-                                            apiKeyDraft.trim() ===
-                                                settings.geminiApiKey
-                                        }
-                                    >
-                                        {keyCopied ? (
-                                            <>
-                                                <CheckIcon
-                                                    width="14"
-                                                    height="14"
-                                                />
-                                                Saved
-                                            </>
-                                        ) : (
-                                            'Save'
-                                        )}
-                                    </button>
-                                </div>
-                                {settings.geminiApiKey && !apiKeyDraft && (
-                                    <span class="hg-welcome-key-saved-note">
-                                        <CheckIcon width="12" height="12" />
-                                        API key is already saved
-                                    </span>
-                                )}
-                            </div>
-                        </li>
-                    </ol>
-                </>
+                            )}
+                        </div>
+                    </li>
+                </ol>
             )}
 
             {wantsApiKey === false && (
                 <div class="hg-welcome-choice-card hg-welcome-choice-card--muted">
                     <p class="hg-welcome-choice-text">
-                        No problem — token counts still work in estimate mode.
-                        You can add an API key later from{' '}
-                        <strong>Settings → Gemini API Key</strong>.
+                        No problem — token counts still work in estimate mode. You can add an API
+                        key later from <strong>Settings → Gemini API Key</strong>.
                     </p>
-                    <div
-                        class="hg-welcome-later-note"
-                        role="status"
-                        aria-live="polite"
-                    >
-                        <strong>Reminder:</strong> You can always add this later
-                        from Settings.
-                    </div>
+                    <output class="hg-welcome-later-note" aria-live="polite">
+                        <strong>Reminder:</strong> You can always add this later from Settings.
+                    </output>
                     <button
                         class="hg-welcome-choice-btn hg-welcome-choice-btn--secondary"
+                        type="button"
                         onClick={() => setWantsApiKey(true)}
                     >
                         Show key setup anyway
@@ -283,8 +271,8 @@ export function WelcomeModal({ onClose }) {
             )}
 
             <p class="hg-welcome-footer-note">
-                Adding a key is optional. Hypergravity works without one, and
-                you can change this any time in Settings.
+                Adding a key is optional. Hypergravity works without one, and you can change this
+                any time in Settings.
             </p>
         </div>
     );
@@ -297,25 +285,24 @@ export function WelcomeModal({ onClose }) {
                 </div>
                 <h2 class="hg-welcome-title">Chat Memory Summaries</h2>
                 <p class="hg-welcome-subtitle">
-                    Hypergravity can summarize your current chat using a
-                    temporary Gemini Flash conversation and store memory by chat
-                    ID for later use.
+                    Hypergravity can summarize your current chat using a temporary Gemini Flash
+                    conversation and store memory by chat ID for later use.
                 </p>
             </div>
 
             <div class="hg-welcome-choice-card">
-                <p class="hg-welcome-choice-text">
-                    Enable chat memory summarization now?
-                </p>
+                <p class="hg-welcome-choice-text">Enable chat memory summarization now?</p>
                 <div class="hg-welcome-choice-actions">
                     <button
                         class={`hg-welcome-choice-btn hg-welcome-choice-btn--secondary ${settings.chatMemoryEnabled === false ? 'hg-welcome-choice-btn--active' : ''}`}
+                        type="button"
                         onClick={() => setChatMemoryEnabled(false)}
                     >
                         Keep it off
                     </button>
                     <button
                         class={`hg-welcome-choice-btn hg-welcome-choice-btn--primary ${settings.chatMemoryEnabled !== false ? 'hg-welcome-choice-btn--active' : ''}`}
+                        type="button"
                         onClick={() => setChatMemoryEnabled(true)}
                     >
                         Enable memory
@@ -325,80 +312,99 @@ export function WelcomeModal({ onClose }) {
 
             <div class="hg-welcome-choice-card hg-welcome-choice-card--muted">
                 <p class="hg-welcome-choice-text">
-                    Stored memory is kept locally in your extension storage,
-                    grouped per conversation. You can turn this feature on or
-                    off any time in <strong>Settings</strong>.
+                    Stored memory is kept locally in your extension storage, grouped per
+                    conversation. You can turn this feature on or off any time in{' '}
+                    <strong>Settings</strong>.
                 </p>
             </div>
         </div>
     );
 
     return (
-        <div class="hg-dialog-overlay" onClick={saveAndClose}>
+        // biome-ignore lint/a11y/useSemanticElements: it's a dialog.
+        <div
+            class="hg-dialog-overlay"
+            role="button"
+            tabIndex={0}
+            aria-label="Close welcome dialog"
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    saveAndClose();
+                }
+            }}
+            onKeyDown={(event) => {
+                if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    saveAndClose();
+                }
+            }}
+        >
             <div
                 class="hg-welcome-modal"
-                onClick={(event) => event.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Welcome and setup"
             >
-            {/* Header */}
-            <div class="hg-welcome-header">
-                <button
-                    class="hg-back-btn"
-                    onClick={saveAndClose}
-                    title="Close"
-                >
-                    <BackArrowIcon width="20" height="20" />
-                </button>
-                {/* Step dots */}
-                <div class="hg-welcome-dots">
-                    {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-                        <button
-                            key={i}
-                            class={`hg-welcome-dot ${i === step ? 'active' : ''}`}
-                            onClick={() => setStep(i)}
-                            aria-label={`Step ${i + 1}`}
-                        />
-                    ))}
+                {/* Header */}
+                <div class="hg-welcome-header">
+                    <button class="hg-back-btn" type="button" onClick={saveAndClose} title="Close">
+                        <BackArrowIcon width="20" height="20" />
+                    </button>
+                    {/* Step dots */}
+                    <div class="hg-welcome-dots">
+                        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                            <button
+                                key={i}
+                                class={`hg-welcome-dot ${i === step ? 'active' : ''}`}
+                                type="button"
+                                onClick={() => setStep(i)}
+                                aria-label={`Step ${i + 1}`}
+                            />
+                        ))}
+                    </div>
+                    <div style={{ width: 36 }} /> {/* spacer to balance back btn */}
                 </div>
-                <div style={{ width: 36 }} /> {/* spacer to balance back btn */}
-            </div>
 
-            {/* Content */}
-            <div class="hg-welcome-body">
-                {step === 0 && <Overview />}
-                {step === 1 && <ChatMemorySetup />}
-                {step === 2 && <ApiKeySetup />}
-            </div>
+                {/* Content */}
+                <div class="hg-welcome-body">
+                    {step === 0 && <Overview />}
+                    {step === 1 && <ChatMemorySetup />}
+                    {step === 2 && <ApiKeySetup />}
+                </div>
 
-            {/* Footer nav */}
-            <div class="hg-welcome-footer">
-                {step > 0 ? (
-                    <button
-                        class="hg-welcome-nav-btn hg-welcome-nav-btn--ghost"
-                        onClick={() => setStep(step - 1)}
-                    >
-                        Back
-                    </button>
-                ) : (
-                    <div />
-                )}
-                {step < TOTAL_STEPS - 1 ? (
-                    <button
-                        class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
-                        onClick={() => setStep(step + 1)}
-                    >
-                        Next
-                        <ChevronRightIcon width="14" height="14" />
-                    </button>
-                ) : (
-                    <button
-                        class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
-                        onClick={saveAndClose}
-                    >
-                        Done
-                        <CheckIcon width="14" height="14" />
-                    </button>
-                )}
-            </div>
+                {/* Footer nav */}
+                <div class="hg-welcome-footer">
+                    {step > 0 ? (
+                        <button
+                            class="hg-welcome-nav-btn hg-welcome-nav-btn--ghost"
+                            type="button"
+                            onClick={() => setStep(step - 1)}
+                        >
+                            Back
+                        </button>
+                    ) : (
+                        <div />
+                    )}
+                    {step < TOTAL_STEPS - 1 ? (
+                        <button
+                            class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
+                            type="button"
+                            onClick={() => setStep(step + 1)}
+                        >
+                            Next
+                            <ChevronRightIcon width="14" height="14" />
+                        </button>
+                    ) : (
+                        <button
+                            class="hg-welcome-nav-btn hg-welcome-nav-btn--primary"
+                            type="button"
+                            onClick={saveAndClose}
+                        >
+                            Done
+                            <CheckIcon width="14" height="14" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

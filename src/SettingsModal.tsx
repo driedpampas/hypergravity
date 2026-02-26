@@ -1,14 +1,43 @@
-// @ts-nocheck
 import { useStorage } from '@hooks/useStorage';
 import { BackArrowIcon } from '@icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
+import type { JSX } from 'preact';
 import './SettingsModal.css';
 
-export function SettingsModal({ onClose }) {
+type Settings = typeof DEFAULT_SETTINGS;
+type SettingKey = keyof Settings;
+type ToastType = 'info' | 'success' | 'error';
+type BooleanSettingKey = {
+    [K in keyof Settings]: Settings[K] extends boolean ? K : never;
+}[keyof Settings];
+
+type OptionItem = {
+    label: string;
+    value: string;
+};
+
+type ModalProps = {
+    onClose: () => void;
+};
+
+type SettingRowProps = {
+    label: string;
+    settingKey: BooleanSettingKey;
+    description?: string;
+};
+
+type SelectRowProps = {
+    label: string;
+    settingKey: SettingKey;
+    description?: string;
+    options: OptionItem[];
+};
+
+export function SettingsModal({ onClose }: ModalProps) {
     const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
 
     // lightweight toast helper copied from content.jsx
-    const showToast = (message, type = 'info') => {
+    const showToast = (message: string, type: ToastType = 'info') => {
         const existing = document.querySelector('#hg-toast');
         if (existing) existing.remove();
 
@@ -25,7 +54,7 @@ export function SettingsModal({ onClose }) {
         }, 1900);
     };
 
-    const toggleSetting = (key) => {
+    const toggleSetting = (key: BooleanSettingKey): void => {
         // master switch needs a warning/reload because most features are
         // initialized at page load and won't disappear immediately.
         if (key === 'enabled') {
@@ -50,39 +79,38 @@ export function SettingsModal({ onClose }) {
             return;
         }
 
-        setSettings({ ...settings, [key]: !settings[key] });
+        setSettings({ ...settings, [key]: !settings[key] } as Settings);
     };
 
-    const SettingRow = ({ label, settingKey, description }) => (
-        <div class="hg-setting-row" onClick={() => toggleSetting(settingKey)}>
+    const SettingRow = ({ label, settingKey, description }: SettingRowProps) => (
+        <button class="hg-setting-row" type="button" onClick={() => toggleSetting(settingKey)}>
             <div class="hg-setting-info">
                 <span class="hg-setting-label">{label}</span>
-                {description && (
-                    <span class="hg-setting-desc">{description}</span>
-                )}
+                {description && <span class="hg-setting-desc">{description}</span>}
             </div>
             <div class={`hg-toggle ${settings[settingKey] ? 'active' : ''}`}>
                 <div class="hg-toggle-knob"></div>
             </div>
-        </div>
+        </button>
     );
 
-    const SelectRow = ({ label, settingKey, description, options }) => (
+    const SelectRow = ({ label, settingKey, description, options }: SelectRowProps) => (
         <div class="hg-setting-row hg-setting-row-input">
             <div class="hg-setting-info">
                 <span class="hg-setting-label">{label}</span>
-                {description && (
-                    <span class="hg-setting-desc">{description}</span>
-                )}
+                {description && <span class="hg-setting-desc">{description}</span>}
             </div>
             <select
                 class="hg-setting-select"
-                value={settings[settingKey]}
-                onChange={(e) => {
-                    e.stopPropagation();
-                    setSettings({ ...settings, [settingKey]: e.target.value });
+                value={String(settings[settingKey])}
+                onChange={(event: JSX.TargetedEvent<HTMLSelectElement, Event>) => {
+                    event.stopPropagation();
+                    setSettings({
+                        ...settings,
+                        [settingKey]: event.currentTarget.value,
+                    } as Settings);
                 }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
             >
                 {options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
@@ -93,43 +121,37 @@ export function SettingsModal({ onClose }) {
         </div>
     );
 
-    const ButtonGroupRow = ({ label, settingKey, description, options }) => (
-        <div class="hg-setting-row hg-setting-row-group">
-            <div class="hg-setting-info" style={{ flex: 1 }}>
-                <span class="hg-setting-label">{label}</span>
-                {description && (
-                    <span class="hg-setting-desc">{description}</span>
-                )}
-            </div>
-            <div class="hg-button-group">
-                {options.map((opt) => (
-                    <button
-                        key={opt.value}
-                        class={`hg-group-btn ${settings[settingKey] === opt.value ? 'active' : ''}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setSettings({
-                                ...settings,
-                                [settingKey]: opt.value,
-                            });
-                        }}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
-
     return (
-        <div class="hg-dialog-overlay" onClick={onClose}>
-            <div class="hg-settings-modal" onClick={(event) => event.stopPropagation()}>
+        // biome-ignore lint/a11y/useSemanticElements: it's a dialog.
+        <div
+            class="hg-dialog-overlay"
+            role="button"
+            tabIndex={0}
+            aria-label="Close settings dialog"
+            onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                    onClose();
+                }
+            }}
+            onKeyDown={(event) => {
+                if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    onClose();
+                }
+            }}
+        >
+            <div
+                class="hg-settings-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="hg-settings-title"
+            >
                 <div class="hg-settings-header">
                     <div class="hg-settings-header-left">
-                        <button class="hg-back-btn" onClick={onClose}>
+                        <button class="hg-back-btn" type="button" onClick={onClose}>
                             <BackArrowIcon width="20" height="20" />
                         </button>
-                        <h2>Settings</h2>
+                        <h2 id="hg-settings-title">Settings</h2>
                     </div>
                 </div>
 
@@ -206,23 +228,22 @@ export function SettingsModal({ onClose }) {
                         <div class="hg-setting-info">
                             <span class="hg-setting-label">Gemini API Key</span>
                             <span class="hg-setting-desc">
-                                Used for exact token counts via Gemini
-                                countTokens API
+                                Used for exact token counts via Gemini countTokens API
                             </span>
                         </div>
                         <input
                             type="text"
                             class="hg-setting-input"
                             value={settings.geminiApiKey || ''}
-                            onInput={(event) =>
+                            onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
                                 setSettings({
                                     ...settings,
-                                    geminiApiKey: event.target.value,
+                                    geminiApiKey: event.currentTarget.value,
                                 })
                             }
                             onClick={(event) => event.stopPropagation()}
                             placeholder="AIza..."
-                            spellCheck={false}
+                            spellcheck={false}
                             autoComplete="off"
                         />
                     </div>
@@ -231,19 +252,17 @@ export function SettingsModal({ onClose }) {
                         <div class="hg-setting-info">
                             <span class="hg-setting-label">Token Limit</span>
                             <span class="hg-setting-desc">
-                                The context size used for the progress ring
-                                calculation
+                                The context size used for the progress ring calculation
                             </span>
                         </div>
                         <input
                             type="number"
                             class="hg-setting-input hg-setting-input-number"
                             value={settings.tokenLimit || 1000000}
-                            onInput={(event) =>
+                            onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
                                 setSettings({
                                     ...settings,
-                                    tokenLimit:
-                                        parseInt(event.target.value, 10) || 0,
+                                    tokenLimit: parseInt(event.currentTarget.value, 10) || 0,
                                 })
                             }
                             onClick={(event) => event.stopPropagation()}

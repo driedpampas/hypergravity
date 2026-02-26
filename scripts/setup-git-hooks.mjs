@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { chmodSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { chmodSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const repoRoot = resolve(new URL('..', import.meta.url).pathname);

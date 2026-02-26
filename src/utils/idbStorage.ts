@@ -1,13 +1,11 @@
-import { openDB } from 'idb';
 import type { DBSchema, IDBPDatabase } from 'idb';
+import { openDB } from 'idb';
 
 const DB_NAME = 'hypergravity';
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
 
-type PendingWriteOperation =
-    | { type: 'set'; value: unknown }
-    | { type: 'delete' };
+type PendingWriteOperation = { type: 'set'; value: unknown } | { type: 'delete' };
 
 interface HypergravityDbSchema extends DBSchema {
     kv: {
@@ -110,9 +108,7 @@ export async function removeIdbValue(key: string): Promise<void> {
     await ensureFlushScheduled();
 }
 
-export async function setIdbValues(
-    values: Record<string, unknown>
-): Promise<void> {
+export async function setIdbValues(values: Record<string, unknown>): Promise<void> {
     if (!values || typeof values !== 'object') return;
 
     for (const [key, value] of Object.entries(values)) {
@@ -132,9 +128,7 @@ export async function removeIdbValues(keys: string[]): Promise<void> {
     await ensureFlushScheduled();
 }
 
-export async function getIdbValues(
-    keys: string[]
-): Promise<Record<string, unknown>> {
+export async function getIdbValues(keys: string[]): Promise<Record<string, unknown>> {
     if (!Array.isArray(keys) || keys.length === 0) return {};
 
     try {
@@ -162,10 +156,7 @@ export async function getAllIdbValues(): Promise<Record<string, unknown>> {
         const tx = db.transaction(STORE_NAME, 'readonly');
         const store = tx.objectStore(STORE_NAME);
 
-        const [keys, values] = await Promise.all([
-            store.getAllKeys(),
-            store.getAll(),
-        ]);
+        const [keys, values] = await Promise.all([store.getAllKeys(), store.getAll()]);
         await tx.done;
 
         const result: Record<string, unknown> = {};

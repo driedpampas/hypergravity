@@ -1,16 +1,8 @@
-import { h, render } from 'preact';
-import {
-    getStorageValue,
-    setStorageValue,
-    getVersion,
-} from '@utils/browserEnv';
 import { ExportDataIcon, ImportDataIcon } from '@icons';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
-import {
-    getAllCacheData,
-    importCacheData,
-    clearCacheData,
-} from '@utils/tokenHashCache';
+import { getStorageValue, getVersion, setStorageValue } from '@utils/browserEnv';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
+import { clearCacheData, getAllCacheData, importCacheData } from '@utils/tokenHashCache';
+import { h, render } from 'preact';
 
 type CacheMessage = {
     type: 'HG_TOKEN_CACHE_GET_ALL' | 'HG_TOKEN_CACHE_IMPORT' | 'HG_TOKEN_CACHE_CLEAR';
@@ -60,8 +52,7 @@ async function getSyncedCacheData() {
     const tabResponse = await sendCacheMessageToActiveGeminiTab({
         type: 'HG_TOKEN_CACHE_GET_ALL',
     });
-    const tabData =
-        tabResponse?.success && tabResponse.data ? tabResponse.data : null;
+    const tabData = tabResponse?.success && tabResponse.data ? tabResponse.data : null;
 
     if (tabData && typeof tabData === 'object') {
         await importCacheData(tabData);
@@ -113,9 +104,7 @@ async function handleExport() {
 async function handleImport(file: File) {
     try {
         showStatus('Importing…');
-        const stream = file
-            .stream()
-            .pipeThrough(new DecompressionStream('gzip'));
+        const stream = file.stream().pipeThrough(new DecompressionStream('gzip'));
         const text = await new Response(stream).text();
         const importedData = JSON.parse(text);
 
@@ -214,39 +203,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('hg-export-btn')?.addEventListener('click', handleExport);
 
-    const importInput = document.getElementById(
-        'hg-import-input'
-    ) as HTMLInputElement | null;
+    const importInput = document.getElementById('hg-import-input') as HTMLInputElement | null;
     document.getElementById('hg-import-btn')?.addEventListener('click', () => {
         importInput?.click();
     });
 
     document.getElementById('hg-clear-cache-btn')?.addEventListener('click', async () => {
-            const merged = await getSyncedCacheData();
-            const entries = Object.keys(merged).length;
-            if (!entries) {
-                showStatus('Cache is already empty', 'info');
-                return;
-            }
+        const merged = await getSyncedCacheData();
+        const entries = Object.keys(merged).length;
+        if (!entries) {
+            showStatus('Cache is already empty', 'info');
+            return;
+        }
 
-            const confirmed = await showConfirmModal({
-                title: 'Clear Cached Token Counts?',
-                body: 'This permanently deletes all cached token counts and cannot be undone.',
-                confirmText: 'Clear Cache',
-                cancelText: 'Cancel',
-                danger: true,
-            });
-
-            if (!confirmed) return;
-
-            showStatus('Clearing cache…');
-            const cleared = await clearCacheData();
-            await sendCacheMessageToActiveGeminiTab({
-                type: 'HG_TOKEN_CACHE_CLEAR',
-            });
-            await refreshStats();
-            showStatus(`Cleared ${cleared} entries`, 'success');
+        const confirmed = await showConfirmModal({
+            title: 'Clear Cached Token Counts?',
+            body: 'This permanently deletes all cached token counts and cannot be undone.',
+            confirmText: 'Clear Cache',
+            cancelText: 'Cancel',
+            danger: true,
         });
+
+        if (!confirmed) return;
+
+        showStatus('Clearing cache…');
+        const cleared = await clearCacheData();
+        await sendCacheMessageToActiveGeminiTab({
+            type: 'HG_TOKEN_CACHE_CLEAR',
+        });
+        await refreshStats();
+        showStatus(`Cleared ${cleared} entries`, 'success');
+    });
 
     importInput?.addEventListener('change', (e: Event) => {
         const target = e.target as HTMLInputElement | null;
@@ -258,9 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // initialize enable/disable toggle
-    const enableToggle = document.getElementById(
-        'hg-enabled-toggle'
-    ) as HTMLInputElement | null;
+    const enableToggle = document.getElementById('hg-enabled-toggle') as HTMLInputElement | null;
     const toggleUi = document.getElementById('hg-toggle-ui') as HTMLElement | null;
     const enabledRow = document.getElementById('hg-enabled-row');
 
@@ -287,10 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newSettings = { ...current, enabled: isChecked };
             await setStorageValue(SETTINGS_KEY, newSettings);
 
-            showStatus(
-                `Hypergravity ${isChecked ? 'enabled' : 'disabled'}`,
-                'info'
-            );
+            showStatus(`Hypergravity ${isChecked ? 'enabled' : 'disabled'}`, 'info');
 
             const confirmed = await showConfirmModal({
                 title: 'Reload Required',
@@ -300,14 +282,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (confirmed) {
-                chrome.tabs.query(
-                    { active: true, currentWindow: true },
-                    (tabs) => {
-                        if (tabs[0] && tabs[0].id) {
-                            chrome.tabs.reload(tabs[0].id);
-                        }
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs[0] && tabs[0].id) {
+                        chrome.tabs.reload(tabs[0].id);
                     }
-                );
+                });
             }
         };
 

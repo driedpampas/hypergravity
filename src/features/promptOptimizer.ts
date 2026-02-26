@@ -1,5 +1,5 @@
 import { chatBoxManager } from '@managers/chatBoxManager';
-import { optimizePrompt, cancelOptimization } from '@utils/browserEnv';
+import { cancelOptimization, optimizePrompt } from '@utils/browserEnv';
 
 const getPromptText = () => chatBoxManager.getInputText();
 const setPromptText = (text: string) => chatBoxManager.setInputText(text);
@@ -96,10 +96,7 @@ export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
                 return;
             }
 
-            showToast(
-                'Optimization failed: ' + (response?.error || 'Unknown error'),
-                'error'
-            );
+            showToast('Optimization failed: ' + (response?.error || 'Unknown error'), 'error');
         } catch (e) {
             if (isOptimizing) {
                 console.error('[hypergravity] Optimization error:', e);

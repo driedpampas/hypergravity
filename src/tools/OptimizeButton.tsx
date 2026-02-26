@@ -1,11 +1,8 @@
-import { useState, useEffect } from 'preact/hooks';
-import { CheckIcon, CloseIcon, OptimizeSparkleIcon } from '@icons';
 import { createPromptOptimizer } from '@features/promptOptimizer';
+import { CheckIcon, CloseIcon, OptimizeSparkleIcon } from '@icons';
+import { useEffect, useState } from 'preact/hooks';
 
-function showToast(
-    message: string,
-    type: 'info' | 'success' | 'error' = 'info'
-) {
+function showToast(message: string, type: 'info' | 'success' | 'error' = 'info') {
     const existing = document.querySelector('#hg-toast');
     if (existing) existing.remove();
 
@@ -67,11 +64,7 @@ export function OptimizeButton() {
                 <span class="hg-optimize-label">Stop</span>
             ) : (
                 <>
-                    <OptimizeSparkleIcon
-                        class="hg-optimize-icon"
-                        width="18"
-                        height="18"
-                    />
+                    <OptimizeSparkleIcon class="hg-optimize-icon" width="18" height="18" />
                     <span class="hg-optimize-label">Optimize</span>
                 </>
             )}

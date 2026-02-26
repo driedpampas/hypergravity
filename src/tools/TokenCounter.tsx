@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { countText } from '@utils/textStats';
 import { useStorage } from '@hooks/useStorage';
 import { InputArrowIcon, OutputArrowIcon, TotalPieIcon } from '@icons';
-import {
-    sanitizeMessageText,
-    hashText,
-    getCachedTokenCount,
-    setCachedTokenCount,
-    forceFlush,
-} from '@utils/tokenHashCache';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import { debugLog as _debugLog } from '@utils/debug';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { countText } from '@utils/textStats';
+import {
+    forceFlush,
+    getCachedTokenCount,
+    hashText,
+    sanitizeMessageText,
+    setCachedTokenCount,
+} from '@utils/tokenHashCache';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import './TokenCounter.css';
 
 type TokenCounterMode =
@@ -90,9 +90,7 @@ function getChatHistoryRoot() {
 function getConversationContainers() {
     const root = getChatHistoryRoot();
     if (!root) return [];
-    const containers = Array.from(
-        root.querySelectorAll('.conversation-container')
-    );
+    const containers = Array.from(root.querySelectorAll('.conversation-container'));
     return containers.length > 0 ? containers : [root];
 }
 
@@ -138,10 +136,7 @@ const MODEL_SELECTORS = [
 function uniqueTopLevelNodes(nodes: Element[]): Element[] {
     return nodes.filter(
         (node, index, arr) =>
-            !arr.some(
-                (other, otherIndex) =>
-                    index !== otherIndex && other.contains(node)
-            )
+            !arr.some((other, otherIndex) => index !== otherIndex && other.contains(node))
     );
 }
 
@@ -156,10 +151,7 @@ function getNodeText(node: Element | null): string {
 function getNodeTextExcludingThoughts(node: Element | null): string {
     if (!node) return '';
 
-    if (
-        node.tagName?.toLowerCase() === 'model-thoughts' ||
-        node.matches?.('model-thoughts')
-    ) {
+    if (node.tagName?.toLowerCase() === 'model-thoughts' || node.matches?.('model-thoughts')) {
         return '';
     }
 
@@ -177,23 +169,20 @@ function getNodeTextExcludingThoughts(node: Element | null): string {
         .querySelectorAll(
             'model-thoughts, [data-test-id="model-thoughts"], .model-thoughts, .cdk-visually-hidden'
         )
-        .forEach((el: Element) => el.remove());
+        .forEach((el: Element) => {
+            el.remove();
+        });
 
     clone.querySelectorAll('[data-math]').forEach((el: Element) => {
         const mathText = (el.getAttribute('data-math') || '').trim();
-        const replacement = document.createTextNode(
-            mathText ? ` ${mathText} ` : ' '
-        );
+        const replacement = document.createTextNode(mathText ? ` ${mathText} ` : ' ');
         el.replaceWith(replacement);
     });
 
     return getNodeText(clone);
 }
 
-function resolveNodesByPriority(
-    conversationContainer: Element,
-    selectorGroups: string[]
-) {
+function resolveNodesByPriority(conversationContainer: Element, selectorGroups: string[]) {
     for (const selectors of selectorGroups) {
         const nodes = uniqueTopLevelNodes(
             Array.from(conversationContainer.querySelectorAll(selectors))
@@ -208,19 +197,12 @@ function resolveNodesByPriority(
 }
 
 function collectMessageNodes(conversationContainer: Element) {
-    const userResolved = resolveNodesByPriority(
-        conversationContainer,
-        USER_SELECTOR_GROUPS
-    );
-    const modelResolved = resolveNodesByPriority(
-        conversationContainer,
-        MODEL_SELECTOR_GROUPS
-    );
+    const userResolved = resolveNodesByPriority(conversationContainer, USER_SELECTOR_GROUPS);
+    const modelResolved = resolveNodesByPriority(conversationContainer, MODEL_SELECTOR_GROUPS);
 
     const userNodes = userResolved.nodes;
     const modelNodes = modelResolved.nodes.filter(
-        (modelNode) =>
-            !userNodes.some((userNode) => userNode.contains(modelNode))
+        (modelNode) => !userNodes.some((userNode) => userNode.contains(modelNode))
     );
 
     return {
@@ -231,11 +213,7 @@ function collectMessageNodes(conversationContainer: Element) {
     };
 }
 
-async function countTokensWithGemini(
-    text: string,
-    apiKey: string,
-    signal: AbortSignal
-) {
+async function countTokensWithGemini(text: string, apiKey: string, signal: AbortSignal) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:countTokens?key=${encodeURIComponent(apiKey)}`;
     const response = await fetch(endpoint, {
         method: 'POST',
@@ -248,9 +226,7 @@ async function countTokensWithGemini(
 
     if (!response.ok) {
         const errorBody = await response.text();
-        throw new Error(
-            `countTokens failed (${response.status}): ${errorBody}`
-        );
+        throw new Error(`countTokens failed (${response.status}): ${errorBody}`);
     }
 
     const data = await response.json();
@@ -268,17 +244,12 @@ export function TokenCounter() {
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             const target = event.target;
-            if (
-                popupRef.current &&
-                target instanceof Node &&
-                !popupRef.current.contains(target)
-            ) {
+            if (popupRef.current && target instanceof Node && !popupRef.current.contains(target)) {
                 setIsExpanded(false);
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
-        return () =>
-            document.removeEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -345,8 +316,7 @@ export function TokenCounter() {
                 const allMessages: CountedMessage[] = [];
 
                 for (const container of conversationContainers) {
-                    const { userNodes, modelNodes } =
-                        collectMessageNodes(container);
+                    const { userNodes, modelNodes } = collectMessageNodes(container);
 
                     for (const node of userNodes) {
                         const rawText = getNodeTextExcludingThoughts(node);
@@ -361,10 +331,7 @@ export function TokenCounter() {
 
                     for (const node of modelNodes) {
                         const rawText = getNodeTextExcludingThoughts(node);
-                        const cleanText = sanitizeMessageText(
-                            rawText,
-                            'output'
-                        );
+                        const cleanText = sanitizeMessageText(rawText, 'output');
                         if (!cleanText) continue;
                         allMessages.push({
                             text: cleanText,
@@ -377,21 +344,15 @@ export function TokenCounter() {
                 if (allMessages.length === 0) {
                     const root = getChatHistoryRoot() || document;
                     const userNodes = uniqueTopLevelNodes(
-                        Array.from(
-                            root.querySelectorAll(USER_SELECTORS.join(', '))
-                        )
+                        Array.from(root.querySelectorAll(USER_SELECTORS.join(', ')))
                     ).filter((node) => getNodeText(node).length > 0);
 
                     const modelNodes = uniqueTopLevelNodes(
-                        Array.from(
-                            root.querySelectorAll(MODEL_SELECTORS.join(', '))
-                        )
+                        Array.from(root.querySelectorAll(MODEL_SELECTORS.join(', ')))
                     ).filter(
                         (node) =>
                             getNodeText(node).length > 0 &&
-                            !userNodes.some((userNode) =>
-                                userNode.contains(node)
-                            )
+                            !userNodes.some((userNode) => userNode.contains(node))
                     );
 
                     for (const node of userNodes) {
@@ -440,10 +401,7 @@ export function TokenCounter() {
                     let inTok = 0;
                     let outTok = 0;
                     for (const m of resolved) {
-                        const tokens =
-                            m.cachedTokens !== null
-                                ? m.cachedTokens
-                                : m.estimatedTokens;
+                        const tokens = m.cachedTokens !== null ? m.cachedTokens : m.estimatedTokens;
                         if (m.role === 'input') inTok += tokens;
                         else outTok += tokens;
                     }
@@ -481,9 +439,7 @@ export function TokenCounter() {
                         exactRequestSeq += 1;
                         const requestId = exactRequestSeq;
 
-                        debugLog(
-                            `Fetching exact counts for ${pending.length} messages`
-                        );
+                        debugLog(`Fetching exact counts for ${pending.length} messages`);
 
                         if (exactController) exactController.abort();
                         exactController = new AbortController();
@@ -494,16 +450,12 @@ export function TokenCounter() {
                             const batch = pending.slice(i, i + BATCH_SIZE);
                             await Promise.all(
                                 batch.map(async (msg) => {
-                                    const exactTokens =
-                                        await countTokensWithGemini(
-                                            msg.text,
-                                            apiKey,
-                                            controller.signal
-                                        );
-                                    await setCachedTokenCount(
-                                        msg.hash,
-                                        exactTokens
+                                    const exactTokens = await countTokensWithGemini(
+                                        msg.text,
+                                        apiKey,
+                                        controller.signal
                                     );
+                                    await setCachedTokenCount(msg.hash, exactTokens);
                                     msg.cachedTokens = exactTokens;
                                 })
                             );
@@ -515,11 +467,7 @@ export function TokenCounter() {
 
                         applyStats('exact');
                     } catch (error: unknown) {
-                        if (
-                            error instanceof DOMException &&
-                            error.name === 'AbortError'
-                        )
-                            return;
+                        if (error instanceof DOMException && error.name === 'AbortError') return;
                         debugLog('Gemini countTokens error:', error);
                     }
                 }, 700);
@@ -570,13 +518,7 @@ export function TokenCounter() {
 
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key !== 'Enter') return;
-            if (
-                event.shiftKey ||
-                event.altKey ||
-                event.ctrlKey ||
-                event.metaKey
-            )
-                return;
+            if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
             scheduleSendTriggeredUpdates();
         };
 
@@ -647,16 +589,13 @@ export function TokenCounter() {
 
     const MAX_TOKENS = geminiSettings?.tokenLimit || 1000000;
     const mode = normalizeTokenCounterMode(geminiSettings?.tokenCounterMode);
-    const { showCircle, showText, showPercentage } =
-        getTokenCounterDisplayConfig(mode);
+    const { showCircle, showText, showPercentage } = getTokenCounterDisplayConfig(mode);
 
     if (!showCircle && !showText && !showPercentage) return null;
 
     const totalTokens = stats.inputTokens + stats.outputTokens;
     let fillPercentage =
-        totalTokens === 0
-            ? 0
-            : Math.min(100, Math.max(1, (totalTokens / MAX_TOKENS) * 100));
+        totalTokens === 0 ? 0 : Math.min(100, Math.max(1, (totalTokens / MAX_TOKENS) * 100));
 
     if (totalTokens > 0 && fillPercentage < 3) {
         fillPercentage = 0;
@@ -669,8 +608,7 @@ export function TokenCounter() {
     };
 
     const hasLabel = showText || showPercentage;
-    const percentValue =
-        MAX_TOKENS > 0 ? ((totalTokens / MAX_TOKENS) * 100).toFixed(1) : '0.0';
+    const percentValue = MAX_TOKENS > 0 ? ((totalTokens / MAX_TOKENS) * 100).toFixed(1) : '0.0';
     const percentageLabel = `${percentValue}%`;
 
     const fillDeg = (fillPercentage / 100) * 360;
@@ -680,18 +618,15 @@ export function TokenCounter() {
         <div class="hg-token-counter-wrapper" ref={popupRef}>
             <button
                 class={`hg-token-counter-btn${hasLabel ? ' hg-token-counter-btn--labeled' : ''}`}
+                type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 title="Context Size & Token Usage"
                 aria-label="Context Size & Token Usage"
             >
                 {showCircle && (
-                    <svg class="hg-token-ring" viewBox="0 0 20 20">
-                        <circle
-                            class="hg-token-ring-bg"
-                            cx="10"
-                            cy="10"
-                            r="9"
-                        />
+                    <svg class="hg-token-ring" viewBox="0 0 20 20" aria-hidden="true">
+                        <title>Token usage ring</title>
+                        <circle class="hg-token-ring-bg" cx="10" cy="10" r="9" />
                         <circle
                             class="hg-token-ring-fill"
                             cx="10"
@@ -705,19 +640,14 @@ export function TokenCounter() {
                     <span class="hg-token-label">
                         {showText && (
                             <span class="hg-token-label-main">
-                                {formatTokenCount(totalTokens)}/
-                                {formatTokenCount(MAX_TOKENS)}
+                                {formatTokenCount(totalTokens)}/{formatTokenCount(MAX_TOKENS)}
                             </span>
                         )}
                         {showPercentage && showText ? (
-                            <span class="hg-token-label-percent">
-                                ({percentageLabel})
-                            </span>
+                            <span class="hg-token-label-percent">({percentageLabel})</span>
                         ) : null}
                         {showPercentage && !showText ? (
-                            <span class="hg-token-label-main">
-                                {percentageLabel}
-                            </span>
+                            <span class="hg-token-label-main">{percentageLabel}</span>
                         ) : null}
                     </span>
                 )}
@@ -732,9 +662,7 @@ export function TokenCounter() {
                             <InputArrowIcon />
                             <span>Input</span>
                         </div>
-                        <div class="hg-token-popup-value">
-                            {stats.inputTokens.toLocaleString()}
-                        </div>
+                        <div class="hg-token-popup-value">{stats.inputTokens.toLocaleString()}</div>
                     </div>
 
                     <div class="hg-token-popup-row">

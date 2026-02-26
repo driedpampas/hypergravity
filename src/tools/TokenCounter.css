@@ -39,10 +39,7 @@
 }
 
 .hg-token-counter-btn:hover {
-    background-color: var(
-        --gem-sys-color--surface-variant,
-        rgba(200, 200, 200, 0.2)
-    );
+    background-color: var(--gem-sys-color--surface-variant, rgba(200, 200, 200, 0.2));
     color: var(--gem-sys-color--on-surface, #333);
 }
 

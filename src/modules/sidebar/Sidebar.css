@@ -8,11 +8,7 @@
 .hg-dialog-overlay {
     position: fixed;
     inset: 0;
-    background: color-mix(
-        in srgb,
-        var(--gem-sys-color--scrim, #000000) 32%,
-        transparent
-    );
+    background: color-mix(in srgb, var(--gem-sys-color--scrim, #000000) 32%, transparent);
     backdrop-filter: blur(1px);
     z-index: 9999;
 }
@@ -23,10 +19,14 @@
     justify-content: space-between;
     padding: 12px 14px;
     background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
     cursor: pointer;
     user-select: none;
     transition: background 0.15s ease;
     border-radius: 28px;
+    font-family: inherit;
 }
 
 .hg-section-title {

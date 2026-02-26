@@ -32,15 +32,15 @@
       </div>
 
       <div class="hg-popup-actions">
-        <button class="hg-popup-btn" id="hg-export-btn">
+        <button class="hg-popup-btn" id="hg-export-btn" type="button">
           <span class="hg-popup-btn-icon" id="hg-export-icon"></span>
           Export Data
         </button>
-        <button class="hg-popup-btn" id="hg-import-btn">
+        <button class="hg-popup-btn" id="hg-import-btn" type="button">
           <span class="hg-popup-btn-icon" id="hg-import-icon"></span>
           Import Data
         </button>
-        <button class="hg-popup-btn" id="hg-clear-cache-btn">
+        <button class="hg-popup-btn" id="hg-clear-cache-btn" type="button">
           Clear Cache
         </button>
         <input type="file" id="hg-import-input" accept=".gz" hidden />
@@ -57,10 +57,11 @@
           Changes will take effect after reloading the current tab.
         </div>
         <div class="hg-popup-modal-actions">
-          <button class="hg-popup-modal-btn" id="hg-modal-cancel">Later</button>
+          <button class="hg-popup-modal-btn" id="hg-modal-cancel" type="button">Later</button>
           <button
             class="hg-popup-modal-btn hg-popup-modal-btn--primary"
             id="hg-modal-confirm"
+            type="button"
           >
             Reload Now
           </button>

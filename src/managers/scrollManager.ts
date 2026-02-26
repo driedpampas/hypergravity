@@ -24,7 +24,7 @@ function fastSmoothScroll(element: HTMLElement, targetTop: number): void {
         if (startTime === null) startTime = timestamp;
         const elapsed = timestamp - startTime;
         const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - ((1 - progress) ** 3);
+        const eased = 1 - (1 - progress) ** 3;
 
         element.scrollTop = startTop + delta * eased;
 
@@ -72,7 +72,7 @@ export function createScrollManager() {
             } catch (e) {
                 // no-op
             }
-        };
+        }
     }
 
     function stopAutoscrollOnManual() {
@@ -82,18 +82,9 @@ export function createScrollManager() {
     function detachManualStopListeners() {
         if (!autoscrollContainer) return;
 
-        autoscrollContainer.removeEventListener(
-            'wheel',
-            stopAutoscrollOnManual
-        );
-        autoscrollContainer.removeEventListener(
-            'mousedown',
-            stopAutoscrollOnManual
-        );
-        autoscrollContainer.removeEventListener(
-            'touchstart',
-            stopAutoscrollOnManual
-        );
+        autoscrollContainer.removeEventListener('wheel', stopAutoscrollOnManual);
+        autoscrollContainer.removeEventListener('mousedown', stopAutoscrollOnManual);
+        autoscrollContainer.removeEventListener('touchstart', stopAutoscrollOnManual);
     }
 
     function attachManualStopListeners(container: HTMLElement): void {
@@ -124,9 +115,7 @@ export function createScrollManager() {
         }
 
         const distanceFromBottom =
-            latestContainer.scrollHeight -
-            latestContainer.scrollTop -
-            latestContainer.clientHeight;
+            latestContainer.scrollHeight - latestContainer.scrollTop - latestContainer.clientHeight;
 
         if (distanceFromBottom >= 5) {
             latestContainer.scrollTop = latestContainer.scrollHeight;
@@ -228,8 +217,7 @@ export function createScrollManager() {
         const rect = anchor.getBoundingClientRect();
 
         if (!isValidAnchorRect(rect)) return false;
-        if (window.getComputedStyle(input).visibility === 'hidden')
-            return false;
+        if (window.getComputedStyle(input).visibility === 'hidden') return false;
 
         return true;
     }

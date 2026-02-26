@@ -85,17 +85,13 @@ export class ChatExportController {
         let nodes = Array.from(document.querySelectorAll<HTMLElement>(allSelectors));
         nodes = nodes.filter(
             (node, index, arr) =>
-                !arr.some(
-                    (other, otherIndex) =>
-                        index !== otherIndex && other.contains(node)
-                )
+                !arr.some((other, otherIndex) => index !== otherIndex && other.contains(node))
         );
 
         return nodes
             .map((node) => {
                 const isUser = userSelectors.some(
-                    (selector) =>
-                        node.matches(selector) || node.closest(selector)
+                    (selector) => node.matches(selector) || node.closest(selector)
                 );
                 const text = (node.innerText || '').trim();
                 if (!text) return null;
@@ -169,11 +165,7 @@ export class ChatExportController {
             pdf.text(title, margin, y);
             y += 24;
             pdf.setFontSize(10);
-            pdf.text(
-                `Exported using hypergravity on: ${new Date().toLocaleString()}`,
-                margin,
-                y
-            );
+            pdf.text(`Exported using hypergravity on: ${new Date().toLocaleString()}`, margin, y);
             y += 22;
 
             const ensureSpace = (needed = 18): void => {
@@ -202,9 +194,7 @@ export class ChatExportController {
                 y += 10;
             });
 
-            pdf.save(
-                `${fileBase}_${new Date().toISOString().slice(0, 10)}.pdf`
-            );
+            pdf.save(`${fileBase}_${new Date().toISOString().slice(0, 10)}.pdf`);
             this.showToast('PDF downloaded', 'success');
         } catch (error) {
             console.error('[hypergravity] PDF export error:', error);
@@ -228,9 +218,7 @@ export class ChatExportController {
 
             const children = [
                 new Paragraph({
-                    children: [
-                        new TextRun({ text: title, bold: true, size: 32 }),
-                    ],
+                    children: [new TextRun({ text: title, bold: true, size: 32 })],
                 }),
                 new Paragraph({
                     children: [
@@ -272,10 +260,7 @@ export class ChatExportController {
             });
 
             const blob = await Packer.toBlob(documentFile);
-            downloadBlob(
-                blob,
-                `${fileBase}_${new Date().toISOString().slice(0, 10)}.docx`
-            );
+            downloadBlob(blob, `${fileBase}_${new Date().toISOString().slice(0, 10)}.docx`);
             this.showToast('DOCX downloaded', 'success');
         } catch (error) {
             console.error('[hypergravity] DOCX export error:', error);
@@ -383,42 +368,43 @@ export class ChatExportController {
                         aria-label="Close"
                         onClick={close}
                     >
-                        <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <title>Close export popup</title>
                             <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
                 <div class="hg-export-actions">
                     <button
+                        type="button"
                         onClick={() => handleAction('copy')}
                         class="hg-export-action"
                     >
                         Copy to Clipboard
                     </button>
                     <button
+                        type="button"
                         onClick={() => handleAction('txt')}
                         class="hg-export-action"
                     >
                         Export as .txt
                     </button>
                     <button
+                        type="button"
                         onClick={() => handleAction('pdf')}
                         class="hg-export-action"
                     >
                         Export as .pdf
                     </button>
                     <button
+                        type="button"
                         onClick={() => handleAction('docx')}
                         class="hg-export-action"
                     >
                         Export as .docx
                     </button>
                     <button
+                        type="button"
                         onClick={() => handleAction('print')}
                         class="hg-export-action"
                     >

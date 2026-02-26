@@ -168,8 +168,7 @@ function addTool(
     const root = getToolsContainer();
     if (!root || !element) return false;
 
-    const containerClass =
-        align === 'right' ? 'hg-chat-tools-right' : 'hg-chat-tools-left';
+    const containerClass = align === 'right' ? 'hg-chat-tools-right' : 'hg-chat-tools-left';
     const container = root.querySelector(`.${containerClass}`) || root;
 
     const existing = container.querySelector(`[data-hg-tool-id="${id}"]`);
@@ -178,9 +177,7 @@ function addTool(
     element.setAttribute('data-hg-tool-id', id);
     element.setAttribute('data-hg-tool-weight', String(weight));
 
-    const siblings = Array.from(
-        container.querySelectorAll('[data-hg-tool-weight]')
-    );
+    const siblings = Array.from(container.querySelectorAll('[data-hg-tool-weight]'));
 
     const duplicate = siblings.find(
         (s) => Number(s.getAttribute('data-hg-tool-weight')) === weight

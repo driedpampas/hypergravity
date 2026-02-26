@@ -1,30 +1,19 @@
-// @ts-nocheck
-import { useEffect, useState } from 'preact/hooks';
-
 import { useStorage } from '@hooks/useStorage';
+import { ChevronRightIcon, FolderEmptyIcon, SettingsGearIcon, WelcomeHandIcon } from '@icons';
+import { FoldersManager } from '@modules/sidebar/FoldersManager';
 import { SettingsModal } from '@src/SettingsModal';
 import { WelcomeModal } from '@src/WelcomeModal';
-import {
-    ChevronRightIcon,
-    WelcomeHandIcon,
-    FolderEmptyIcon,
-    SettingsGearIcon,
-} from '@icons';
 import { WELCOME_SEEN_KEY } from '@utils/constants';
-import { FoldersManager } from '@modules/sidebar/FoldersManager';
+import { useEffect, useState } from 'preact/hooks';
 import './Sidebar.css';
 
+type ActiveMenu = 'folders' | 'settings' | null;
+
 export function Sidebar() {
-    const [isExpanded, setIsExpanded] = useStorage(
-        'hypergravitySectionExpanded',
-        true
-    );
-    const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useStorage(
-        WELCOME_SEEN_KEY,
-        false
-    );
+    const [isExpanded, setIsExpanded] = useStorage('hypergravitySectionExpanded', true);
+    const [welcomeSeen, setWelcomeSeen, isWelcomeLoaded] = useStorage(WELCOME_SEEN_KEY, false);
     const hasSeenWelcome = welcomeSeen === true;
-    const [activeMenu, setActiveMenu] = useState(null);
+    const [activeMenu, setActiveMenu] = useState<ActiveMenu>(null);
     const [showWelcome, setShowWelcome] = useState(false);
 
     useEffect(() => {
@@ -44,16 +33,8 @@ export function Sidebar() {
     };
 
     return (
-        <div
-            id="hg-hypergravity-section"
-            class="hypergravity-sidebar-container"
-        >
-            <div
-                class="hg-section-header"
-                onClick={toggleSection}
-                role="button"
-                tabIndex={0}
-            >
+        <div id="hg-hypergravity-section" class="hypergravity-sidebar-container">
+            <button class="hg-section-header" type="button" onClick={toggleSection}>
                 <div class="hg-section-header-left">
                     <span class="hg-section-title">hypergravity</span>
                 </div>
@@ -63,14 +44,12 @@ export function Sidebar() {
                         width: '16px',
                         height: '16px',
                         color: '#727676',
-                        transform: isExpanded
-                            ? 'rotate(90deg)'
-                            : 'rotate(0deg)',
+                        transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
                         transition: 'transform 0.2s ease',
                         marginRight: '-5px',
                     }}
                 />
-            </div>
+            </button>
 
             <div
                 class="hg-section-content"
@@ -81,17 +60,19 @@ export function Sidebar() {
                 }}
             >
                 <div class="hg-dropdown-menu">
-                    <div
+                    <button
                         class="hg-dropdown-item"
+                        type="button"
                         onClick={() => setActiveMenu('folders')}
                     >
                         <FolderEmptyIcon class="hg-dropdown-icon" />
                         <span>Folders</span>
-                    </div>
+                    </button>
 
                     {isWelcomeLoaded && !hasSeenWelcome && (
-                        <div
+                        <button
                             class="hg-dropdown-item"
+                            type="button"
                             onClick={() => {
                                 setActiveMenu(null);
                                 setShowWelcome(true);
@@ -99,25 +80,22 @@ export function Sidebar() {
                         >
                             <WelcomeHandIcon class="hg-dropdown-icon" />
                             <span>Welcome & Setup</span>
-                        </div>
+                        </button>
                     )}
 
-                    <div
+                    <button
                         class="hg-dropdown-item"
+                        type="button"
                         onClick={() => setActiveMenu('settings')}
                     >
                         <SettingsGearIcon class="hg-dropdown-icon" />
                         <span>Settings</span>
-                    </div>
+                    </button>
                 </div>
             </div>
 
-            {activeMenu === 'folders' && (
-                <FoldersManager onClose={() => setActiveMenu(null)} />
-            )}
-            {activeMenu === 'settings' && (
-                <SettingsModal onClose={() => setActiveMenu(null)} />
-            )}
+            {activeMenu === 'folders' && <FoldersManager onClose={() => setActiveMenu(null)} />}
+            {activeMenu === 'settings' && <SettingsModal onClose={() => setActiveMenu(null)} />}
             {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
         </div>
     );

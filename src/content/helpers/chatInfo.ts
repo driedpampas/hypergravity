@@ -1,10 +1,15 @@
-// @ts-nocheck
+type ChatInfo = {
+    id: string;
+    title: string;
+    url: string;
+};
+
 /**
  * Generates an absolute Gemini URL for a given chat ID, preserving account context (e.g. /u/1/).
  * @param {string} [chatId=''] - The ID of the chat.
  * @returns {string} The full Gemini URL.
  */
-export function getAccountAwareUrl(chatId = '') {
+export function getAccountAwareUrl(chatId = ''): string {
     const match = window.location.pathname.match(/^\/u\/(\d+)\//);
     const accountPath = match ? `/u/${match[1]}/app` : '/app';
     return `https://gemini.google.com${chatId ? `${accountPath}/${chatId}` : accountPath}`;
@@ -14,7 +19,7 @@ export function getAccountAwareUrl(chatId = '') {
  * Inspects DOM and URL to find metadata for the currently active chat.
  * @returns {Object|null} Chat info object containing id, title, and url, or null if not found.
  */
-export function findActiveChatInfo() {
+export function findActiveChatInfo(): ChatInfo | null {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const appIndex = pathParts.indexOf('app');
     const id = appIndex >= 0 ? pathParts[appIndex + 1] : null;
@@ -22,9 +27,7 @@ export function findActiveChatInfo() {
     if (!id || id.length < 6) return null;
 
     const explicitConversationTitle =
-        document
-            .querySelector('[data-test-id="conversation-title"]')
-            ?.textContent?.trim() ||
+        document.querySelector('[data-test-id="conversation-title"]')?.textContent?.trim() ||
         document
             .querySelector('.conversation-title-container .conversation-title-column')
             ?.textContent?.trim();
@@ -39,13 +42,9 @@ export function findActiveChatInfo() {
         .replace('Google Gemini', '')
         .trim();
 
-    const titleCandidates = [
-        explicitConversationTitle,
-        titleFromHeader,
-        titleFromDocument,
-    ]
+    const titleCandidates = [explicitConversationTitle, titleFromHeader, titleFromDocument]
         .map((value) => value?.replace(/\s+/g, ' ').trim())
-        .filter(Boolean);
+        .filter((value): value is string => Boolean(value));
 
     const title =
         titleCandidates.find((value) => {
@@ -70,9 +69,9 @@ export function findActiveChatInfo() {
  * @param {HTMLElement} row - The DOM element representing the conversation row.
  * @returns {Object|null} Chat info object or null.
  */
-export function inferChatInfoFromConversationRow(row) {
+export function inferChatInfoFromConversationRow(row: Element | null): ChatInfo | null {
     if (!row) return null;
-    const link = row.querySelector('a[href*="/app/"]');
+    const link = row.querySelector<HTMLAnchorElement>('a[href*="/app/"]');
     if (!link) return null;
 
     const href = link.href;
@@ -91,9 +90,7 @@ export function inferChatInfoFromConversationRow(row) {
         row.getAttribute('data-test-id')?.includes('conversation') ||
         link.getAttribute('data-test-id')?.includes('conversation') ||
         Boolean(
-            row.closest(
-                '.conversation, .conversation-list-item, [data-test-id*="conversation"]'
-            )
+            row.closest('.conversation, .conversation-list-item, [data-test-id*="conversation"]')
         );
 
     if (
@@ -104,9 +101,7 @@ export function inferChatInfoFromConversationRow(row) {
     }
 
     const title =
-        row
-            .querySelector('.conversation-title, [class*="title"]')
-            ?.textContent?.trim() ||
+        row.querySelector('.conversation-title, [class*="title"]')?.textContent?.trim() ||
         ariaLabel ||
         rowText ||
         'Untitled Chat';

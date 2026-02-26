@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { ChevronDownIcon, ChevronUpIcon } from '@icons';
 import { useStorage } from '@hooks/useStorage';
+import { ChevronDownIcon, ChevronUpIcon } from '@icons';
 import { createScrollManager } from '@managers/scrollManager';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
+import { useEffect, useRef, useState } from 'preact/hooks';
 
 type ScrollManager = ReturnType<typeof createScrollManager>;
 type ScrollButtonState = {
@@ -49,11 +49,7 @@ export function ScrollButtons() {
         });
 
         window.addEventListener('resize', requestRefresh);
-        window.addEventListener(
-            'scroll',
-            requestRefresh,
-            scrollListenerOptions
-        );
+        window.addEventListener('scroll', requestRefresh, scrollListenerOptions);
         window.addEventListener('popstate', requestRefresh);
         window.addEventListener('hashchange', requestRefresh);
 
@@ -61,11 +57,7 @@ export function ScrollButtons() {
             if (rafId) cancelAnimationFrame(rafId);
             observer.disconnect();
             window.removeEventListener('resize', requestRefresh);
-            window.removeEventListener(
-                'scroll',
-                requestRefresh,
-                scrollListenerOptions
-            );
+            window.removeEventListener('scroll', requestRefresh, scrollListenerOptions);
             window.removeEventListener('popstate', requestRefresh);
             window.removeEventListener('hashchange', requestRefresh);
             unsubscribe();
@@ -91,6 +83,7 @@ export function ScrollButtons() {
         <div class="hg-scroll-controls">
             <button
                 class="hg-scroll-btn"
+                type="button"
                 title="Scroll to top"
                 aria-label="Scroll to top"
                 onClick={managerRef.current.scrollToTop}
@@ -99,6 +92,7 @@ export function ScrollButtons() {
             </button>
             <button
                 class={`hg-scroll-btn ${state.isAutoscrollActive ? 'active' : ''}`}
+                type="button"
                 title="Scroll to bottom (double-click to auto-follow)"
                 aria-label="Scroll to bottom"
                 onClick={managerRef.current.scrollToBottom}

@@ -1,32 +1,25 @@
-// @ts-nocheck
 import './content.css';
 
-import { addStorageListener } from '@utils/browserEnv';
-import { SETTINGS_KEY, DEFAULT_SETTINGS } from '@utils/constants';
-import { ChatExportController } from '@features/chatExport';
-import { createChatMemoryManager } from '@features/chatMemoryManager';
-import { createTopBarToolsManager } from '@features/topBarToolsManager';
+import { insertChatTools, insertHypergravitySidebar } from '@content/domInjection';
+import { createFoldersMenuManager } from '@content/features/foldersMenu';
+import { registerTokenCacheMessageHandler } from '@content/features/tokenCacheMessageHandler';
+import { findActiveChatInfo, getAccountAwareUrl } from '@content/helpers/chatInfo';
 import {
     applyChatboxHeaderStyleSetting,
     getSettings,
     updateSettings,
 } from '@content/helpers/settings';
-import {
-    getAccountAwareUrl,
-    findActiveChatInfo,
-} from '@content/helpers/chatInfo';
 import { showToast } from '@content/helpers/toast';
-import {
-    insertHypergravitySidebar,
-    insertChatTools,
-} from '@content/domInjection';
-import { createFoldersMenuManager } from '@content/features/foldersMenu';
-import { registerTokenCacheMessageHandler } from '@content/features/tokenCacheMessageHandler';
+import { ChatExportController } from '@features/chatExport';
+import { createChatMemoryManager } from '@features/chatMemoryManager';
+import { createTopBarToolsManager } from '@features/topBarToolsManager';
+import { addStorageListener } from '@utils/browserEnv';
+import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 
 let lastWideChatUrl = window.location.href;
-let chatExportController = null;
-let topBarToolsManager = null;
-let chatMemoryManager = null;
+let chatExportController: ChatExportController | null = null;
+let topBarToolsManager: ReturnType<typeof createTopBarToolsManager> | null = null;
+let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
 let hgEnabled = true;
 
 const foldersMenuManager = createFoldersMenuManager({
@@ -67,9 +60,10 @@ function refreshInjectedUi() {
     chatMemoryManager?.refresh();
 
     const menuRoots = document.querySelectorAll('.conversation-actions-menu');
-    menuRoots.forEach((menuRoot) =>
-        foldersMenuManager.injectAddToFolderOption(menuRoot)
-    );
+
+    for (const root of menuRoots) {
+        foldersMenuManager.injectAddToFolderOption(root);
+    }
 }
 
 function removeInjectedUi() {
@@ -77,9 +71,11 @@ function removeInjectedUi() {
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
 }
 
-let mutationDebounceTimer = null;
+let mutationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const observer = new MutationObserver(() => {
-    clearTimeout(mutationDebounceTimer);
+    if (mutationDebounceTimer) {
+        clearTimeout(mutationDebounceTimer);
+    }
     mutationDebounceTimer = setTimeout(() => {
         if (!hgEnabled) return;
 
@@ -108,16 +104,12 @@ getSettings().then((settings) => {
     refreshInjectedUi();
 });
 
-document.addEventListener(
-    'click',
-    foldersMenuManager.handleGlobalMenuButtonTracking,
-    true
-);
+document.addEventListener('click', foldersMenuManager.handleGlobalMenuButtonTracking, true);
 
 addStorageListener(SETTINGS_KEY, (newValue) => {
-    const settings = {
+    const settings: typeof DEFAULT_SETTINGS = {
         ...DEFAULT_SETTINGS,
-        ...(newValue || {}),
+        ...((newValue as Partial<typeof DEFAULT_SETTINGS>) || {}),
     };
     hgEnabled = Boolean(settings.enabled);
 

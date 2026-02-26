@@ -30,18 +30,14 @@ export function QuickActions() {
                     key={idx}
                     class="hg-optimize-btn"
                     style={{
-                        backgroundColor:
-                            action.color ||
-                            'var(--gem-sys-color--surface-container)',
+                        backgroundColor: action.color || 'var(--gem-sys-color--surface-container)',
                     }}
                     title={action.prompt || action.name}
                     onClick={() => {
                         chatBoxManager.setInputText(action.prompt);
                     }}
                 >
-                    {action.icon && (
-                        <span class="hg-quick-action-icon">{action.icon}</span>
-                    )}
+                    {action.icon && <span class="hg-quick-action-icon">{action.icon}</span>}
                     <span class="hg-optimize-label">{action.name}</span>
                 </button>
             ))}

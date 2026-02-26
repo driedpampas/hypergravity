@@ -1,7 +1,6 @@
 :root {
-    --hg-font-family:
-        'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif;
-    --hg-font-family-mono: 'Google Sans Mono', 'Roboto Mono', monospace;
+    --hg-font-family: "Google Sans Flex", "Google Sans", "Helvetica Neue", sans-serif;
+    --hg-font-family-mono: "Google Sans Mono", "Roboto Mono", monospace;
 }
 
 #hypergravity-btn {
@@ -22,10 +21,7 @@
 }
 
 #hypergravity-btn:hover {
-    background-color: var(
-        --bard-color-surface-variant,
-        rgba(255, 255, 255, 0.08)
-    );
+    background-color: var(--bard-color-surface-variant, rgba(255, 255, 255, 0.08));
 }
 
 #hypergravity-btn .hypergravity-icon {
@@ -56,10 +52,7 @@
 }
 
 .hg-header-btn:hover {
-    background: var(
-        --gem-sys-color--surface-container-highest,
-        rgba(60, 64, 67, 0.08)
-    );
+    background: var(--gem-sys-color--surface-container-highest, rgba(60, 64, 67, 0.08));
 }
 
 .hg-header-btn svg {
@@ -78,17 +71,17 @@
 body.hg-wide-chat .conversation-container,
 body.hg-wide-chat conversation-container,
 body.hg-wide-chat .user-message,
-body.hg-wide-chat [data-message-author='user'],
+body.hg-wide-chat [data-message-author="user"],
 body.hg-wide-chat .query-content,
 body.hg-wide-chat user-query,
 body.hg-wide-chat .model-response,
-body.hg-wide-chat [data-message-author='model'],
+body.hg-wide-chat [data-message-author="model"],
 body.hg-wide-chat model-response,
 body.hg-wide-chat .response-container,
 body.hg-wide-chat response-container,
 body.hg-wide-chat message-content,
 body.hg-wide-chat .markdown-main-panel,
-body.hg-wide-chat [class*='chat-history'],
+body.hg-wide-chat [class*="chat-history"],
 body.hg-wide-chat .conversation-history,
 body.hg-wide-chat hallucination-disclaimer,
 body.hg-wide-chat .hallucination-disclaimer,
@@ -100,11 +93,11 @@ body.hg-wide-chat .human-review-disclosure-container {
 body.hg-wide-chat .conversation-container,
 body.hg-wide-chat conversation-container,
 body.hg-wide-chat .user-message,
-body.hg-wide-chat [data-message-author='user'],
+body.hg-wide-chat [data-message-author="user"],
 body.hg-wide-chat .query-content,
 body.hg-wide-chat user-query,
 body.hg-wide-chat .model-response,
-body.hg-wide-chat [data-message-author='model'],
+body.hg-wide-chat [data-message-author="model"],
 body.hg-wide-chat model-response,
 body.hg-wide-chat .response-container,
 body.hg-wide-chat response-container {
@@ -405,9 +398,7 @@ body.hg-chatbox-compact-enabled .toolbox-drawer-button {
     padding-bottom: 0 !important;
 }
 
-body.hg-chatbox-compact-enabled
-    .toolbox-drawer-button-with-label
-    .mdc-button__label {
+body.hg-chatbox-compact-enabled .toolbox-drawer-button-with-label .mdc-button__label {
     line-height: 32px;
 }
 

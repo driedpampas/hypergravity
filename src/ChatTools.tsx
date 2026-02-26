@@ -1,12 +1,18 @@
-// @ts-nocheck
 import './ChatTools.css';
-import { WordCounter } from '@tools/WordCounter';
 import { OptimizeButton } from '@tools/OptimizeButton';
-import { TokenCounter } from '@tools/TokenCounter';
 import { QuickActions } from '@tools/QuickActions';
 import { ScrollButtons } from '@tools/ScrollButtons';
+import { TokenCounter } from '@tools/TokenCounter';
+import { WordCounter } from '@tools/WordCounter';
+import type { ComponentType } from 'preact';
 
-const TOOLS = [
+type ToolDefinition = {
+    component: ComponentType;
+    align: 'left' | 'right';
+    weight: number;
+};
+
+const TOOLS: ToolDefinition[] = [
     { component: WordCounter, align: 'left', weight: 0 },
     { component: OptimizeButton, align: 'left', weight: 1 },
     { component: QuickActions, align: 'left', weight: 3 },
@@ -14,8 +20,8 @@ const TOOLS = [
     { component: ScrollButtons, align: 'right', weight: 0 },
 ];
 
-function sortByWeight(tools) {
-    const seen = new Map();
+function sortByWeight(tools: ToolDefinition[]): ToolDefinition[] {
+    const seen = new Map<string, string>();
     const sorted = [...tools].sort((a, b) => a.weight - b.weight);
 
     return sorted.map((tool) => {
