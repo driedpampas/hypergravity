@@ -1,6 +1,6 @@
 import { render } from 'preact';
 
-const TOP_BAR_SELECTOR = 'top-bar-actions';
+const TOP_BAR_SELECTOR = 'top-bar-actions .right-section .buttons-container';
 
 /**
  * Finds the Gemini top bar container for tool injection.
@@ -32,7 +32,7 @@ function ensureButton({ id, title, svg, iconVNode, onClick }) {
         button.title = title;
 
         button.addEventListener('click', onClick);
-        topBar.appendChild(button);
+        topBar.insertAdjacentElement('afterbegin', button);
     }
 
     if (button.title !== title) {
