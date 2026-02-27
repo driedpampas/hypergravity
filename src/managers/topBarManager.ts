@@ -20,7 +20,12 @@ type AddToolOptions = {
  * @returns {HTMLElement|null}
  */
 function getTopBar() {
-    return document.querySelector<HTMLElement>(TOP_BAR_SELECTOR) || null;
+    const top_bar = document.querySelector<HTMLElement>(TOP_BAR_SELECTOR);
+    if (top_bar) {
+        top_bar.classList.add('hg-top-bar');
+        return top_bar;
+    }
+    return null;
 }
 
 /**
