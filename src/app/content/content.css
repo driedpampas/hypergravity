@@ -53,6 +53,10 @@
     padding-inline-end: 0px !important;
 }
 
+top-bar-actions .right-section:has(.hg-top-bar) {
+    gap: 0px;
+}
+
 .hg-header-btn {
     display: flex;
     align-items: center;

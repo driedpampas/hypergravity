@@ -1,11 +1,13 @@
+/* ── Modal shell ───────────────────────────────────────────────────────────── */
+
 .hg-settings-modal {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 500px;
-    height: 60vh;
+    /* Enforced width: narrow enough for focused single-col content */
+    width: min(480px, calc(100vw - 32px));
+    max-height: min(680px, calc(100vh - 48px));
     background: var(--gem-sys-color--surface, #f0f4f8);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -20,8 +22,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    flex-shrink: 0;
 }
 
 .hg-settings-header-left {
@@ -37,25 +40,107 @@
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
 
-.hg-settings-list {
+.hg-settings-body {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 0;
+    min-height: 0;
 }
+
+/* ── Home page ─────────────────────────────────────────────────────────────── */
+
+.hg-settings-home-section {
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.hg-settings-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.hg-settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    font-family: inherit;
+}
+
+.hg-settings-nav-item:last-child {
+    border-bottom: none;
+}
+
+.hg-settings-nav-item:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.hg-settings-nav-icon {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+.hg-settings-nav-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.hg-settings-nav-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.hg-settings-nav-desc {
+    font-size: 13px;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hg-settings-nav-chevron {
+    flex-shrink: 0;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+/* ── Sub-page ──────────────────────────────────────────────────────────────── */
+
+.hg-settings-page {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Shared setting rows ───────────────────────────────────────────────────── */
 
 .hg-setting-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
+    padding: 14px 16px;
     cursor: pointer;
     transition: background 0.15s ease;
-    border-bottom: 1px solid var(--gem-sys-color--outline-variant, transparent);
     border: none;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
     background: transparent;
     width: 100%;
     text-align: left;
     font-family: inherit;
+}
+
+.hg-settings-page .hg-setting-row:last-child,
+.hg-settings-home-section .hg-setting-row:last-child {
+    border-bottom: none;
 }
 
 .hg-setting-row:hover {
@@ -64,8 +149,8 @@
 
 .hg-setting-row-input {
     cursor: default;
-    align-items: flex-end;
-    gap: 16px;
+    align-items: center;
+    gap: 12px;
 }
 
 .hg-setting-row-input:hover {
@@ -76,6 +161,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 0;
+    flex: 1;
 }
 
 .hg-setting-label {
@@ -90,8 +177,8 @@
 }
 
 .hg-setting-input {
-    width: 220px;
-    max-width: 50%;
+    width: 200px;
+    max-width: 46%;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
@@ -99,6 +186,7 @@
     color: var(--gem-sys-color--on-surface, #1f1f1f);
     font-size: 13px;
     outline: none;
+    flex-shrink: 0;
 }
 
 .hg-setting-input:focus {
@@ -107,9 +195,11 @@
 
 .hg-setting-input-number {
     width: 120px;
+    max-width: 120px;
 }
 
-/* Toggle Switch Styles */
+/* ── Toggle switch ─────────────────────────────────────────────────────────── */
+
 .hg-toggle {
     width: 44px;
     height: 24px;
@@ -142,7 +232,8 @@
     transform: translateX(20px);
 }
 
-/* Select Styles */
+/* ── Select ────────────────────────────────────────────────────────────────── */
+
 .hg-setting-select {
     appearance: none;
     -webkit-appearance: none;
@@ -157,7 +248,7 @@
     font-family: var(--hg-font-family);
     cursor: pointer;
     outline: none;
-    min-width: 140px;
+    min-width: 148px;
     flex-shrink: 0;
 }
 
@@ -165,7 +256,23 @@
     border-color: var(--gem-sys-color--primary, #4285f4);
 }
 
-/* Button Group Styles */
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+    .hg-setting-row-input {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .hg-setting-input,
+    .hg-setting-select {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+/* ── Legacy button group (retained for potential external use) ─────────────── */
+
 .hg-button-group {
     display: flex;
     background: var(--gem-sys-color--surface, #f0f4f8);

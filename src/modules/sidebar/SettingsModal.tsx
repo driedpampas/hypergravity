@@ -1,7 +1,8 @@
 import { useStorage } from '@hooks/useStorage';
-import { BackArrowIcon } from '@icons';
+import { BackArrowIcon, ChevronRightIcon } from '@icons';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import type { JSX } from 'preact';
+import { useState } from 'preact/hooks';
 import './SettingsModal.css';
 
 type Settings = typeof DEFAULT_SETTINGS;
@@ -11,7 +12,7 @@ type BooleanSettingKey = {
     [K in keyof Settings]: Settings[K] extends boolean ? K : never;
 }[keyof Settings];
 
-type OptionItem = {
+export type OptionItem = {
     label: string;
     value: string;
 };
@@ -20,23 +21,188 @@ type ModalProps = {
     onClose: () => void;
 };
 
-type SettingRowProps = {
+export type SettingRowProps = {
     label: string;
     settingKey: BooleanSettingKey;
     description?: string;
 };
 
-type SelectRowProps = {
+export type SelectRowProps = {
     label: string;
     settingKey: SettingKey;
     description?: string;
     options: OptionItem[];
 };
 
+// ── Settings Page API ──────────────────────────────────────────────────────────
+// Each page is a plain object. Push into SETTINGS_PAGES to register a new page.
+
+export type SettingsRenderContext = {
+    settings: Settings;
+    setSettings: (s: Settings) => void;
+    SettingRow: (props: SettingRowProps) => JSX.Element;
+    SelectRow: (props: SelectRowProps) => JSX.Element;
+};
+
+export type SettingsPageDef = {
+    /** Unique stable identifier used as the navigation key. */
+    id: string;
+    /** Short title shown in the nav list and sub-page header. */
+    title: string;
+    /** One-line subtitle shown in the nav entry. */
+    description: string;
+    /** Optional icon rendered left of the title in the nav list. */
+    icon?: JSX.Element;
+    /** Render the page body. Receives helpers so the page needs no own state. */
+    render: (ctx: SettingsRenderContext) => JSX.Element;
+};
+
+/**
+ * Registry of all settings sub-pages.
+ * Push a SettingsPageDef here from any module to add a new page.
+ */
+export const SETTINGS_PAGES: SettingsPageDef[] = [];
+
+// ── Built-in page registrations ───────────────────────────────────────────────
+
+SETTINGS_PAGES.push({
+    id: 'navigation',
+    title: 'Navigation',
+    description: 'Sidebar, wide mode, and top-bar behavior',
+    render: ({ SettingRow }) => (
+        <>
+            <SettingRow
+                label="Enable Folders"
+                settingKey="foldersEnabled"
+                description="Organize your chats into custom folders"
+            />
+            <SettingRow
+                label="Chat Memory Summaries"
+                settingKey="chatMemoryEnabled"
+                description="Use temporary Flash chats to summarize and save memory per conversation"
+            />
+            <SettingRow
+                label="Hide Sidebar"
+                settingKey="hideSidebarEnabled"
+                description="Collapse the native Gemini sidebar by default"
+            />
+            <SettingRow
+                label="Wide Mode"
+                settingKey="wideModeEnabled"
+                description="Expand chat width to utilize full screen space"
+            />
+            <SettingRow
+                label="Show Export Button"
+                settingKey="showExportButton"
+                description="Add chat export button in the top action bar"
+            />
+        </>
+    ),
+});
+
+SETTINGS_PAGES.push({
+    id: 'chat-tools',
+    title: 'Chat Tools',
+    description: 'Input area controls, scroll helpers, and chatbox style',
+    render: ({ SettingRow }) => (
+        <>
+            <SettingRow
+                label="Auto-scroll"
+                settingKey="autoScrollEnabled"
+                description="Automatically scroll to bottom when generating"
+            />
+            <SettingRow
+                label="Show Scroll Buttons"
+                settingKey="showScrollButtons"
+                description="Add scroll up/down controls in the chat tools"
+            />
+            <SettingRow
+                label="Chatbox Header Strip"
+                settingKey="chatboxStyleEnabled"
+                description="Show tools in a raised strip above the input area"
+            />
+            <SettingRow
+                label="Compact Chatbox"
+                settingKey="chatboxCompactEnabled"
+                description="Tighten input-area padding and shrink native action buttons"
+            />
+        </>
+    ),
+});
+
+SETTINGS_PAGES.push({
+    id: 'token-counter',
+    title: 'Token Counter',
+    description: 'Display mode, API key, and context limit',
+    render: ({ settings, setSettings, SelectRow }) => (
+        <>
+            <SelectRow
+                label="Token Counter Display"
+                settingKey="tokenCounterMode"
+                description="Choose how context usage is shown"
+                options={[
+                    { label: 'None', value: 'none' },
+                    { label: 'Text', value: 'text' },
+                    { label: 'Percentage', value: 'percentage' },
+                    { label: 'Text + %', value: 'text_percentage' },
+                    { label: 'Ring', value: 'ring' },
+                    { label: 'Ring + Text', value: 'ring_text' },
+                    { label: 'Ring + %', value: 'ring_percentage' },
+                    { label: 'Ring + Text + %', value: 'ring_text_percentage' },
+                ]}
+            />
+            <div class="hg-setting-row hg-setting-row-input">
+                <div class="hg-setting-info">
+                    <span class="hg-setting-label">Gemini API Key</span>
+                    <span class="hg-setting-desc">
+                        Used for exact token counts via Gemini countTokens API
+                    </span>
+                </div>
+                <input
+                    type="text"
+                    class="hg-setting-input"
+                    value={settings.geminiApiKey || ''}
+                    onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
+                        setSettings({ ...settings, geminiApiKey: event.currentTarget.value })
+                    }
+                    onClick={(event) => event.stopPropagation()}
+                    placeholder="AIza..."
+                    spellcheck={false}
+                    autoComplete="off"
+                />
+            </div>
+            <div class="hg-setting-row hg-setting-row-input">
+                <div class="hg-setting-info">
+                    <span class="hg-setting-label">Token Limit</span>
+                    <span class="hg-setting-desc">
+                        The context size used for the progress ring calculation
+                    </span>
+                </div>
+                <input
+                    type="number"
+                    class="hg-setting-input hg-setting-input-number"
+                    value={settings.tokenLimit || 1000000}
+                    onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
+                        setSettings({
+                            ...settings,
+                            tokenLimit: parseInt(event.currentTarget.value, 10) || 0,
+                        })
+                    }
+                    onClick={(event) => event.stopPropagation()}
+                    step="100000"
+                    min="1000"
+                />
+            </div>
+        </>
+    ),
+});
+
+// ── Modal component ────────────────────────────────────────────────────────────
+
 export function SettingsModal({ onClose }: ModalProps) {
     const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
+    const [activePage, setActivePage] = useState<string | null>(null);
 
-    // lightweight toast helper copied from content.jsx
     const showToast = (message: string, type: ToastType = 'info') => {
         const existing = document.querySelector('#hg-toast');
         if (existing) existing.remove();
@@ -55,8 +221,6 @@ export function SettingsModal({ onClose }: ModalProps) {
     };
 
     const toggleSetting = (key: BooleanSettingKey): void => {
-        // master switch needs a warning/reload because most features are
-        // initialized at page load and won't disappear immediately.
         if (key === 'enabled') {
             const currentlyOn = Boolean(settings.enabled);
             const newVal = !currentlyOn;
@@ -75,13 +239,12 @@ export function SettingsModal({ onClose }: ModalProps) {
                     : 'Hypergravity disabled. Please refresh the page for changes to take effect.';
                 showToast(notice, 'info');
             }
-
             return;
         }
-
         setSettings({ ...settings, [key]: !settings[key] } as Settings);
     };
 
+    // Row helpers — shared between home page and all sub-pages via context.
     const SettingRow = ({ label, settingKey, description }: SettingRowProps) => (
         <button class="hg-setting-row" type="button" onClick={() => toggleSetting(settingKey)}>
             <div class="hg-setting-info">
@@ -121,6 +284,20 @@ export function SettingsModal({ onClose }: ModalProps) {
         </div>
     );
 
+    const ctx: SettingsRenderContext = { settings, setSettings, SettingRow, SelectRow };
+
+    const currentPage = activePage ? SETTINGS_PAGES.find((p) => p.id === activePage) : null;
+
+    const handleBack = () => {
+        if (activePage) {
+            setActivePage(null);
+        } else {
+            onClose();
+        }
+    };
+
+    const headerTitle = currentPage ? currentPage.title : 'Settings';
+
     return (
         // biome-ignore lint/a11y/useSemanticElements: it's a dialog.
         <div
@@ -129,14 +306,12 @@ export function SettingsModal({ onClose }: ModalProps) {
             tabIndex={0}
             aria-label="Close settings dialog"
             onClick={(event) => {
-                if (event.target === event.currentTarget) {
-                    onClose();
-                }
+                if (event.target === event.currentTarget) onClose();
             }}
             onKeyDown={(event) => {
-                if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
+                if (event.key === 'Escape') {
                     event.preventDefault();
-                    onClose();
+                    handleBack();
                 }
             }}
         >
@@ -148,128 +323,55 @@ export function SettingsModal({ onClose }: ModalProps) {
             >
                 <div class="hg-settings-header">
                     <div class="hg-settings-header-left">
-                        <button class="hg-back-btn" type="button" onClick={onClose}>
+                        <button class="hg-back-btn" type="button" onClick={handleBack}>
                             <BackArrowIcon width="20" height="20" />
                         </button>
-                        <h2 id="hg-settings-title">Settings</h2>
+                        <h2 id="hg-settings-title">{headerTitle}</h2>
                     </div>
                 </div>
 
-                <div class="hg-settings-list">
-                    <SettingRow
-                        label="Enable Hypergravity"
-                        settingKey="enabled"
-                        description="Master switch to toggle all features"
-                    />
-                    <SettingRow
-                        label="Enable Folders"
-                        settingKey="foldersEnabled"
-                        description="Organize your chats into custom folders"
-                    />
-                    <SettingRow
-                        label="Chat Memory Summaries"
-                        settingKey="chatMemoryEnabled"
-                        description="Use temporary Flash chats to summarize and save memory per conversation"
-                    />
-                    <SettingRow
-                        label="Wide Mode"
-                        settingKey="wideModeEnabled"
-                        description="Expand chat width to utilize full screen space"
-                    />
-                    <SettingRow
-                        label="Show Export Button"
-                        settingKey="showExportButton"
-                        description="Add chat export button in the top action bar"
-                    />
-                    <SettingRow
-                        label="Auto-scroll"
-                        settingKey="autoScrollEnabled"
-                        description="Automatically scroll to bottom when generating"
-                    />
-                    <SettingRow
-                        label="Hide Sidebar"
-                        settingKey="hideSidebarEnabled"
-                        description="Collapse the native Gemini sidebar by default"
-                    />
-                    <SelectRow
-                        label="Token Counter Display"
-                        settingKey="tokenCounterMode"
-                        description="Choose how context usage is shown"
-                        options={[
-                            { label: 'None', value: 'none' },
-                            { label: 'Text', value: 'text' },
-                            { label: 'Percentage', value: 'percentage' },
-                            { label: 'Text + %', value: 'text_percentage' },
-                            { label: 'Ring', value: 'ring' },
-                            { label: 'Ring + Text', value: 'ring_text' },
-                            { label: 'Ring + %', value: 'ring_percentage' },
-                            {
-                                label: 'Ring + Text + %',
-                                value: 'ring_text_percentage',
-                            },
-                        ]}
-                    />
-                    <SettingRow
-                        label="Show Scroll Buttons"
-                        settingKey="showScrollButtons"
-                        description="Add scroll up/down controls in the chat tools"
-                    />
-                    <SettingRow
-                        label="Chatbox Header Strip"
-                        settingKey="chatboxStyleEnabled"
-                        description="Show tools in a raised strip above the input area"
-                    />
-                    <SettingRow
-                        label="Compact Chatbox"
-                        settingKey="chatboxCompactEnabled"
-                        description="Tighten input-area padding and shrink native action buttons"
-                    />
-                    <div class="hg-setting-row hg-setting-row-input">
-                        <div class="hg-setting-info">
-                            <span class="hg-setting-label">Gemini API Key</span>
-                            <span class="hg-setting-desc">
-                                Used for exact token counts via Gemini countTokens API
-                            </span>
-                        </div>
-                        <input
-                            type="text"
-                            class="hg-setting-input"
-                            value={settings.geminiApiKey || ''}
-                            onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
-                                setSettings({
-                                    ...settings,
-                                    geminiApiKey: event.currentTarget.value,
-                                })
-                            }
-                            onClick={(event) => event.stopPropagation()}
-                            placeholder="AIza..."
-                            spellcheck={false}
-                            autoComplete="off"
-                        />
-                    </div>
+                <div class="hg-settings-body">
+                    {currentPage ? (
+                        // ── Sub-page ────────────────────────────────────────
+                        <div class="hg-settings-page">{currentPage.render(ctx)}</div>
+                    ) : (
+                        // ── Home page ────────────────────────────────────────
+                        <div class="hg-settings-home">
+                            <div class="hg-settings-home-section">
+                                <SettingRow
+                                    label="Enable Hypergravity"
+                                    settingKey="enabled"
+                                    description="Master switch to toggle all features"
+                                />
+                            </div>
 
-                    <div class="hg-setting-row hg-setting-row-input">
-                        <div class="hg-setting-info">
-                            <span class="hg-setting-label">Token Limit</span>
-                            <span class="hg-setting-desc">
-                                The context size used for the progress ring calculation
-                            </span>
+                            <nav class="hg-settings-nav" aria-label="Settings pages">
+                                {SETTINGS_PAGES.map((page) => (
+                                    <button
+                                        key={page.id}
+                                        class="hg-settings-nav-item"
+                                        type="button"
+                                        onClick={() => setActivePage(page.id)}
+                                    >
+                                        {page.icon && (
+                                            <span class="hg-settings-nav-icon">{page.icon}</span>
+                                        )}
+                                        <div class="hg-settings-nav-info">
+                                            <span class="hg-settings-nav-title">{page.title}</span>
+                                            <span class="hg-settings-nav-desc">
+                                                {page.description}
+                                            </span>
+                                        </div>
+                                        <ChevronRightIcon
+                                            class="hg-settings-nav-chevron"
+                                            width="16"
+                                            height="16"
+                                        />
+                                    </button>
+                                ))}
+                            </nav>
                         </div>
-                        <input
-                            type="number"
-                            class="hg-setting-input hg-setting-input-number"
-                            value={settings.tokenLimit || 1000000}
-                            onInput={(event: JSX.TargetedEvent<HTMLInputElement, Event>) =>
-                                setSettings({
-                                    ...settings,
-                                    tokenLimit: parseInt(event.currentTarget.value, 10) || 0,
-                                })
-                            }
-                            onClick={(event) => event.stopPropagation()}
-                            step="100000"
-                            min="1000"
-                        />
-                    </div>
+                    )}
                 </div>
             </div>
         </div>
