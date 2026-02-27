@@ -6,6 +6,8 @@ import {
 import { showToast } from '@content/helpers/toast';
 import { useStorage } from '@hooks/useStorage';
 import {
+    CheckIcon,
+    ChevronRightIcon,
     FolderAddIcon,
     FolderBackIcon,
     FolderDeleteIcon,
@@ -512,7 +514,16 @@ export function FoldersManager({ onClose }: FoldersManagerProps) {
                                     type="button"
                                     onClick={() => toggleFolderExpanded(folder.id)}
                                 >
-                                    {isExpanded ? '▾' : '▸'}
+                                    <ChevronRightIcon
+                                        width="16"
+                                        height="16"
+                                        style={{
+                                            transform: isExpanded
+                                                ? 'rotate(90deg)'
+                                                : 'rotate(0deg)',
+                                            transition: 'transform 0.2s ease',
+                                        }}
+                                    />
                                 </button>
                             ) : (
                                 <span class="hg-folder-chevron-placeholder" />
@@ -842,7 +853,9 @@ export function FoldersManager({ onClose }: FoldersManagerProps) {
                                                 onClick={() => toggleBulkSelection(chat.id)}
                                             >
                                                 <span class="hg-folder-select-check">
-                                                    {bulkSelected.has(chat.id) ? '✓' : ''}
+                                                    {bulkSelected.has(chat.id) && (
+                                                        <CheckIcon width="16" height="16" />
+                                                    )}
                                                 </span>
                                                 <span class="hg-folder-select-name">
                                                     {chat.title}

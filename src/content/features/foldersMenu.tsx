@@ -1,5 +1,5 @@
 import { inferChatInfoFromConversationRow } from '@content/helpers/chatInfo';
-import { CloseIcon, FolderAddIcon } from '@icons';
+import { CheckIcon, CloseIcon, FolderAddIcon } from '@icons';
 import { getStorageValue, setStorageValue } from '@utils/browserEnv';
 import { FOLDERS_KEY } from '@utils/constants';
 import {
@@ -87,7 +87,7 @@ function FolderSelectModal({
                         type="button"
                     >
                         <span class="hg-folder-select-check">
-                            {selected.has(folder.id) ? '✓' : ''}
+                            {selected.has(folder.id) && <CheckIcon width="16" height="16" />}
                         </span>
                         <span
                             class="hg-folder-select-name"

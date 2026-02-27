@@ -2,7 +2,6 @@ import { createMemoriesPickerController } from '@content/features/memories/picke
 import { useStorage } from '@hooks/useStorage';
 import {
     ChevronRightIcon,
-    FilledMemoriesIcon,
     FolderEmptyIcon,
     SettingsGearIcon,
     SmallMemoriesIcon,

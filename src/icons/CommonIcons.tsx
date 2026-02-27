@@ -15,7 +15,7 @@ export function ChevronRightIcon(props: IconProps) {
     return (
         <svg viewBox="0 -960 960 960" fill="currentColor" {...props} aria-hidden="true">
             <title>Chevron right icon</title>
-            <path d="M466-480 281-665l95-95 280 280-280 279-95-95 185-184Z" />
+            <path d="M644-480 340-784l56-56 360 360-360 360-56-56 304-304Z" />
         </svg>
     );
 }
@@ -24,7 +24,7 @@ export function CheckIcon(props: IconProps) {
     return (
         <svg viewBox="0 -960 960 960" fill="currentColor" {...props} aria-hidden="true">
             <title>Check icon</title>
-            <path d="M382-200 113-469l97-97 172 173 369-369 97 96-466 466Z" />
+            <path d="M382-80 40-422l70-70 272 272L850-658l70 70L382-80Z" />
         </svg>
     );
 }
@@ -33,7 +33,7 @@ export function CloseIcon(props: IconProps) {
     return (
         <svg viewBox="0 -960 960 960" fill="currentColor" {...props} aria-hidden="true">
             <title>Close icon</title>
-            <path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+            <path d="M200-120L120-200l280-280-280-280 80-80 280 280 280-280 80 80-280 280 280 280-80 80-280-280-280 280Z" />
         </svg>
     );
 }
@@ -150,7 +150,7 @@ export function ChevronUpIcon(props: IconProps) {
     return (
         <svg viewBox="0 -960 960 960" fill="currentColor" {...props} aria-hidden="true">
             <title>Chevron up icon</title>
-            <path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z" />
+            <path d="M480-714 140-374l-56-56 396-396 396 396-56 56-340-340Z" />
         </svg>
     );
 }
@@ -159,7 +159,7 @@ export function ChevronDownIcon(props: IconProps) {
     return (
         <svg viewBox="0 -960 960 960" fill="currentColor" {...props} aria-hidden="true">
             <title>Chevron down icon</title>
-            <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
+            <path d="M480-134 84-530l56-56 340 340 340-340 56 56-396 396Z" />
         </svg>
     );
 }
