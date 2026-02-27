@@ -6,6 +6,13 @@
         "indentWidth": 4,
         "lineWidth": 100
     },
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "on"
+            }
+        }
+    },
     "javascript": {
         "globals": [
             "chrome",
@@ -16,7 +23,8 @@
             "GM_listValues",
             "GM_addValueChangeListener",
             "GM_removeValueChangeListener",
-            "GM_openInTab"
+            "GM_openInTab",
+            "__HG_DEBUG_BUILD__"
         ],
         "formatter": {
             "quoteStyle": "single",

@@ -2,6 +2,7 @@ import './content.css';
 
 import { insertChatTools, insertHypergravitySidebar } from '@content/domInjection';
 import { createFoldersMenuManager } from '@content/features/foldersMenu';
+import { createAtMentionsMemoriesManager } from '@content/features/memories';
 import { registerTokenCacheMessageHandler } from '@content/features/tokenCacheMessageHandler';
 import { findActiveChatInfo, getAccountAwareUrl } from '@content/helpers/chatInfo';
 import {
@@ -20,6 +21,7 @@ let lastWideChatUrl = window.location.href;
 let chatExportController: ChatExportController | null = null;
 let topBarToolsManager: ReturnType<typeof createTopBarToolsManager> | null = null;
 let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
+let atMentionsMemoriesManager: ReturnType<typeof createAtMentionsMemoriesManager> | null = null;
 let hgEnabled = true;
 
 const foldersMenuManager = createFoldersMenuManager({
@@ -49,6 +51,10 @@ function initializeFeatureModules() {
     if (!chatMemoryManager) {
         chatMemoryManager = createChatMemoryManager();
     }
+
+    if (!atMentionsMemoriesManager) {
+        atMentionsMemoriesManager = createAtMentionsMemoriesManager();
+    }
 }
 
 function refreshInjectedUi() {
@@ -58,6 +64,7 @@ function refreshInjectedUi() {
     insertChatTools();
     topBarToolsManager?.refresh();
     chatMemoryManager?.refresh();
+    atMentionsMemoriesManager?.refresh();
 
     const menuRoots = document.querySelectorAll('.conversation-actions-menu');
 
@@ -69,6 +76,7 @@ function refreshInjectedUi() {
 function removeInjectedUi() {
     document.querySelector('#hypergravity-root')?.remove();
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
+    atMentionsMemoriesManager?.cleanup();
 }
 
 let mutationDebounceTimer: ReturnType<typeof setTimeout> | null = null;

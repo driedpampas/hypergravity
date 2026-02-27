@@ -1,5 +1,13 @@
+import { createMemoriesPickerController } from '@content/features/memories/picker';
 import { useStorage } from '@hooks/useStorage';
-import { ChevronRightIcon, FolderEmptyIcon, SettingsGearIcon, WelcomeHandIcon } from '@icons';
+import {
+    ChevronRightIcon,
+    FilledMemoriesIcon,
+    FolderEmptyIcon,
+    SettingsGearIcon,
+    SmallMemoriesIcon,
+    WelcomeHandIcon,
+} from '@icons';
 import { FoldersManager } from '@modules/sidebar/FoldersManager';
 import { SettingsModal } from '@src/SettingsModal';
 import { WelcomeModal } from '@src/WelcomeModal';
@@ -30,6 +38,12 @@ export function Sidebar() {
 
     const toggleSection = () => {
         setIsExpanded(!isExpanded);
+    };
+
+    const handleMemoriesClick = () => {
+        setActiveMenu(null);
+        const picker = createMemoriesPickerController();
+        void picker.openPicker();
     };
 
     return (
@@ -67,6 +81,11 @@ export function Sidebar() {
                     >
                         <FolderEmptyIcon class="hg-dropdown-icon" />
                         <span>Folders</span>
+                    </button>
+
+                    <button class="hg-dropdown-item" type="button" onClick={handleMemoriesClick}>
+                        <SmallMemoriesIcon class="hg-dropdown-icon" />
+                        <span>Memories</span>
                     </button>
 
                     {isWelcomeLoaded && !hasSeenWelcome && (
