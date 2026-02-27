@@ -1,5 +1,5 @@
-import { CheckIcon, CloseIcon, FolderAddIcon } from '@icons';
 import { inferChatInfoFromConversationRow } from '@shared/chat/chatInfo';
+import { CheckIcon, CloseIcon, FolderAddIcon } from '@icons';
 import { getStorageValue, setStorageValue } from '@utils/browserEnv';
 import { FOLDERS_KEY } from '@utils/constants';
 import {

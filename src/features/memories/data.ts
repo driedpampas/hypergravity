@@ -1,5 +1,5 @@
-import { CHAT_MEMORY_PREFIX } from '@content/features/memories/constants';
-import type { MemoryEntry } from '@content/features/memories/types';
+import { CHAT_MEMORY_PREFIX } from '@features/memories/constants';
+import type { MemoryEntry } from '@features/memories/types';
 import { getAllIdbValues } from '@utils/idbStorage';
 
 function extractChatIdFromPath(pathname: string): string | null {

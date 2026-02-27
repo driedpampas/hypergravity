@@ -1,18 +1,13 @@
 import { ExportDataIcon, ImportDataIcon } from '@icons';
+import {
+    TOKEN_CACHE_MESSAGE_TYPES,
+    type TokenCacheMessage,
+    type TokenCacheResponse,
+} from '@shared/contracts/tokenCacheMessages';
 import { getStorageValue, getVersion, setStorageValue } from '@utils/browserEnv';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import { clearCacheData, getAllCacheData, importCacheData } from '@utils/tokenHashCache';
 import { h, render } from 'preact';
-
-type CacheMessage = {
-    type: 'HG_TOKEN_CACHE_GET_ALL' | 'HG_TOKEN_CACHE_IMPORT' | 'HG_TOKEN_CACHE_CLEAR';
-    data?: Record<string, unknown>;
-};
-
-type CacheResponse = {
-    success?: boolean;
-    data?: Record<string, unknown>;
-};
 
 type PopupSettings = typeof DEFAULT_SETTINGS;
 
@@ -30,8 +25,8 @@ function showStatus(message: string, type = '') {
 }
 
 async function sendCacheMessageToActiveGeminiTab(
-    message: CacheMessage
-): Promise<CacheResponse | null> {
+    message: TokenCacheMessage
+): Promise<TokenCacheResponse | null> {
     const [activeTab] = await chrome.tabs.query({
         active: true,
         currentWindow: true,
@@ -41,7 +36,7 @@ async function sendCacheMessageToActiveGeminiTab(
     if (!activeTab.url?.startsWith('https://gemini.google.com/')) return null;
 
     try {
-        return (await chrome.tabs.sendMessage(activeTab.id, message)) as CacheResponse;
+        return (await chrome.tabs.sendMessage(activeTab.id, message)) as TokenCacheResponse;
     } catch {
         return null;
     }
@@ -50,7 +45,7 @@ async function sendCacheMessageToActiveGeminiTab(
 async function getSyncedCacheData() {
     const localData = await getAllCacheData();
     const tabResponse = await sendCacheMessageToActiveGeminiTab({
-        type: 'HG_TOKEN_CACHE_GET_ALL',
+        type: TOKEN_CACHE_MESSAGE_TYPES.getAll,
     });
     const tabData = tabResponse?.success && tabResponse.data ? tabResponse.data : null;
 
@@ -114,7 +109,7 @@ async function handleImport(file: File) {
 
         const imported = await importCacheData(importedData);
         await sendCacheMessageToActiveGeminiTab({
-            type: 'HG_TOKEN_CACHE_IMPORT',
+            type: TOKEN_CACHE_MESSAGE_TYPES.import,
             data: importedData,
         });
         await refreshStats();
@@ -229,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus('Clearing cache…');
         const cleared = await clearCacheData();
         await sendCacheMessageToActiveGeminiTab({
-            type: 'HG_TOKEN_CACHE_CLEAR',
+            type: TOKEN_CACHE_MESSAGE_TYPES.clear,
         });
         await refreshStats();
         showStatus(`Cleared ${cleared} entries`, 'success');

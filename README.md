@@ -63,4 +63,12 @@ Lint:
 
 ```bash
 bun run lint
+bun run lint:imports
+bun run lint:architecture
+```
+
+CI-strict validation:
+
+```bash
+bun run check:ci
 ```

@@ -1,3 +1,4 @@
+import type { SummarizeChatMemoryResponse } from '@shared/contracts/runtimeMessages';
 import { getStorageValue, isExtension, summarizeChatMemory } from '@utils/browserEnv';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import { debugLog as _debugLog } from '@utils/debug';
@@ -8,11 +9,6 @@ type ChatMessage = { role: 'user' | 'model'; text: string };
 type ChatMemory = {
     sourceHash?: string;
     [key: string]: unknown;
-};
-type SummaryResponse = {
-    success?: boolean;
-    memory?: ChatMemory;
-    error?: string;
 };
 
 const debugLog = (...args: unknown[]) => _debugLog('ChatMemory', ...args);
@@ -168,7 +164,7 @@ export function createChatMemoryManager() {
                 chatId,
                 messages,
                 sourceHash,
-            })) as SummaryResponse;
+            })) as SummarizeChatMemoryResponse;
 
             if (!result?.success || !result.memory) {
                 debugLog('Memory summarization failed', {

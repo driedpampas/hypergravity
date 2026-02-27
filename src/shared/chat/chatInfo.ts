@@ -1,24 +1,15 @@
-type ChatInfo = {
+export type ChatInfo = {
     id: string;
     title: string;
     url: string;
 };
 
-/**
- * Generates an absolute Gemini URL for a given chat ID, preserving account context (e.g. /u/1/).
- * @param {string} [chatId=''] - The ID of the chat.
- * @returns {string} The full Gemini URL.
- */
 export function getAccountAwareUrl(chatId = ''): string {
     const match = window.location.pathname.match(/^\/u\/(\d+)\//);
     const accountPath = match ? `/u/${match[1]}/app` : '/app';
     return `https://gemini.google.com${chatId ? `${accountPath}/${chatId}` : accountPath}`;
 }
 
-/**
- * Inspects DOM and URL to find metadata for the currently active chat.
- * @returns {Object|null} Chat info object containing id, title, and url, or null if not found.
- */
 export function findActiveChatInfo(): ChatInfo | null {
     const pathParts = window.location.pathname.split('/').filter(Boolean);
     const appIndex = pathParts.indexOf('app');
@@ -64,11 +55,6 @@ export function findActiveChatInfo(): ChatInfo | null {
     };
 }
 
-/**
- * Attempts to extract chat metadata from a conversation sidebar entry row.
- * @param {HTMLElement} row - The DOM element representing the conversation row.
- * @returns {Object|null} Chat info object or null.
- */
 export function inferChatInfoFromConversationRow(row: Element | null): ChatInfo | null {
     if (!row) return null;
     const link = row.querySelector<HTMLAnchorElement>('a[href*="/app/"]');

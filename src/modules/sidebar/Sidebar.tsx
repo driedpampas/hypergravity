@@ -1,4 +1,4 @@
-import { createMemoriesPickerController } from '@content/features/memories/picker';
+import { createMemoriesPickerController } from '@features/memories/picker';
 import { useStorage } from '@hooks/useStorage';
 import {
     ChevronRightIcon,
@@ -8,8 +8,8 @@ import {
     WelcomeHandIcon,
 } from '@icons';
 import { FoldersManager } from '@modules/sidebar/FoldersManager';
-import { SettingsModal } from '@src/SettingsModal';
-import { WelcomeModal } from '@src/WelcomeModal';
+import { SettingsModal } from '@modules/sidebar/SettingsModal';
+import { WelcomeModal } from '@modules/sidebar/WelcomeModal';
 import { WELCOME_SEEN_KEY } from '@utils/constants';
 import { useEffect, useState } from 'preact/hooks';
 import './Sidebar.css';

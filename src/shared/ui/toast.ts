@@ -1,8 +1,3 @@
-/**
- * Displays a non-intrusive toast notification to the user.
- * @param {string} message - The message text to display.
- * @param {'info'|'success'|'error'} [type='info'] - The toast type for styling.
- */
 export function showToast(message: string, type: 'info' | 'success' | 'error' = 'info'): void {
     const existing = document.querySelector('#hg-toast');
     if (existing) existing.remove();

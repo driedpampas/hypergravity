@@ -1,4 +1,5 @@
 import { chatBoxManager } from '@managers/chatBoxManager';
+import type { OptimizePromptResponse } from '@shared/contracts/runtimeMessages';
 import { cancelOptimization, optimizePrompt } from '@utils/browserEnv';
 
 const getPromptText = () => chatBoxManager.getInputText();
@@ -6,11 +7,6 @@ const setPromptText = (text: string) => chatBoxManager.setInputText(text);
 
 type PromptOptimizerState = 'idle' | 'loading' | 'confirmation';
 type ToastType = 'info' | 'success' | 'error';
-type OptimizeResponse = {
-    success?: boolean;
-    optimizedPrompt?: string;
-    error?: string;
-};
 type ShowToast = (message: string, type?: ToastType) => void;
 
 /**
@@ -84,7 +80,7 @@ export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
         emitState('loading');
 
         try {
-            const response = (await optimizePrompt(promptText)) as OptimizeResponse;
+            const response = (await optimizePrompt(promptText)) as OptimizePromptResponse;
 
             if (!isOptimizing) return;
 

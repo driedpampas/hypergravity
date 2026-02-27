@@ -1,9 +1,3 @@
-import {
-    findActiveChatInfo,
-    getAccountAwareUrl,
-    inferChatInfoFromConversationRow,
-} from '@content/helpers/chatInfo';
-import { showToast } from '@content/helpers/toast';
 import { useStorage } from '@hooks/useStorage';
 import {
     CheckIcon,
@@ -14,6 +8,12 @@ import {
     FolderEmptyIcon,
     FolderFilledIcon,
 } from '@icons';
+import {
+    findActiveChatInfo,
+    getAccountAwareUrl,
+    inferChatInfoFromConversationRow,
+} from '@shared/chat/chatInfo';
+import { showToast } from '@shared/ui/toast';
 import { FOLDERS_KEY } from '@utils/constants';
 import {
     type FoldersData,

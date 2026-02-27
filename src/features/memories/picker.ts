@@ -1,9 +1,9 @@
-import { getSettings } from '@content/helpers/settings';
-import { showToast } from '@content/helpers/toast';
-import { PICKER_OVERLAY_ID, PICKER_SEARCH_ID } from '@content/features/memories/constants';
-import { fetchMemoryEntries } from '@content/features/memories/data';
-import type { MemoryEntry } from '@content/features/memories/types';
-import { chatBoxManager } from '@managers/chatBoxManager';
+import { chatBoxManager } from '@core/dom/chatBoxManager';
+import { PICKER_OVERLAY_ID, PICKER_SEARCH_ID } from '@features/memories/constants';
+import { fetchMemoryEntries } from '@features/memories/data';
+import type { MemoryEntry } from '@features/memories/types';
+import { getSettings } from '@platform/content/helpers/settings';
+import { showToast } from '@shared/ui/toast';
 
 function prependMemoryToken(chatId: string) {
     const token = `<hg-chat-memories-${chatId}>`;

@@ -11,14 +11,18 @@
         "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
         "baseUrl": ".",
         "paths": {
+            "@app/*": ["src/app/*"],
+            "@core/*": ["src/core/*"],
+            "@entry/*": ["src/entry/*"],
             "@src/*": ["src/*"],
-            "@content/*": ["src/content/*"],
             "@features/*": ["src/features/*"],
             "@hooks/*": ["src/hooks/*"],
             "@icons": ["src/icons/index.ts"],
             "@icons/*": ["src/icons/*"],
             "@managers/*": ["src/managers/*"],
             "@modules/*": ["src/modules/*"],
+            "@platform/*": ["src/platform/*"],
+            "@shared/*": ["src/shared/*"],
             "@tools/*": ["src/tools/*"],
             "@utils/*": ["src/utils/*"]
         }

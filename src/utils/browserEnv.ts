@@ -1,4 +1,11 @@
 import {
+    type OptimizePromptResponse,
+    RUNTIME_MESSAGE_TYPES,
+    type SummarizeChatMemoryRequest,
+    type SummarizeChatMemoryResponse,
+    type TranscriptMessage,
+} from '@shared/contracts/runtimeMessages';
+import {
     getAllIdbValues,
     getIdbValue,
     getIdbValues,
@@ -272,18 +279,18 @@ export async function getAllStorageData(keys?: string[]): Promise<Record<string,
 }
 
 // Prompt Optimizer
-export async function optimizePrompt(promptText: string): Promise<unknown> {
+export async function optimizePrompt(promptText: string): Promise<OptimizePromptResponse> {
     if (isExtension()) {
         return chrome.runtime.sendMessage({
-            type: 'OPTIMIZE_PROMPT',
+            type: RUNTIME_MESSAGE_TYPES.optimizePrompt,
             prompt: promptText,
-        });
+        }) as Promise<OptimizePromptResponse>;
     }
 
     if (isUserscript() && typeof GM_openInTab === 'function') {
         const requestId = Date.now().toString() + Math.random().toString().slice(2);
 
-        return new Promise<unknown>((resolve, reject) => {
+        return new Promise<OptimizePromptResponse>((resolve, reject) => {
             // Setup listener for the result
             const listenerId = GM_addValueChangeListener(
                 `hg_opt_result_${requestId}`,
@@ -291,7 +298,7 @@ export async function optimizePrompt(promptText: string): Promise<unknown> {
                     if (newValue) {
                         GM_removeValueChangeListener(listenerId);
                         GM_deleteValue(`hg_opt_result_${requestId}`);
-                        resolve(newValue);
+                        resolve(newValue as OptimizePromptResponse);
                     }
                 }
             );
@@ -318,16 +325,20 @@ export async function optimizePrompt(promptText: string): Promise<unknown> {
 
 export async function cancelOptimization() {
     if (isExtension()) {
-        chrome.runtime.sendMessage({ type: 'CANCEL_OPTIMIZATION' });
+        chrome.runtime.sendMessage({ type: RUNTIME_MESSAGE_TYPES.cancelOptimization });
     }
 }
 
-export async function summarizeChatMemory(payload: Record<string, unknown>): Promise<unknown> {
+export async function summarizeChatMemory(payload: {
+    chatId: string;
+    messages: TranscriptMessage[];
+    sourceHash?: string;
+}): Promise<SummarizeChatMemoryResponse> {
     if (isExtension()) {
         return chrome.runtime.sendMessage({
-            type: 'SUMMARIZE_CHAT_MEMORY',
+            type: RUNTIME_MESSAGE_TYPES.summarizeChatMemory,
             ...payload,
-        });
+        } satisfies SummarizeChatMemoryRequest) as Promise<SummarizeChatMemoryResponse>;
     }
 
     throw new Error('Chat memory summarization is not supported here');
