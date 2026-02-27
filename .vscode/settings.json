@@ -2,5 +2,8 @@
     "editor.codeActionsOnSave": {
         "source.organizeImports.biome": "explicit",
         "source.fixAll.biome": "explicit"
+    },
+    "chat.tools.terminal.autoApprove": {
+        "bun": true
     }
 }

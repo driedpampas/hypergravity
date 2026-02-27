@@ -8,6 +8,9 @@ import { hashText, sanitizeMessageText } from '@utils/tokenHashCache';
 type ChatMessage = { role: 'user' | 'model'; text: string };
 type ChatMemory = {
     sourceHash?: string;
+    chatTitle?: string;
+    chatTitleUserModified?: boolean;
+    detectedChatTitle?: string;
     [key: string]: unknown;
 };
 
@@ -66,6 +69,45 @@ function getNodeText(node: Element | null): string {
         return (node.innerText || node.textContent || '').trim();
     }
     return (node.textContent || '').trim();
+}
+
+function getVisibleTextExcludingHidden(node: Element | null): string {
+    if (!node) return '';
+    const clone = node.cloneNode(true) as Element;
+    clone.querySelectorAll('.cdk-visually-hidden').forEach((hiddenNode) => {
+        hiddenNode.remove();
+    });
+    return getNodeText(clone).replace(/\s+/g, ' ').trim();
+}
+
+function normalizeChatTitle(title: string): string {
+    const normalized = String(title || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const lowered = normalized.toLowerCase();
+    if (!normalized) return '';
+    if (lowered === 'google gemini' || lowered === 'gemini' || lowered === 'chats') return '';
+    return normalized;
+}
+
+function getCurrentConversationTitle(): string {
+    const candidates = [
+        getVisibleTextExcludingHidden(
+            document.querySelector('[data-test-id="conversation-title"]')
+        ),
+        getVisibleTextExcludingHidden(
+            document.querySelector('.conversation-title-container .conversation-title-column')
+        ),
+        getVisibleTextExcludingHidden(document.querySelector('h1')),
+        normalizeChatTitle(document.title.replace(' - Gemini', '').replace('Google Gemini', '')),
+    ];
+
+    for (const candidate of candidates) {
+        const title = normalizeChatTitle(candidate);
+        if (title) return title;
+    }
+
+    return '';
 }
 
 function getNodeTextExcludingThoughts(node: Element | null): string {
@@ -146,15 +188,36 @@ export function createChatMemoryManager() {
         if (!transcript) return;
 
         const sourceHash = await hashText(transcript);
+        const detectedChatTitle = getCurrentConversationTitle();
         const storedMemory = (await getIdbValue(
             getChatMemoryKey(chatId),
             null
         )) as ChatMemory | null;
+
+        const shouldRefreshAutoTitle =
+            Boolean(detectedChatTitle) &&
+            storedMemory?.chatTitleUserModified !== true &&
+            String(storedMemory?.chatTitle || '').trim() !== detectedChatTitle;
+
         if (storedMemory?.sourceHash === sourceHash) {
+            if (storedMemory && shouldRefreshAutoTitle) {
+                await setIdbValue(getChatMemoryKey(chatId), {
+                    ...storedMemory,
+                    chatTitle: detectedChatTitle,
+                    detectedChatTitle,
+                });
+            }
             latestSourceHashByChatId.set(chatId, sourceHash);
             return;
         }
         if (latestSourceHashByChatId.get(chatId) === sourceHash) {
+            if (storedMemory && shouldRefreshAutoTitle) {
+                await setIdbValue(getChatMemoryKey(chatId), {
+                    ...storedMemory,
+                    chatTitle: detectedChatTitle,
+                    detectedChatTitle,
+                });
+            }
             return;
         }
 
@@ -174,8 +237,19 @@ export function createChatMemoryManager() {
                 return;
             }
 
+            const isUserModified = storedMemory?.chatTitleUserModified === true;
+            const persistedTitle = String(storedMemory?.chatTitle || '').trim();
+            const mergedMemory = {
+                ...result.memory,
+                chatTitleUserModified: isUserModified,
+                detectedChatTitle: detectedChatTitle || storedMemory?.detectedChatTitle,
+                chatTitle: isUserModified
+                    ? persistedTitle || result.memory.chatTitle || detectedChatTitle || undefined
+                    : detectedChatTitle || result.memory.chatTitle || persistedTitle || undefined,
+            };
+
             latestSourceHashByChatId.set(chatId, result.memory?.sourceHash || sourceHash);
-            await setIdbValue(getChatMemoryKey(chatId), result.memory);
+            await setIdbValue(getChatMemoryKey(chatId), mergedMemory);
         } catch (error) {
             debugLog('Memory summarization error', { chatId, error });
         } finally {

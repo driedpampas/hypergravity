@@ -1,12 +1,9 @@
-/* ── Modal shell ───────────────────────────────────────────────────────────── */
-
 .hg-settings-modal {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    /* Enforced width: narrow enough for focused single-col content */
-    width: min(480px, calc(100vw - 32px));
+    width: min(460px, calc(100vw - 40px));
     max-height: min(680px, calc(100vh - 48px));
     background: var(--gem-sys-color--surface, #f0f4f8);
     border-radius: 16px;
@@ -46,7 +43,7 @@
     min-height: 0;
 }
 
-/* ── Home page ─────────────────────────────────────────────────────────────── */
+/* Home page */
 
 .hg-settings-home-section {
     border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
@@ -114,14 +111,14 @@
     color: var(--gem-sys-color--on-surface-variant, #575a5a);
 }
 
-/* ── Sub-page ──────────────────────────────────────────────────────────────── */
+/* Sub-page */
 
 .hg-settings-page {
     display: flex;
     flex-direction: column;
 }
 
-/* ── Shared setting rows ───────────────────────────────────────────────────── */
+/* Shared setting rows */
 
 .hg-setting-row {
     display: flex;
@@ -136,6 +133,10 @@
     width: 100%;
     text-align: left;
     font-family: inherit;
+}
+
+.hg-setting-row.hg-setting-row-input {
+    width: auto;
 }
 
 .hg-settings-page .hg-setting-row:last-child,
@@ -179,6 +180,7 @@
 .hg-setting-input {
     width: 200px;
     max-width: 46%;
+    box-sizing: border-box;
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
@@ -198,7 +200,7 @@
     max-width: 120px;
 }
 
-/* ── Toggle switch ─────────────────────────────────────────────────────────── */
+/* Toggle switch  */
 
 .hg-toggle {
     width: 44px;
@@ -232,11 +234,10 @@
     transform: translateX(20px);
 }
 
-/* ── Select ────────────────────────────────────────────────────────────────── */
-
 .hg-setting-select {
     appearance: none;
     -webkit-appearance: none;
+    box-sizing: border-box;
     padding: 8px 30px 8px 12px;
     border-radius: 10px;
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
@@ -256,7 +257,20 @@
     border-color: var(--gem-sys-color--primary, #4285f4);
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
+.hg-settings-page-token-counter .hg-setting-row-input {
+    align-items: flex-start;
+    flex-direction: column;
+}
+
+.hg-settings-page-token-counter .hg-setting-input,
+.hg-settings-page-token-counter .hg-setting-select {
+    width: 100%;
+    max-width: 100%;
+}
+
+.hg-settings-page-token-counter .hg-setting-input-number {
+    max-width: 100%;
+}
 
 @media (max-width: 520px) {
     .hg-setting-row-input {
@@ -271,7 +285,7 @@
     }
 }
 
-/* ── Legacy button group (retained for potential external use) ─────────────── */
+/* Legacy button group (retained for potential external use) */
 
 .hg-button-group {
     display: flex;

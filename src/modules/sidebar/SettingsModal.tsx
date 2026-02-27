@@ -34,7 +34,7 @@ export type SelectRowProps = {
     options: OptionItem[];
 };
 
-// ── Settings Page API ──────────────────────────────────────────────────────────
+// Settings page system:
 // Each page is a plain object. Push into SETTINGS_PAGES to register a new page.
 
 export type SettingsRenderContext = {
@@ -63,7 +63,7 @@ export type SettingsPageDef = {
  */
 export const SETTINGS_PAGES: SettingsPageDef[] = [];
 
-// ── Built-in page registrations ───────────────────────────────────────────────
+// Built-in page registrations
 
 SETTINGS_PAGES.push({
     id: 'navigation',
@@ -197,8 +197,6 @@ SETTINGS_PAGES.push({
     ),
 });
 
-// ── Modal component ────────────────────────────────────────────────────────────
-
 export function SettingsModal({ onClose }: ModalProps) {
     const [settings, setSettings] = useStorage(SETTINGS_KEY, DEFAULT_SETTINGS);
     const [activePage, setActivePage] = useState<string | null>(null);
@@ -244,7 +242,7 @@ export function SettingsModal({ onClose }: ModalProps) {
         setSettings({ ...settings, [key]: !settings[key] } as Settings);
     };
 
-    // Row helpers — shared between home page and all sub-pages via context.
+    // Row helpers shared between home page and all sub-pages via context.
     const SettingRow = ({ label, settingKey, description }: SettingRowProps) => (
         <button class="hg-setting-row" type="button" onClick={() => toggleSetting(settingKey)}>
             <div class="hg-setting-info">
@@ -332,10 +330,12 @@ export function SettingsModal({ onClose }: ModalProps) {
 
                 <div class="hg-settings-body">
                     {currentPage ? (
-                        // ── Sub-page ────────────────────────────────────────
-                        <div class="hg-settings-page">{currentPage.render(ctx)}</div>
+                        // Sub-page
+                        <div class={`hg-settings-page hg-settings-page-${currentPage.id}`}>
+                            {currentPage.render(ctx)}
+                        </div>
                     ) : (
-                        // ── Home page ────────────────────────────────────────
+                        // Home page
                         <div class="hg-settings-home">
                             <div class="hg-settings-home-section">
                                 <SettingRow

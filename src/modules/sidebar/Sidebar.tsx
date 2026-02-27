@@ -1,4 +1,3 @@
-import { createMemoriesPickerController } from '@features/memories/picker';
 import { useStorage } from '@hooks/useStorage';
 import {
     ChevronRightIcon,
@@ -8,13 +7,14 @@ import {
     WelcomeHandIcon,
 } from '@icons';
 import { FoldersManager } from '@modules/sidebar/FoldersManager';
+import { MemoriesModal } from '@modules/sidebar/MemoriesModal';
 import { SettingsModal } from '@modules/sidebar/SettingsModal';
 import { WelcomeModal } from '@modules/sidebar/WelcomeModal';
 import { WELCOME_SEEN_KEY } from '@utils/constants';
 import { useEffect, useState } from 'preact/hooks';
 import './Sidebar.css';
 
-type ActiveMenu = 'folders' | 'settings' | null;
+type ActiveMenu = 'folders' | 'memories' | 'settings' | null;
 
 export function Sidebar() {
     const [isExpanded, setIsExpanded] = useStorage('hypergravitySectionExpanded', true);
@@ -40,9 +40,7 @@ export function Sidebar() {
     };
 
     const handleMemoriesClick = () => {
-        setActiveMenu(null);
-        const picker = createMemoriesPickerController();
-        void picker.openPicker();
+        setActiveMenu('memories');
     };
 
     return (
@@ -113,6 +111,7 @@ export function Sidebar() {
             </div>
 
             {activeMenu === 'folders' && <FoldersManager onClose={() => setActiveMenu(null)} />}
+            {activeMenu === 'memories' && <MemoriesModal onClose={() => setActiveMenu(null)} />}
             {activeMenu === 'settings' && <SettingsModal onClose={() => setActiveMenu(null)} />}
             {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
         </div>

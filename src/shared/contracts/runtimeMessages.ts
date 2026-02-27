@@ -9,9 +9,21 @@ export type TranscriptMessage = {
     text?: string;
 };
 
+export type MemorySummaryStructured = {
+    context: string[];
+    userPreferences: string[];
+    decisions: string[];
+    openThreads: string[];
+    nextUsefulActions: string[];
+};
+
 export type ChatMemoryRecord = {
     chatId: string;
     summary: string;
+    summaryStructured?: MemorySummaryStructured;
+    chatTitle?: string;
+    chatTitleUserModified?: boolean;
+    detectedChatTitle?: string;
     sourceHash: string | null;
     messageCount: number;
     updatedAt: number;

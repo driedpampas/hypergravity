@@ -10,6 +10,15 @@ function extractChatIdFromPath(pathname: string): string | null {
     return id;
 }
 
+function getVisibleTextExcludingHidden(node: Element | null): string {
+    if (!node) return '';
+    const clone = node.cloneNode(true) as Element;
+    clone.querySelectorAll('.cdk-visually-hidden').forEach((hiddenNode) => {
+        hiddenNode.remove();
+    });
+    return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
 function collectSidebarTitles(): Map<string, string> {
     const map = new Map<string, string>();
     const links = document.querySelectorAll<HTMLAnchorElement>('a[href*="/app/"]');
@@ -21,9 +30,7 @@ function collectSidebarTitles(): Map<string, string> {
         if (!chatId || chatId.length < 6) continue;
 
         const title =
-            link.getAttribute('aria-label')?.trim() ||
-            link.textContent?.replace(/\s+/g, ' ').trim() ||
-            '';
+            link.getAttribute('aria-label')?.trim() || getVisibleTextExcludingHidden(link) || '';
         if (!title) continue;
 
         map.set(chatId, title);
@@ -32,8 +39,9 @@ function collectSidebarTitles(): Map<string, string> {
     const activeChatId = extractChatIdFromPath(window.location.pathname);
     if (activeChatId) {
         const activeTitle =
-            document.querySelector('[data-test-id="conversation-title"]')?.textContent?.trim() ||
-            document.title.replace(' - Gemini', '').replace('Google Gemini', '').trim();
+            getVisibleTextExcludingHidden(
+                document.querySelector('[data-test-id="conversation-title"]')
+            ) || document.title.replace(' - Gemini', '').replace('Google Gemini', '').trim();
 
         if (activeTitle) {
             map.set(activeChatId, activeTitle);
@@ -55,9 +63,11 @@ export async function fetchMemoryEntries(): Promise<MemoryEntry[]> {
         if (!chatId) continue;
 
         const valueRecord = (value || {}) as Record<string, unknown>;
+        const storedTitle = String(valueRecord.chatTitle || '').trim();
         const title =
+            storedTitle ||
             titlesByChatId.get(chatId) ||
-            String(valueRecord.chatTitle || valueRecord.title || '').trim() ||
+            String(valueRecord.title || '').trim() ||
             `Chat ${chatId.slice(0, 12)}`;
 
         const updatedAt = Number(valueRecord.updatedAt || 0);
