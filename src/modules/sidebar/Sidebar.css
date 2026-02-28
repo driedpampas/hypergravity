@@ -67,3 +67,28 @@
 .hg-dropdown-item:hover .hg-dropdown-icon {
     color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
+
+.hg-collapsed-sidebar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+    align-items: center;
+}
+
+.hg-collapsed-sidebar-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.hg-collapsed-sidebar-action:hover {
+    background: var(--gem-sys-color--surface-container-high, #e9eef6);
+}

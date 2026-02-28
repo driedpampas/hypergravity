@@ -77,14 +77,14 @@ SETTINGS_PAGES.push({
                 description="Organize your chats into custom folders"
             />
             <SettingRow
-                label="Chat Memory Summaries"
-                settingKey="chatMemoryEnabled"
-                description="Use temporary Flash chats to summarize and save memory per conversation"
-            />
-            <SettingRow
                 label="Hide Sidebar"
                 settingKey="hideSidebarEnabled"
                 description="Collapse the native Gemini sidebar by default"
+            />
+            <SettingRow
+                label="Show Collapsed Sidebar Buttons"
+                settingKey="showCollapsedSidebarButtons"
+                description="Show Hypergravity quick buttons when Gemini sidebar is collapsed"
             />
             <SettingRow
                 label="Wide Mode"
@@ -95,6 +95,40 @@ SETTINGS_PAGES.push({
                 label="Show Export Button"
                 settingKey="showExportButton"
                 description="Add chat export button in the top action bar"
+            />
+        </>
+    ),
+});
+
+SETTINGS_PAGES.push({
+    id: 'chat-memories',
+    title: 'Chat Memories',
+    description: 'Memory summaries and mention expansion behavior',
+    render: ({ SettingRow, SelectRow }) => (
+        <>
+            <SettingRow
+                label="Chat Memory Summaries"
+                settingKey="chatMemoryEnabled"
+                description="Use temporary Flash chats to summarize and save memory per conversation"
+            />
+            <SelectRow
+                label="Memory Mention Behavior"
+                settingKey="memoryMentionMode"
+                description="Choose how <hg-chat-memories-...> tags are expanded before sending"
+                options={[
+                    {
+                        label: 'Auto (leading inject, inline refs)',
+                        value: 'auto',
+                    },
+                    {
+                        label: 'Always references',
+                        value: 'references',
+                    },
+                    {
+                        label: 'Always inject at top',
+                        value: 'inject',
+                    },
+                ]}
             />
         </>
     ),

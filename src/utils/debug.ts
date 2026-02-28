@@ -55,7 +55,7 @@ export function debugLog(tag: string, ...args: unknown[]): void {
     if (!DEBUG_BUILD_ENABLED) return;
 
     if (isDebugEnabled(tag)) {
-        console.log(`[HG ${tag}]`, ...args);
+        console.debug(`[HG ${tag}]`, ...args);
     }
 }
 

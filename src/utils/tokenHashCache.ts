@@ -4,6 +4,7 @@ import { getAllIdbValues, removeIdbValues, setIdbValues } from '@utils/idbStorag
 
 const CACHE_KEY = 'hg_token_hash_cache';
 const CACHE_PREFIX = `${CACHE_KEY}:`;
+const LEGACY_STORAGE_KEYS = [CACHE_KEY, 'hg_token_map'] as const;
 const FLUSH_DELAY = 1500;
 const FLUSH_INTERVAL = 15000;
 const HASH_HEX_LENGTH = 20;
@@ -49,9 +50,9 @@ function loadCache(): Promise<TokenCacheMap> {
     return loadPromise;
 }
 
-function readLegacyLocalStorageMap(): Record<string, unknown> | null {
+function readLegacyLocalStorageMap(key: string): Record<string, unknown> | null {
     try {
-        const raw = localStorage.getItem(CACHE_KEY);
+        const raw = localStorage.getItem(key);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
         return parsed && typeof parsed === 'object' ? parsed : null;
@@ -60,9 +61,9 @@ function readLegacyLocalStorageMap(): Record<string, unknown> | null {
     }
 }
 
-function removeLegacyLocalStorageMap() {
+function removeLegacyLocalStorageMap(key: string) {
     try {
-        localStorage.removeItem(CACHE_KEY);
+        localStorage.removeItem(key);
     } catch {}
 }
 
@@ -79,7 +80,15 @@ async function ensureLegacyCacheMigration(): Promise<void> {
             if (hash) existingHashes.add(hash);
         }
 
-        const legacyMaps = [await getStorageValue(CACHE_KEY, null), readLegacyLocalStorageMap()];
+        const legacyMaps: Array<Record<string, unknown>> = [];
+
+        for (const key of LEGACY_STORAGE_KEYS) {
+            legacyMaps.push((await getStorageValue(key, null)) as Record<string, unknown>);
+            const localStorageMap = readLegacyLocalStorageMap(key);
+            if (localStorageMap) {
+                legacyMaps.push(localStorageMap);
+            }
+        }
 
         const batch: Record<string, unknown> = {};
         let migratedCount = 0;
@@ -107,8 +116,10 @@ async function ensureLegacyCacheMigration(): Promise<void> {
             debugLog('Migrated', migratedCount, 'legacy cache entries to IDB');
         }
 
-        await removeStorageValue(CACHE_KEY);
-        removeLegacyLocalStorageMap();
+        await Promise.all(LEGACY_STORAGE_KEYS.map((key) => removeStorageValue(key)));
+        for (const key of LEGACY_STORAGE_KEYS) {
+            removeLegacyLocalStorageMap(key);
+        }
     })();
 
     return migrationPromise;
@@ -287,7 +298,10 @@ export async function clearCacheData() {
         await removeIdbValues(idbKeys);
     }
 
-    await removeStorageValue(CACHE_KEY);
+    await Promise.all(LEGACY_STORAGE_KEYS.map((key) => removeStorageValue(key)));
+    for (const key of LEGACY_STORAGE_KEYS) {
+        removeLegacyLocalStorageMap(key);
+    }
     memoryCache = {};
 
     return hashes.length;
