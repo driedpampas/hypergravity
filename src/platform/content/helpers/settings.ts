@@ -21,6 +21,19 @@ export function applyChatboxHeaderStyleSetting(settings: Settings): void {
 }
 
 /**
+ * Applies CSS classes to enable privacy mode text blur by section.
+ * @param {Object} settings - The user settings.
+ */
+export function applyPrivacyModeSetting(settings: Settings): void {
+    document.body.classList.toggle(
+        'hg-privacy-blur-user',
+        Boolean(settings?.privacyBlurUserRequests)
+    );
+    document.body.classList.toggle('hg-privacy-blur-ai', Boolean(settings?.privacyBlurAiResponses));
+    document.body.classList.toggle('hg-privacy-blur-input', Boolean(settings?.privacyBlurInput));
+}
+
+/**
  * Retrieves the current settings from storage, merging with default values.
  * @returns {Promise<Object>} The combined settings object.
  */

@@ -1,5 +1,5 @@
 import { useStorage } from '@hooks/useStorage';
-import { BackArrowIcon, ChevronRightIcon } from '@icons';
+import { BackArrowIcon, ChevronRightIcon, EyeOffIcon } from '@icons';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
@@ -159,6 +159,42 @@ SETTINGS_PAGES.push({
                 label="Compact Chatbox"
                 settingKey="chatboxCompactEnabled"
                 description="Tighten input-area padding and shrink native action buttons"
+            />
+        </>
+    ),
+});
+
+SETTINGS_PAGES.push({
+    id: 'privacy',
+    title: 'Privacy',
+    description: 'Blur sensitive text in chats and input area',
+    icon: <EyeOffIcon width="18" height="18" />,
+    render: ({ SettingRow }) => (
+        <>
+            <SettingRow
+                label="Private Mode"
+                settingKey="privacyModeEnabled"
+                description="Enable privacy blur controls across the chat page"
+            />
+            <SettingRow
+                label="Blur Everything (Sidebar)"
+                settingKey="privacyBlurEverything"
+                description="Blur all chat titles in sidebar, not only private chats"
+            />
+            <SettingRow
+                label="Blur User Requests"
+                settingKey="privacyBlurUserRequests"
+                description="Blur your prompts until hovered"
+            />
+            <SettingRow
+                label="Blur AI Responses"
+                settingKey="privacyBlurAiResponses"
+                description="Blur Gemini responses until hovered"
+            />
+            <SettingRow
+                label="Blur Input While Typing"
+                settingKey="privacyBlurInput"
+                description="Blur current input content until hovered"
             />
         </>
     ),

@@ -255,6 +255,21 @@ top-bar-actions .right-section:has(.hg-top-bar) {
     text-align: left;
 }
 
+.hg-toggle-private-chat-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-left: var(--mat-menu-item-with-icon-leading-spacing, 12px);
+    padding-right: var(--mat-menu-item-with-icon-trailing-spacing, 12px);
+    background: transparent;
+    border: none;
+    color: var(--mat-menu-item-label-text-color, var(--mat-sys-on-surface));
+    font-size: 14px;
+    font-family: var(--hg-font-family);
+    cursor: pointer;
+    text-align: left;
+}
+
 .hg-add-to-folder-btn svg {
     width: 20px;
     height: 20px;
@@ -262,7 +277,18 @@ top-bar-actions .right-section:has(.hg-top-bar) {
     margin-right: 10px;
 }
 
+.hg-toggle-private-chat-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
 .hg-add-to-folder-btn:hover {
+    background: var(--gem-sys-color--surface-container-highest, #3c3c3c);
+}
+
+.hg-toggle-private-chat-btn:hover {
     background: var(--gem-sys-color--surface-container-highest, #3c3c3c);
 }
 
@@ -293,4 +319,83 @@ top-bar-actions .right-section:has(.hg-top-bar) {
 
 .hg-toast-error {
     background: #c5221f;
+}
+
+body.hg-privacy-mode-enabled {
+    --hg-privacy-blur-radius: 8px;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-user
+    :is([data-message-author="user"], .user-message, .query-content, user-query) {
+    filter: blur(var(--hg-privacy-blur-radius));
+    transition: filter 0.15s ease;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-user
+    :is([data-message-author="user"], .user-message, .query-content, user-query):hover {
+    filter: none;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-ai
+    :is(
+        [data-message-author="model"],
+        .model-response,
+        model-response,
+        response-container,
+        .response-container,
+        generative-ui-response
+    ) {
+    filter: blur(var(--hg-privacy-blur-radius));
+    transition: filter 0.15s ease;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-ai
+    :is(
+        [data-message-author="model"],
+        .model-response,
+        model-response,
+        response-container,
+        .response-container,
+        generative-ui-response
+    ):hover {
+    filter: none;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-input
+    :is(
+        rich-textarea .ql-editor,
+        .ql-editor[contenteditable="true"],
+        div[contenteditable="true"][role="textbox"],
+        textarea[placeholder*="Enter"]
+    ) {
+    filter: blur(var(--hg-privacy-blur-radius));
+    transition: filter 0.15s ease;
+}
+
+body.hg-privacy-mode-enabled.hg-privacy-blur-input
+    :is(
+        rich-textarea .ql-editor,
+        .ql-editor[contenteditable="true"],
+        div[contenteditable="true"][role="textbox"],
+        textarea[placeholder*="Enter"]
+    ):hover {
+    filter: none;
+}
+
+body [data-hg-private-title="1"] {
+    filter: blur(var(--hg-privacy-blur-radius, 8px));
+    transition: filter 0.15s ease;
+}
+
+body [data-hg-private-title="1"]:hover {
+    filter: none;
+}
+
+body [data-hg-private-chat="1"] {
+    filter: blur(var(--hg-privacy-blur-radius, 8px));
+    transition: filter 0.15s ease;
+}
+
+body [data-hg-private-chat="1"]:hover {
+    filter: none;
 }

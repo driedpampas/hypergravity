@@ -1,17 +1,27 @@
 {
     "manifest_version": 3,
     "name": "hypergravity",
-    "version": "57",
+    "version": "62",
     "description": "Enhance the Gemini web interface",
-    "permissions": ["storage", "tabs", "scripting"],
-    "host_permissions": ["*://gemini.google.com/*"],
+    "permissions": [
+        "storage",
+        "tabs",
+        "scripting"
+    ],
+    "host_permissions": [
+        "*://gemini.google.com/*"
+    ],
     "background": {
         "service_worker": "src/entry/background.ts"
     },
     "content_scripts": [
         {
-            "matches": ["*://gemini.google.com/*"],
-            "js": ["src/entry/content.tsx"]
+            "matches": [
+                "*://gemini.google.com/*"
+            ],
+            "js": [
+                "src/entry/content.tsx"
+            ]
         }
     ],
     "action": {

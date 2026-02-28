@@ -1,15 +1,23 @@
-import { CheckIcon, CloseIcon, FolderAddIcon } from '@icons';
+import { CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, FolderAddIcon } from '@icons';
 import { inferChatInfoFromConversationRow } from '@shared/chat/chatInfo';
 import { getStorageValue, setStorageValue } from '@utils/browserEnv';
-import { FOLDERS_KEY } from '@utils/constants';
+import { FOLDERS_KEY, PRIVACY_CHAT_KEY_PREFIX } from '@utils/constants';
 import {
     normalizeFoldersData,
     type StoredChat,
     type StoredFolder,
     withUpdatedFolders,
 } from '@utils/foldersData';
+import { getIdbValue, setIdbValue } from '@utils/idbStorage';
 import { render } from 'preact';
 import { useState } from 'preact/hooks';
+
+type PrivacyChatRecord = {
+    chatId: string;
+    title: string;
+    enabled: boolean;
+    updatedAt: number;
+};
 
 type ChatInfo = {
     id: string;
@@ -120,6 +128,26 @@ export function createFoldersMenuManager({
 }: FoldersMenuManagerOptions) {
     let lastClickedChatInfo: ChatInfo | null = null;
 
+    const getPrivacyChatKey = (chatId: string) => `${PRIVACY_CHAT_KEY_PREFIX}${chatId}`;
+
+    async function getPrivacyChatRecord(chatId: string): Promise<PrivacyChatRecord | null> {
+        const raw = (await getIdbValue(
+            getPrivacyChatKey(chatId),
+            null
+        )) as Partial<PrivacyChatRecord> | null;
+
+        if (!raw || typeof raw !== 'object') return null;
+        const id = String(raw.chatId || '').trim();
+        if (!id) return null;
+
+        return {
+            chatId: id,
+            title: String(raw.title || '').trim(),
+            enabled: Boolean(raw.enabled),
+            updatedAt: Number(raw.updatedAt) || Date.now(),
+        };
+    }
+
     async function showAddToFolderMenu(chatInfo: ChatInfo): Promise<void> {
         const storedFolders = await getStorageValue(FOLDERS_KEY);
         const foldersData = normalizeFoldersData(storedFolders);
@@ -223,38 +251,115 @@ export function createFoldersMenuManager({
     }
 
     function injectAddToFolderOption(menuRoot: Element | null): void {
-        if (!menuRoot || menuRoot.querySelector('.hg-add-to-folder-btn')) return;
+        if (!menuRoot) return;
         const nativeItems = menuRoot.querySelectorAll('button, [role="menuitem"]');
         if (!nativeItems.length) return;
 
-        const button = document.createElement('button');
-        button.className = 'hg-add-to-folder-btn';
-        button.setAttribute('role', 'menuitem');
-        button.type = 'button';
+        const chatInfo = lastClickedChatInfo || findActiveChatInfo();
 
-        render(
-            <>
-                <FolderAddIcon width="24" height="24" />
-                <span>Add chat to folder</span>
-            </>,
-            button
-        );
+        if (!menuRoot.querySelector('.hg-add-to-folder-btn')) {
+            const addToFolderButton = document.createElement('button');
+            addToFolderButton.className = 'hg-add-to-folder-btn';
+            addToFolderButton.setAttribute('role', 'menuitem');
+            addToFolderButton.type = 'button';
 
-        button.addEventListener('click', async (event: MouseEvent) => {
+            render(
+                <>
+                    <FolderAddIcon width="24" height="24" />
+                    <span>Add chat to folder</span>
+                </>,
+                addToFolderButton
+            );
+
+            addToFolderButton.addEventListener('click', async (event: MouseEvent) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const currentChatInfo = lastClickedChatInfo || findActiveChatInfo();
+                if (!currentChatInfo) {
+                    showToast('Could not identify chat to add', 'error');
+                    return;
+                }
+
+                await showAddToFolderMenu(currentChatInfo);
+            });
+
+            const last = nativeItems[nativeItems.length - 1];
+            last.parentNode?.insertBefore(addToFolderButton, last.nextSibling);
+        }
+
+        if (menuRoot.querySelector('.hg-toggle-private-chat-btn')) return;
+        if (!chatInfo?.id) return;
+
+        const togglePrivateButton = document.createElement('button');
+        togglePrivateButton.className = 'hg-toggle-private-chat-btn';
+        togglePrivateButton.setAttribute('role', 'menuitem');
+        togglePrivateButton.type = 'button';
+
+        const label = document.createElement('span');
+        label.textContent = 'Hide chat';
+
+        const iconHost = document.createElement('span');
+        iconHost.className = 'hg-toggle-private-chat-icon';
+
+        togglePrivateButton.appendChild(iconHost);
+        togglePrivateButton.appendChild(label);
+
+        const updateToggleUi = (enabled: boolean) => {
+            label.textContent = enabled ? 'Show chat' : 'Hide chat';
+            render(
+                enabled ? (
+                    <EyeIcon width="24" height="24" />
+                ) : (
+                    <EyeOffIcon width="24" height="24" />
+                ),
+                iconHost
+            );
+        };
+
+        void getPrivacyChatRecord(chatInfo.id).then((record) => {
+            updateToggleUi(Boolean(record?.enabled));
+        });
+
+        togglePrivateButton.addEventListener('click', async (event: MouseEvent) => {
             event.preventDefault();
             event.stopPropagation();
 
-            const chatInfo = lastClickedChatInfo || findActiveChatInfo();
-            if (!chatInfo) {
-                showToast('Could not identify chat to add', 'error');
+            const currentChatInfo = lastClickedChatInfo || findActiveChatInfo();
+            if (!currentChatInfo?.id) {
+                showToast('Could not identify chat privacy target', 'error');
                 return;
             }
 
-            await showAddToFolderMenu(chatInfo);
+            const existing = await getPrivacyChatRecord(currentChatInfo.id);
+            const nextEnabled = !existing?.enabled;
+
+            await setIdbValue(getPrivacyChatKey(currentChatInfo.id), {
+                chatId: currentChatInfo.id,
+                title: currentChatInfo.title,
+                enabled: nextEnabled,
+                updatedAt: Date.now(),
+            } as PrivacyChatRecord);
+
+            window.dispatchEvent(
+                new CustomEvent('hg-privacy-chat-updated', {
+                    detail: {
+                        chatId: currentChatInfo.id,
+                        title: currentChatInfo.title,
+                        enabled: nextEnabled,
+                    },
+                })
+            );
+
+            updateToggleUi(nextEnabled);
+            showToast(
+                nextEnabled ? 'Chat hidden in privacy mode' : 'Chat shown in privacy mode',
+                'success'
+            );
         });
 
         const last = nativeItems[nativeItems.length - 1];
-        last.parentNode?.insertBefore(button, last.nextSibling);
+        last.parentNode?.insertBefore(togglePrivateButton, last.nextSibling);
     }
 
     return {

@@ -1,6 +1,6 @@
 {
     "name": "hypergravity",
-    "version": "57",
+    "version": "62",
     "type": "module",
     "scripts": {
         "dev": "vite",

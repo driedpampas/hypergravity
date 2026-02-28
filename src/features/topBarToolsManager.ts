@@ -1,11 +1,21 @@
-import { CollapseIcon, ExpandIcon, ExportIcon } from '@icons';
+import { CollapseIcon, ExpandIcon, ExportIcon, EyeIcon, EyeOffIcon } from '@icons';
 import { topBarManager } from '@managers/topBarManager';
+import { findActiveChatInfo } from '@shared/chat/chatInfo';
+import { PRIVACY_CHAT_KEY_PREFIX } from '@utils/constants';
 import { debugSelectorMatch } from '@utils/debug';
+import { getIdbValue, setIdbValue } from '@utils/idbStorage';
 import { h } from 'preact';
 
 type SettingsShape = {
     wideModeEnabled?: boolean;
     showExportButton?: boolean;
+};
+
+type PrivacyChatRecord = {
+    chatId: string;
+    title: string;
+    enabled: boolean;
+    updatedAt: number;
 };
 
 type TopBarToolsManagerOptions = {
@@ -263,6 +273,28 @@ export function createTopBarToolsManager({
 }: TopBarToolsManagerOptions) {
     const wideLayoutEngine = createWideLayoutEngine();
 
+    function getPrivacyChatKey(chatId: string): string {
+        return `${PRIVACY_CHAT_KEY_PREFIX}${chatId}`;
+    }
+
+    async function getActiveChatPrivacy(): Promise<PrivacyChatRecord | null> {
+        const active = findActiveChatInfo();
+        if (!active?.id) return null;
+
+        const raw = (await getIdbValue(
+            getPrivacyChatKey(active.id),
+            null
+        )) as Partial<PrivacyChatRecord> | null;
+
+        if (!raw || typeof raw !== 'object') return null;
+        return {
+            chatId: String(raw.chatId || active.id),
+            title: String(raw.title || active.title),
+            enabled: Boolean(raw.enabled),
+            updatedAt: Number(raw.updatedAt) || Date.now(),
+        };
+    }
+
     async function handleWideToggle() {
         const settings = await getSettings();
         const nextWideModeEnabled = !settings.wideModeEnabled;
@@ -282,6 +314,7 @@ export function createTopBarToolsManager({
         const settings = await getSettings();
         const shouldApplyWide =
             Boolean(settings.wideModeEnabled) && !window.location.pathname.includes('/gems/');
+        const privateModeEnabled = Boolean((await getActiveChatPrivacy())?.enabled);
 
         wideLayoutEngine.setEnabled(shouldApplyWide);
 
@@ -298,6 +331,39 @@ export function createTopBarToolsManager({
         });
 
         wideButton?.classList.toggle('hg-wide-active', shouldApplyWide);
+
+        const privacyButton = topBarManager.ensureButton({
+            id: 'hg-header-privacy-btn',
+            title: privateModeEnabled ? 'Disable Privacy Mode' : 'Enable Privacy Mode',
+            iconVNode: h(privateModeEnabled ? EyeOffIcon : EyeIcon, {}),
+            onClick: async () => {
+                const active = findActiveChatInfo();
+                if (!active?.id) return;
+
+                const existing = await getActiveChatPrivacy();
+                const nextEnabled = !existing?.enabled;
+
+                await setIdbValue(getPrivacyChatKey(active.id), {
+                    chatId: active.id,
+                    title: active.title,
+                    enabled: nextEnabled,
+                    updatedAt: Date.now(),
+                } as PrivacyChatRecord);
+
+                window.dispatchEvent(
+                    new CustomEvent('hg-privacy-chat-updated', {
+                        detail: {
+                            chatId: active.id,
+                            title: active.title,
+                            enabled: nextEnabled,
+                        },
+                    })
+                );
+                await refresh();
+            },
+        });
+
+        privacyButton?.classList.toggle('hg-privacy-active', privateModeEnabled);
 
         const shouldShowExport = settings.showExportButton !== false;
         const existingExport = document.getElementById('hg-header-export-btn');

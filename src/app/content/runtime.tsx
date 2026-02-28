@@ -4,12 +4,14 @@ import '@app/content/host-overrides.css';
 import { ChatExportController } from '@features/chatExport';
 import { createChatMemoryManager } from '@features/chatMemoryManager';
 import { createAtMentionsMemoriesManager } from '@features/memories';
+import { createPrivacyModeManager } from '@features/privacyModeManager';
 import { createTopBarToolsManager } from '@features/topBarToolsManager';
 import { insertChatTools, insertHypergravitySidebar } from '@platform/content/domInjection';
 import { createFoldersMenuManager } from '@platform/content/features/foldersMenu';
 import { registerTokenCacheMessageHandler } from '@platform/content/features/tokenCacheMessageHandler';
 import {
     applyChatboxHeaderStyleSetting,
+    applyPrivacyModeSetting,
     getSettings,
     updateSettings,
 } from '@platform/content/helpers/settings';
@@ -23,12 +25,32 @@ let chatExportController: ChatExportController | null = null;
 let topBarToolsManager: ReturnType<typeof createTopBarToolsManager> | null = null;
 let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
 let atMentionsMemoriesManager: ReturnType<typeof createAtMentionsMemoriesManager> | null = null;
+let privacyModeManager: ReturnType<typeof createPrivacyModeManager> | null = null;
 let hgEnabled = true;
 
 const foldersMenuManager = createFoldersMenuManager({
     showToast,
     findActiveChatInfo,
     getAccountAwareUrl,
+});
+
+window.addEventListener('hg-privacy-chat-updated', (event: Event) => {
+    const custom = event as CustomEvent<{
+        chatId?: string;
+        title?: string;
+        enabled?: boolean;
+    }>;
+
+    if (custom?.detail?.chatId && typeof custom?.detail?.enabled === 'boolean') {
+        privacyModeManager?.applyExternalUpdate({
+            chatId: custom.detail.chatId,
+            title: custom.detail.title,
+            enabled: custom.detail.enabled,
+        });
+    }
+
+    privacyModeManager?.refresh();
+    topBarToolsManager?.refresh();
 });
 
 function initializeFeatureModules() {
@@ -56,6 +78,12 @@ function initializeFeatureModules() {
     if (!atMentionsMemoriesManager) {
         atMentionsMemoriesManager = createAtMentionsMemoriesManager();
     }
+
+    if (!privacyModeManager) {
+        privacyModeManager = createPrivacyModeManager({
+            getSettings,
+        });
+    }
 }
 
 function refreshInjectedUi() {
@@ -66,6 +94,7 @@ function refreshInjectedUi() {
     topBarToolsManager?.refresh();
     chatMemoryManager?.refresh();
     atMentionsMemoriesManager?.refresh();
+    privacyModeManager?.refresh();
 
     const menuRoots = document.querySelectorAll('.conversation-actions-menu');
 
@@ -78,6 +107,7 @@ function removeInjectedUi() {
     document.querySelector('#hypergravity-root')?.remove();
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
     atMentionsMemoriesManager?.cleanup();
+    privacyModeManager?.destroy();
 }
 
 let mutationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -106,6 +136,7 @@ observer.observe(document.body, {
 getSettings().then((settings) => {
     hgEnabled = Boolean(settings.enabled);
     applyChatboxHeaderStyleSetting(settings);
+    applyPrivacyModeSetting(settings);
 
     if (!hgEnabled) return;
 
@@ -124,6 +155,7 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
 
     topBarToolsManager?.refresh();
     applyChatboxHeaderStyleSetting(settings);
+    applyPrivacyModeSetting(settings);
 
     if (!hgEnabled) {
         removeInjectedUi();
