@@ -9,39 +9,22 @@ import { render } from 'preact';
 export function insertHypergravitySidebar() {
     if (document.querySelector('#hypergravity-root')) return;
 
-    let target: Element | null = document.querySelector('conversations-list');
-    let insertMode: 'prepend' | 'afterend' | 'before' = 'prepend';
+    const overflowContainers = Array.from(document.querySelectorAll('div.overflow-container'));
+    const targetContainer =
+        overflowContainers.find((container) =>
+            container.querySelector('infinite-scroller div.chat-history')
+        ) || null;
 
-    if (!target) {
-        const gemsList = document.querySelector('.gems-list-container');
-        if (gemsList) {
-            target = gemsList;
-            insertMode = 'afterend';
-        } else {
-            const sideNav =
-                document.querySelector('bard-sidenav infinite-scroller') ||
-                document.querySelector('infinite-scroller[scrollable="true"]') ||
-                document.querySelector('.conversations-container');
-            if (sideNav) {
-                target = sideNav;
-                insertMode = 'before';
-            }
-        }
-    }
+    if (!targetContainer) return;
 
-    if (!target || target === document.body) return;
+    const actionList = targetContainer.querySelector('mat-action-list');
+    if (!actionList) return;
 
     const rootElement = document.createElement('div');
     rootElement.id = 'hypergravity-root';
     rootElement.style.cssText = 'overflow: visible; transition: margin-top 0.2s ease;';
 
-    if (insertMode === 'afterend') {
-        target.insertAdjacentElement('afterend', rootElement);
-    } else if (insertMode === 'before') {
-        target.insertAdjacentElement('beforebegin', rootElement);
-    } else {
-        target.prepend(rootElement);
-    }
+    actionList.append(rootElement);
 
     const styleHost = createStyleHost(rootElement, 'global');
     rootElement.dataset.hgStyleHost = styleHost.mode;
