@@ -1,4 +1,4 @@
-import { getStorageValue, removeStorageValue } from '@utils/browserEnv';
+import { getStorageValue, removeStorageValue, setStorageValue } from '@utils/browserEnv';
 import { debugLog as _debugLog } from '@utils/debug';
 import { getAllIdbValues, removeIdbValues, setIdbValues } from '@utils/idbStorage';
 
@@ -9,14 +9,35 @@ const FLUSH_DELAY = 1500;
 const FLUSH_INTERVAL = 15000;
 const HASH_HEX_LENGTH = 20;
 const LEGACY_HASH_HEX_LENGTH = 16;
+const CONVERSATION_CHECKPOINTS_KEY = 'hg_token_conversation_checkpoints';
+const MAX_CHECKPOINTS_PER_CONVERSATION = 12;
+const MAX_TRACKED_CONVERSATIONS = 80;
 
 type TokenCacheMap = Record<string, number>;
+type ConversationCheckpointMap = Record<string, ConversationTokenCheckpoint[]>;
+
+export type ConversationTokenCheckpoint = {
+    hash: string;
+    preview: string;
+    inputTokens: number;
+    outputTokens: number;
+    updatedAt: number;
+};
+
+export type CheckpointMatch = {
+    index: number;
+    checkpoint: ConversationTokenCheckpoint;
+};
 
 let memoryCache: TokenCacheMap | null = null;
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 let loadPromise: Promise<TokenCacheMap> | null = null;
 let dirtyHashes = new Set<string>();
 let migrationPromise: Promise<void> | null = null;
+let checkpointsCache: ConversationCheckpointMap | null = null;
+let checkpointsLoadPromise: Promise<ConversationCheckpointMap> | null = null;
+let checkpointsFlushTimer: ReturnType<typeof setTimeout> | null = null;
+let checkpointsDirty = false;
 
 const debugLog = (...args: unknown[]) => _debugLog('Cache', ...args);
 
@@ -149,6 +170,72 @@ async function flushToStorage() {
     await setIdbValues(batch);
 }
 
+function normalizeCheckpoint(raw: unknown): ConversationTokenCheckpoint | null {
+    if (!raw || typeof raw !== 'object') return null;
+
+    const item = raw as Record<string, unknown>;
+    const hash = String(item.hash || '').trim();
+    if (!hash) return null;
+
+    const inputTokens = Number(item.inputTokens);
+    const outputTokens = Number(item.outputTokens);
+
+    if (!Number.isFinite(inputTokens) || !Number.isFinite(outputTokens)) {
+        return null;
+    }
+
+    return {
+        hash,
+        preview: String(item.preview || '').slice(0, 80),
+        inputTokens,
+        outputTokens,
+        updatedAt: Number(item.updatedAt) || Date.now(),
+    };
+}
+
+async function loadConversationCheckpoints(): Promise<ConversationCheckpointMap> {
+    if (checkpointsLoadPromise) return checkpointsLoadPromise;
+
+    checkpointsLoadPromise = (async () => {
+        const raw = await getStorageValue(CONVERSATION_CHECKPOINTS_KEY, {});
+        const hydrated: ConversationCheckpointMap = {};
+
+        if (raw && typeof raw === 'object') {
+            for (const [conversationId, value] of Object.entries(raw as Record<string, unknown>)) {
+                if (!conversationId || !Array.isArray(value)) continue;
+
+                const checkpoints = value
+                    .map((entry) => normalizeCheckpoint(entry))
+                    .filter((entry): entry is ConversationTokenCheckpoint => entry !== null)
+                    .sort((a, b) => b.updatedAt - a.updatedAt)
+                    .slice(0, MAX_CHECKPOINTS_PER_CONVERSATION);
+
+                if (checkpoints.length > 0) {
+                    hydrated[conversationId] = checkpoints;
+                }
+            }
+        }
+
+        checkpointsCache = hydrated;
+        return hydrated;
+    })();
+
+    return checkpointsLoadPromise;
+}
+
+async function flushConversationCheckpoints() {
+    if (!checkpointsCache || !checkpointsDirty) return;
+    checkpointsDirty = false;
+    await setStorageValue(CONVERSATION_CHECKPOINTS_KEY, checkpointsCache);
+}
+
+function scheduleConversationCheckpointsFlush() {
+    if (checkpointsFlushTimer) {
+        clearTimeout(checkpointsFlushTimer);
+    }
+    checkpointsFlushTimer = setTimeout(flushConversationCheckpoints, FLUSH_DELAY);
+}
+
 /**
  * Debounces cache writes to storage to prevent excessive API calls.
  */
@@ -160,9 +247,13 @@ function scheduleFlush() {
 }
 
 try {
-    window.addEventListener('beforeunload', flushToStorage);
+    window.addEventListener('beforeunload', () => {
+        void flushToStorage();
+        void flushConversationCheckpoints();
+    });
     window.setInterval(() => {
         void flushToStorage();
+        void flushConversationCheckpoints();
     }, FLUSH_INTERVAL);
 
     queueMicrotask(() => {
@@ -256,6 +347,95 @@ export async function setCachedTokenCount(hash: string, count: number): Promise<
 
 export function forceFlush() {
     void flushToStorage();
+    void flushConversationCheckpoints();
+}
+
+export async function findConversationCheckpointMatch(
+    conversationId: string | null,
+    messageHashesInOrder: string[]
+): Promise<CheckpointMatch | null> {
+    if (!conversationId || !messageHashesInOrder.length) return null;
+
+    const checkpoints = (await loadConversationCheckpoints())[conversationId] || [];
+    if (!checkpoints.length) return null;
+
+    const indexByHash = new Map<string, number>();
+    messageHashesInOrder.forEach((hash, index) => {
+        indexByHash.set(hash, index);
+    });
+
+    let match: CheckpointMatch | null = null;
+
+    for (const checkpoint of checkpoints) {
+        const index = indexByHash.get(checkpoint.hash);
+        if (typeof index !== 'number') continue;
+
+        if (!match || index > match.index) {
+            match = { index, checkpoint };
+        }
+    }
+
+    return match;
+}
+
+export async function saveConversationCheckpoints(args: {
+    conversationId: string | null;
+    checkpoints: Array<{
+        hash: string;
+        preview: string;
+        inputTokens: number;
+        outputTokens: number;
+    }>;
+    allowLowerTotals?: boolean;
+}): Promise<void> {
+    const { conversationId, checkpoints, allowLowerTotals = false } = args;
+    if (!conversationId || !checkpoints.length) return;
+
+    const cache = await loadConversationCheckpoints();
+    const existing = cache[conversationId] || [];
+    const existingByHash = new Map(existing.map((entry) => [entry.hash, entry]));
+    const now = Date.now();
+
+    for (const checkpoint of checkpoints) {
+        if (!checkpoint.hash) continue;
+
+        const prev = existingByHash.get(checkpoint.hash);
+        const next: ConversationTokenCheckpoint = {
+            hash: checkpoint.hash,
+            preview: String(checkpoint.preview || '').slice(0, 80),
+            inputTokens: Number(checkpoint.inputTokens) || 0,
+            outputTokens: Number(checkpoint.outputTokens) || 0,
+            updatedAt: now,
+        };
+
+        if (prev && !allowLowerTotals) {
+            next.inputTokens = Math.max(prev.inputTokens, next.inputTokens);
+            next.outputTokens = Math.max(prev.outputTokens, next.outputTokens);
+            if (!next.preview) {
+                next.preview = prev.preview;
+            }
+        }
+
+        existingByHash.set(next.hash, next);
+    }
+
+    const merged = Array.from(existingByHash.values())
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .slice(0, MAX_CHECKPOINTS_PER_CONVERSATION);
+
+    cache[conversationId] = merged;
+
+    const entries = Object.entries(cache)
+        .sort((a, b) => {
+            const newestA = Math.max(...a[1].map((item) => item.updatedAt), 0);
+            const newestB = Math.max(...b[1].map((item) => item.updatedAt), 0);
+            return newestB - newestA;
+        })
+        .slice(0, MAX_TRACKED_CONVERSATIONS);
+
+    checkpointsCache = Object.fromEntries(entries);
+    checkpointsDirty = true;
+    scheduleConversationCheckpointsFlush();
 }
 
 export async function getAllCacheData() {
@@ -299,10 +479,16 @@ export async function clearCacheData() {
     }
 
     await Promise.all(LEGACY_STORAGE_KEYS.map((key) => removeStorageValue(key)));
+    await removeStorageValue(CONVERSATION_CHECKPOINTS_KEY);
     for (const key of LEGACY_STORAGE_KEYS) {
         removeLegacyLocalStorageMap(key);
     }
     memoryCache = {};
+    checkpointsCache = {};
+    checkpointsDirty = false;
+    if (checkpointsFlushTimer) {
+        clearTimeout(checkpointsFlushTimer);
+    }
 
     return hashes.length;
 }

@@ -165,6 +165,7 @@ export function createChatMemoryManager() {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let inFlightChatId: string | null = null;
     const latestSourceHashByChatId = new Map<string, string>();
+    const lastMessageCountByChatId = new Map<string, number>();
 
     async function summarizeCurrentChat() {
         if (!isExtension()) return;
@@ -183,6 +184,18 @@ export function createChatMemoryManager() {
 
         const messages = collectTranscriptMessages();
         if (messages.length < 2) return;
+
+        const currentMessageCount = messages.length;
+        const lastMessageCount = lastMessageCountByChatId.get(chatId) || 0;
+
+        // Only summarize if we have more messages than last time (indicating more content was loaded)
+        // or if this is the first time for this chat
+        if (lastMessageCount > 0 && currentMessageCount <= lastMessageCount) {
+            lastMessageCountByChatId.set(chatId, currentMessageCount);
+            return;
+        }
+
+        lastMessageCountByChatId.set(chatId, currentMessageCount);
 
         const transcript = serializeTranscript(messages);
         if (!transcript) return;
@@ -263,7 +276,7 @@ export function createChatMemoryManager() {
         }
         debounceTimer = setTimeout(() => {
             void summarizeCurrentChat();
-        }, 1400);
+        }, 2000); // Increased debounce to 2 seconds to avoid rapid-fire during scrolling
     }
 
     return {

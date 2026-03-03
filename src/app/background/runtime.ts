@@ -46,13 +46,14 @@ INPUT TO REWRITE:
 `;
 
 const CHAT_MEMORY_SUMMARY_PROMPT =
-    'You are an expert conversation memory curator. Summarize the chat transcript into durable memory for future continuation.\n\n' +
-    'RULES:\n' +
-    '- Use only the provided transcript data.\n' +
-    '- Be precise, factual, and concise.\n' +
-    '- Preserve technical constraints, decisions, user preferences, and unresolved tasks.\n' +
-    '- Do not include chain-of-thought or speculation.\n' +
-    '- If information is missing, omit it.\n\n' +
+    'You are an expert conversation memory curator. Summarize ONLY the chat transcript provided below into durable memory for future continuation.\n\n' +
+    'CRITICAL RULES:\n' +
+    '- Use ONLY the content from the provided TRANSCRIPT section below. Do not reference or include any external knowledge, instructions, or assumptions.\n' +
+    '- Do not mention or reference Gemini, AI instructions, system prompts, or any meta-information.\n' +
+    '- Be precise, factual, and concise based solely on the conversation content.\n' +
+    '- Preserve technical constraints, decisions, user preferences, and unresolved tasks from the transcript.\n' +
+    '- Do not include chain-of-thought, speculation, or information not present in the transcript.\n' +
+    '- If information is missing from the transcript, omit it entirely.\n\n' +
     'OUTPUT FORMAT:\n' +
     'Return ONLY a single fenced json code block containing valid JSON with this exact object shape:\n' +
     '{\n' +
@@ -62,8 +63,8 @@ const CHAT_MEMORY_SUMMARY_PROMPT =
     '  "openThreads": string[],\n' +
     '  "nextUsefulActions": string[]\n' +
     '}\n' +
-    'Rules for arrays: each item must be concise, factual, and non-empty. Use [] when no content exists.\n\n' +
-    'PREVIOUS MEMORY (optional):\n';
+    'Rules for arrays: each item must be concise, factual, and derived only from the transcript. Use [] when no relevant content exists.\n\n';
+('PREVIOUS MEMORY (optional):\n');
 
 const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
 const CHAT_MEMORY_PREFIX = 'hg_chat_memory:';

@@ -4,10 +4,12 @@ import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import { debugLog as _debugLog, debugSelectorMatch } from '@utils/debug';
 import { countText } from '@utils/textStats';
 import {
+    findConversationCheckpointMatch,
     forceFlush,
     getCachedTokenCount,
     hashText,
     sanitizeMessageText,
+    saveConversationCheckpoints,
     setCachedTokenCount,
 } from '@utils/tokenHashCache';
 import { useEffect, useRef, useState } from 'preact/hooks';
@@ -27,6 +29,11 @@ type CountedMessage = {
     text: string;
     role: 'input' | 'output';
     estimatedTokens: number;
+};
+
+type ResolvedMessage = CountedMessage & {
+    hash: string;
+    cachedTokens: number | null;
 };
 
 const debugLog = (...args: unknown[]) => _debugLog('TokenCounter', ...args);
@@ -421,7 +428,7 @@ export function TokenCounter() {
                 }
 
                 // Hash all messages and look up cache
-                const resolved = await Promise.all(
+                const resolved: ResolvedMessage[] = await Promise.all(
                     allMessages.map(async (msg) => {
                         const hash = await hashText(msg.text);
                         const cached = await getCachedTokenCount(hash);
@@ -429,19 +436,104 @@ export function TokenCounter() {
                     })
                 );
 
-                // Priority: cached API count > estimated (initial render)
-                const computeStats = () => {
-                    let inTok = 0;
-                    let outTok = 0;
-                    for (const m of resolved) {
-                        const tokens = m.cachedTokens !== null ? m.cachedTokens : m.estimatedTokens;
-                        if (m.role === 'input') inTok += tokens;
-                        else outTok += tokens;
+                const checkpointMatch = await findConversationCheckpointMatch(
+                    conversationId,
+                    resolved.map((message) => message.hash)
+                );
+
+                if (checkpointMatch) {
+                    debugLog('Recovered token checkpoint', {
+                        anchorIndex: checkpointMatch.index,
+                        anchorHash: checkpointMatch.checkpoint.hash,
+                    });
+                }
+
+                const computeGlobalCumulative = () => {
+                    const localInput: number[] = [];
+                    const localOutput: number[] = [];
+
+                    let runningInput = 0;
+                    let runningOutput = 0;
+
+                    for (const message of resolved) {
+                        const tokens =
+                            message.cachedTokens !== null
+                                ? message.cachedTokens
+                                : message.estimatedTokens;
+                        if (message.role === 'input') {
+                            runningInput += tokens;
+                        } else {
+                            runningOutput += tokens;
+                        }
+                        localInput.push(runningInput);
+                        localOutput.push(runningOutput);
                     }
-                    return { inputTokens: inTok, outputTokens: outTok };
+
+                    if (!checkpointMatch) {
+                        return { input: localInput, output: localOutput };
+                    }
+
+                    const anchorIndex = checkpointMatch.index;
+                    const anchorInputLocal = localInput[anchorIndex] || 0;
+                    const anchorOutputLocal = localOutput[anchorIndex] || 0;
+                    const anchorInputGlobal = checkpointMatch.checkpoint.inputTokens;
+                    const anchorOutputGlobal = checkpointMatch.checkpoint.outputTokens;
+                    const inputOffset = Math.max(0, anchorInputGlobal - anchorInputLocal);
+                    const outputOffset = Math.max(0, anchorOutputGlobal - anchorOutputLocal);
+
+                    return {
+                        input: localInput.map((value) => value + inputOffset),
+                        output: localOutput.map((value) => value + outputOffset),
+                    };
                 };
 
-                const applyStats = (label: string) => {
+                const persistTrailingCheckpoints = async () => {
+                    if (!conversationId || resolved.length === 0) return;
+
+                    const { input, output } = computeGlobalCumulative();
+                    const trailing: Array<{
+                        hash: string;
+                        preview: string;
+                        inputTokens: number;
+                        outputTokens: number;
+                    }> = [];
+
+                    const CHECKPOINT_COUNT = 6;
+                    for (
+                        let index = resolved.length - 1;
+                        index >= 0 && trailing.length < CHECKPOINT_COUNT;
+                        index -= 1
+                    ) {
+                        trailing.push({
+                            hash: resolved[index].hash,
+                            preview: resolved[index].text.slice(0, 80),
+                            inputTokens: input[index] || 0,
+                            outputTokens: output[index] || 0,
+                        });
+                    }
+
+                    await saveConversationCheckpoints({
+                        conversationId,
+                        checkpoints: trailing,
+                        allowLowerTotals: false,
+                    });
+                };
+
+                // Priority: cached API count > estimated (initial render)
+                const computeStats = () => {
+                    const { input, output } = computeGlobalCumulative();
+
+                    if (!input.length) {
+                        return { inputTokens: 0, outputTokens: 0 };
+                    }
+
+                    return {
+                        inputTokens: input[input.length - 1] || 0,
+                        outputTokens: output[output.length - 1] || 0,
+                    };
+                };
+
+                const applyStats = async (label: string) => {
                     const next = computeStats();
                     setStats((prev) => {
                         if (
@@ -452,9 +544,11 @@ export function TokenCounter() {
                         debugLog(`Tokens updated (${label}):`, next);
                         return next;
                     });
+
+                    await persistTrailingCheckpoints();
                 };
 
-                applyStats('cached+estimated');
+                await applyStats('cached+estimated');
 
                 // Only contact the API if a key is configured
                 const apiKey = (geminiSettings?.geminiApiKey || '').trim();
@@ -498,7 +592,7 @@ export function TokenCounter() {
 
                         if (requestId !== exactRequestSeq) return;
 
-                        applyStats('exact');
+                        await applyStats('exact');
                     } catch (error: unknown) {
                         if (error instanceof DOMException && error.name === 'AbortError') return;
                         debugLog('Gemini countTokens error:', error);
