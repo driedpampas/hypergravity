@@ -1,9 +1,26 @@
 import type { SVGAttributes } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
 
-export function HypergravityIcon(props: SVGAttributes<SVGSVGElement>) {
+type HypergravityIconProps = SVGAttributes<SVGSVGElement> & {
+    monochrome?: boolean;
+};
+
+export function HypergravityIcon({ monochrome = false, ...props }: HypergravityIconProps) {
+    const svgRef = useRef<SVGSVGElement>(null);
+
+    useEffect(() => {
+        if (!monochrome || !svgRef.current) return;
+
+        const paths = svgRef.current.querySelectorAll('path');
+        paths.forEach((path) => {
+            path.style.fill = 'currentColor';
+        });
+    }, [monochrome]);
+
     return (
         <svg
             {...props}
+            ref={svgRef}
             width="24"
             height="24"
             viewBox="0 0 4.2333332 4.2333333"

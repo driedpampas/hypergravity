@@ -2,6 +2,7 @@ import { useStorage } from '@hooks/useStorage';
 import {
     ChevronRightIcon,
     FolderEmptyIcon,
+    HypergravityIcon,
     SettingsGearIcon,
     SmallMemoriesIcon,
     WelcomeHandIcon,
@@ -24,6 +25,7 @@ export function Sidebar() {
     const hasSeenWelcome = welcomeSeen === true;
     const [activeMenu, setActiveMenu] = useState<ActiveMenu>(null);
     const [showWelcome, setShowWelcome] = useState(false);
+    const sidebarThemedIconClass = settings.themeSidebarIcons ? 'hg-sidebar-themed-icon' : '';
 
     useEffect(() => {
         if (isWelcomeLoaded && !hasSeenWelcome) {
@@ -120,7 +122,9 @@ export function Sidebar() {
                             aria-label="Memories"
                             data-hg-action="memories"
                         >
-                            <SmallMemoriesIcon class="hg-dropdown-icon" />
+                            <SmallMemoriesIcon
+                                class={`hg-dropdown-icon ${sidebarThemedIconClass}`.trim()}
+                            />
                         </button>
                     )}
 
@@ -210,9 +214,18 @@ export function Sidebar() {
     }, [settings.foldersEnabled, settings.chatMemoryEnabled, settings.showCollapsedSidebarButtons]);
 
     return (
-        <div id="hg-hypergravity-section" class="hypergravity-sidebar-container">
+        <div
+            id="hg-hypergravity-section"
+            class="hypergravity-sidebar-container"
+            data-expanded={isExpanded ? 'true' : 'false'}
+        >
             <button class="hg-section-header" type="button" onClick={toggleSection}>
                 <div class="hg-section-header-left">
+                    <HypergravityIcon
+                        key={settings.themeSidebarIcons ? 'sidebar-themed' : 'sidebar-default'}
+                        class={`hg-section-title-icon ${sidebarThemedIconClass}`.trim()}
+                        monochrome={settings.themeSidebarIcons}
+                    />
                     <span class="hg-section-title">hypergravity</span>
                 </div>
                 <ChevronRightIcon
@@ -252,7 +265,9 @@ export function Sidebar() {
                             type="button"
                             onClick={handleMemoriesClick}
                         >
-                            <SmallMemoriesIcon class="hg-dropdown-icon" />
+                            <SmallMemoriesIcon
+                                class={`hg-dropdown-icon ${sidebarThemedIconClass}`.trim()}
+                            />
                             <span>Memories</span>
                         </button>
                     )}

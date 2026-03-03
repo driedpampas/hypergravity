@@ -17,6 +17,17 @@
     font-family: var(--hg-font-family) !important;
 }
 
+#hypergravity-root {
+    background: var(--gem-sys-color--surface);
+    border-radius: 30px;
+    margin: 0px 12px;
+    overflow: hidden;
+}
+
+#hypergravity-root:has(#hg-hypergravity-section[data-expanded="true"]) {
+    border-radius: 20px;
+}
+
 #hypergravity-btn {
     display: flex;
     align-items: center;

@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = {
     enabled: true,
     foldersEnabled: true,
     chatMemoryEnabled: true,
+    themeSidebarIcons: false,
     showCollapsedSidebarButtons: true,
     memoryMentionMode: 'auto',
     autoScrollEnabled: false,

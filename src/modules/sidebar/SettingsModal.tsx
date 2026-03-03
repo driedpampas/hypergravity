@@ -87,6 +87,11 @@ SETTINGS_PAGES.push({
                 description="Show Hypergravity quick buttons when Gemini sidebar is collapsed"
             />
             <SettingRow
+                label="Theme Sidebar Icons"
+                settingKey="themeSidebarIcons"
+                description="Use Gemini's default sidebar icon color for Hypergravity and Memories icons"
+            />
+            <SettingRow
                 label="Wide Mode"
                 settingKey="wideModeEnabled"
                 description="Expand chat width to utilize full screen space"

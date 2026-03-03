@@ -1,8 +1,8 @@
 .hypergravity-sidebar-container {
-    overflow: visible;
+    overflow: hidden;
+    border-radius: inherit;
     transition: margin-top 0.2s ease;
     font-family: var(--hg-font-family);
-    color: var(--gem-sys-color--on-surface, #1f1f1f);
 }
 
 .hg-dialog-overlay {
@@ -19,14 +19,39 @@
     justify-content: space-between;
     padding: 12px 14px;
     background: transparent;
-    border: none;
     width: 100%;
     text-align: left;
     cursor: pointer;
     user-select: none;
-    transition: background 0.15s ease;
-    border-radius: 28px;
     font-family: inherit;
+
+    border: 1px solid transparent;
+    border-radius: 28px;
+
+    transition: all 0.3s ease-in-out;
+}
+
+#hg-hypergravity-section[data-expanded="true"] .hg-section-header {
+    border-bottom: 1px solid var(--gem-sys-color--on-surface, #1f1f1f);
+
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+.hg-section-header-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hg-section-title-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.hg-section-title-icon.hg-sidebar-themed-icon {
+    color: var(--sidenav-button-default-text-color);
 }
 
 .hg-section-title {
@@ -66,6 +91,14 @@
 
 .hg-dropdown-item:hover .hg-dropdown-icon {
     color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.hg-dropdown-icon.hg-sidebar-themed-icon {
+    color: var(--sidenav-button-default-text-color);
+}
+
+.hg-dropdown-item:hover .hg-dropdown-icon.hg-sidebar-themed-icon {
+    color: var(--sidenav-button-default-text-color);
 }
 
 .hg-collapsed-sidebar-actions {
