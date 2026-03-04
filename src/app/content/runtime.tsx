@@ -27,6 +27,7 @@ let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
 let atMentionsMemoriesManager: ReturnType<typeof createAtMentionsMemoriesManager> | null = null;
 let privacyModeManager: ReturnType<typeof createPrivacyModeManager> | null = null;
 let hgEnabled = true;
+let uiRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
 const foldersMenuManager = createFoldersMenuManager({
     showToast,
@@ -49,8 +50,7 @@ window.addEventListener('hg-privacy-chat-updated', (event: Event) => {
         });
     }
 
-    privacyModeManager?.refresh();
-    topBarToolsManager?.refresh();
+    scheduleUiRefresh(0, false);
 });
 
 function initializeFeatureModules() {
@@ -103,29 +103,43 @@ function refreshInjectedUi() {
     }
 }
 
+function scheduleUiRefresh(delay = 120, checkUrl = true) {
+    if (!hgEnabled) return;
+
+    if (uiRefreshTimer) {
+        clearTimeout(uiRefreshTimer);
+    }
+
+    uiRefreshTimer = setTimeout(() => {
+        uiRefreshTimer = null;
+        if (!hgEnabled) return;
+
+        refreshInjectedUi();
+
+        if (checkUrl) {
+            const currentUrl = window.location.href;
+            if (currentUrl !== lastWideChatUrl) {
+                lastWideChatUrl = currentUrl;
+                topBarToolsManager?.refresh();
+            }
+        }
+    }, delay);
+}
+
 function removeInjectedUi() {
+    if (uiRefreshTimer) {
+        clearTimeout(uiRefreshTimer);
+        uiRefreshTimer = null;
+    }
+
     document.querySelector('#hypergravity-root')?.remove();
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
     atMentionsMemoriesManager?.cleanup();
     privacyModeManager?.destroy();
 }
 
-let mutationDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 const observer = new MutationObserver(() => {
-    if (mutationDebounceTimer) {
-        clearTimeout(mutationDebounceTimer);
-    }
-    mutationDebounceTimer = setTimeout(() => {
-        if (!hgEnabled) return;
-
-        refreshInjectedUi();
-
-        const currentUrl = window.location.href;
-        if (currentUrl !== lastWideChatUrl) {
-            lastWideChatUrl = currentUrl;
-            topBarToolsManager?.refresh();
-        }
-    }, 150);
+    scheduleUiRefresh(150, true);
 });
 
 observer.observe(document.body, {
@@ -141,7 +155,7 @@ getSettings().then((settings) => {
     if (!hgEnabled) return;
 
     initializeFeatureModules();
-    refreshInjectedUi();
+    scheduleUiRefresh(0, true);
 });
 
 document.addEventListener('click', foldersMenuManager.handleGlobalMenuButtonTracking, true);
@@ -153,7 +167,6 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
     };
     hgEnabled = Boolean(settings.enabled);
 
-    topBarToolsManager?.refresh();
     applyChatboxHeaderStyleSetting(settings);
     applyPrivacyModeSetting(settings);
 
@@ -163,7 +176,7 @@ addStorageListener(SETTINGS_KEY, (newValue) => {
     }
 
     initializeFeatureModules();
-    refreshInjectedUi();
+    scheduleUiRefresh(0, true);
 });
 
 registerTokenCacheMessageHandler();

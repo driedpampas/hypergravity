@@ -272,6 +272,8 @@ export function createTopBarToolsManager({
     onWideToggleDebug,
 }: TopBarToolsManagerOptions) {
     const wideLayoutEngine = createWideLayoutEngine();
+    let refreshInFlight: Promise<void> | null = null;
+    let refreshQueued = false;
 
     function getPrivacyChatKey(chatId: string): string {
         return `${PRIVACY_CHAT_KEY_PREFIX}${chatId}`;
@@ -310,7 +312,7 @@ export function createTopBarToolsManager({
         await refresh();
     }
 
-    async function refresh() {
+    async function runRefresh() {
         const settings = await getSettings();
         const shouldApplyWide =
             Boolean(settings.wideModeEnabled) && !window.location.pathname.includes('/gems/');
@@ -380,6 +382,25 @@ export function createTopBarToolsManager({
         }
 
         wideLayoutEngine.refresh();
+    }
+
+    async function refresh() {
+        if (refreshInFlight) {
+            refreshQueued = true;
+            await refreshInFlight;
+            return;
+        }
+
+        refreshInFlight = (async () => {
+            do {
+                refreshQueued = false;
+                await runRefresh();
+            } while (refreshQueued);
+        })().finally(() => {
+            refreshInFlight = null;
+        });
+
+        await refreshInFlight;
     }
 
     function destroy() {

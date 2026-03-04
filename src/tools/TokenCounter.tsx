@@ -326,9 +326,12 @@ export function TokenCounter() {
         let observer: MutationObserver | null = null;
         let interval: ReturnType<typeof setInterval> | null = null;
         let containerObserver: MutationObserver | null = null;
+        let containerDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
         let exactDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
         let exactRequestSeq = 0;
         let exactController: AbortController | null = null;
+        let observedRoot: Element | null = null;
+        const sendUpdateTimeouts: ReturnType<typeof setTimeout>[] = [];
 
         const updateTokens = async () => {
             try {
@@ -611,9 +614,13 @@ export function TokenCounter() {
 
         const scheduleSendTriggeredUpdates = () => {
             scheduleUpdate();
-            setTimeout(scheduleUpdate, 120);
-            setTimeout(scheduleUpdate, 450);
-            setTimeout(scheduleUpdate, 900);
+            while (sendUpdateTimeouts.length > 0) {
+                const timeout = sendUpdateTimeouts.pop();
+                if (timeout) clearTimeout(timeout);
+            }
+
+            sendUpdateTimeouts.push(setTimeout(scheduleUpdate, 180));
+            sendUpdateTimeouts.push(setTimeout(scheduleUpdate, 650));
         };
 
         const isSendButton = (target: EventTarget | null): boolean => {
@@ -655,7 +662,16 @@ export function TokenCounter() {
 
         const attachObserverToConversation = () => {
             const chatHistoryRoot = getChatHistoryRoot();
-            if (!chatHistoryRoot) return false;
+            if (!chatHistoryRoot) {
+                observedRoot = null;
+                return false;
+            }
+
+            if (observer && observedRoot === chatHistoryRoot) {
+                return true;
+            }
+
+            observedRoot = chatHistoryRoot;
 
             updateTokens();
             debugLog('Observer attached', {
@@ -676,8 +692,20 @@ export function TokenCounter() {
 
         const attachContainerObserver = () => {
             containerObserver = new MutationObserver(() => {
-                attachObserverToConversation();
-                scheduleUpdate();
+                if (containerDebounceTimeout) {
+                    clearTimeout(containerDebounceTimeout);
+                }
+
+                containerDebounceTimeout = setTimeout(() => {
+                    const latestRoot = getChatHistoryRoot();
+                    const rootChanged = latestRoot !== observedRoot;
+
+                    if (rootChanged) {
+                        attachObserverToConversation();
+                    }
+
+                    scheduleUpdate();
+                }, 200);
             });
             containerObserver.observe(document.body, {
                 childList: true,
@@ -706,8 +734,13 @@ export function TokenCounter() {
             if (containerObserver) containerObserver.disconnect();
             if (interval) clearInterval(interval);
             if (debounceTimeout) clearTimeout(debounceTimeout);
+            if (containerDebounceTimeout) clearTimeout(containerDebounceTimeout);
             if (exactDebounceTimeout) clearTimeout(exactDebounceTimeout);
             if (exactController) exactController.abort();
+            while (sendUpdateTimeouts.length > 0) {
+                const timeout = sendUpdateTimeouts.pop();
+                if (timeout) clearTimeout(timeout);
+            }
             document.removeEventListener('click', onClick, true);
             document.removeEventListener('keydown', onKeyDown, true);
             document.removeEventListener('submit', onSubmit, true);

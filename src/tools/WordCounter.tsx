@@ -15,12 +15,18 @@ export function WordCounter() {
         updateCount();
         document.addEventListener('input', updateCount);
         document.addEventListener('keyup', updateCount);
-        const interval = setInterval(updateCount, 1000);
+        document.addEventListener('change', updateCount);
+        document.addEventListener('compositionend', updateCount);
+        window.addEventListener('focus', updateCount);
+        window.addEventListener('pageshow', updateCount);
 
         return () => {
             document.removeEventListener('input', updateCount);
             document.removeEventListener('keyup', updateCount);
-            clearInterval(interval);
+            document.removeEventListener('change', updateCount);
+            document.removeEventListener('compositionend', updateCount);
+            window.removeEventListener('focus', updateCount);
+            window.removeEventListener('pageshow', updateCount);
         };
     }, []);
 
