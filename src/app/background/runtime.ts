@@ -270,13 +270,25 @@ function formatMemorySummary(structured: MemorySummaryStructured): string {
 }
 
 function parseOptimizedPromptFromJson(rawText: string): string {
-    const jsonText = extractJsonObject(rawText, true);
+    const jsonText = extractJsonObject(rawText, false);
     if (!jsonText) return '';
 
     try {
         const parsed = JSON.parse(jsonText) as Record<string, unknown>;
-        return cleanOptimizedPrompt(String(parsed.optimizedPrompt || '').trim());
-    } catch {
+        let optimized = String(parsed.optimizedPrompt || '').trim();
+        if (!optimized) return '';
+
+        // Unescape literal \n strings back into actual newlines
+        optimized = optimized.replace(/\\n/g, '\n');
+
+        return cleanOptimizedPrompt(optimized);
+    } catch (e) {
+        console.error(
+            '[hypergravity] Failed to parse optimized prompt JSON:',
+            e,
+            'Raw JSON text:',
+            jsonText
+        );
         return '';
     }
 }
@@ -940,7 +952,7 @@ async function handleOptimizePrompt(request: OptimizePromptRequest) {
             ? { success: true, optimizedPrompt }
             : {
                   success: false,
-                  error: 'Could not extract optimizer JSON code block response',
+                  error: 'Could not extract optimizer JSON response after repair attempt',
               };
     } catch (e: unknown) {
         console.error('[hypergravity] Optimization failed:', e);

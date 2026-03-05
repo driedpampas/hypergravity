@@ -92,10 +92,12 @@ export function createPromptOptimizer({ showToast }: { showToast: ShowToast }) {
                 return;
             }
 
-            showToast(`Optimization failed: ${response?.error || 'Unknown error'}`, 'error');
+            const errorMessage = response?.error || 'Unknown error';
+            console.error('[hypergravity] Prompt optimization failed:', errorMessage);
+            showToast(`Optimization failed: ${errorMessage}`, 'error');
         } catch (e) {
             if (isOptimizing) {
-                console.error('[hypergravity] Optimization error:', e);
+                console.error('[hypergravity] Prompt optimization exception:', e);
                 showToast('Error optimizing prompt', 'error');
             }
         } finally {
