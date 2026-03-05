@@ -18,7 +18,7 @@
 }
 
 #hypergravity-root {
-    background: var(--gem-sys-color--surface);
+    background: var(--gem-sys-color--surface-container);
     border-radius: 30px;
     margin: 0px 12px;
     overflow: hidden;
@@ -77,11 +77,9 @@ top-bar-actions .right-section:has(.hg-top-bar) {
     border-radius: 50%;
     background: transparent;
     border: none;
-    color: var(--gem-sys-color--on-surface, #444746);
+    color: var(--mat-icon-button-icon-color, var(--mat-sys-on-surface-variant));
     cursor: pointer;
     transition: background 0.15s ease;
-    margin-right: 4px;
-    margin-top: 4px;
 }
 
 .hg-header-btn:hover {
