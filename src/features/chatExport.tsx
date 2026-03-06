@@ -1,11 +1,22 @@
+import { parseExportDocument } from '@features/chatExport.parser';
+import {
+    serializeDocumentAsMarkdown,
+    serializeDocumentAsText,
+} from '@features/chatExport.serializers';
+import { serializeDocumentAsStyledHtml } from '@features/chatExport.serializers.html';
+import { createDocxDocument } from '@features/chatExport.targets.docx';
+import { renderDocumentToPdf } from '@features/chatExport.targets.pdf';
+import type { ExportDocument } from '@features/chatExport.types';
+import {
+    ClipboardExportIcon,
+    DocsIcon,
+    HtmlIcon,
+    MarkdownIcon,
+    PictureAsPdfIcon,
+    PrintMenuIcon,
+    TextSnippetIcon,
+} from '@icons';
 import { render } from 'preact';
-
-type ChatRole = 'User' | 'Gemini';
-type ChatExportMessage = {
-    role: ChatRole;
-    text: string;
-    timestamp: string;
-};
 
 type ActiveChatInfo = {
     id: string;
@@ -60,79 +71,29 @@ export class ChatExportController {
         this.findActiveChatInfo = findActiveChatInfo;
     }
 
-    /**
-     * Scrapes the current page DOM to extract a structured list of chat messages.
-     * @returns {Array<{role: 'User'|'Gemini', text: string, timestamp: string}>}
-     */
-    getChatHistory(): ChatExportMessage[] {
-        const userSelectors = [
-            'user-query',
-            '.user-message',
-            '[data-message-author="user"]',
-            '.query-content',
-        ];
+    private buildExportDocument(): ExportDocument {
+        const chat = this.findActiveChatInfo();
+        const title = chat?.title || 'Gemini Chat';
+        const exportedAt = new Date();
 
-        const allSelectors = [
-            ...userSelectors,
-            'model-response',
-            '.model-response',
-            '[data-message-author="model"]',
-            'message-content .markdown-main-panel',
-            'generative-ui-response',
-            'response-container',
-        ].join(', ');
-
-        let nodes = Array.from(document.querySelectorAll<HTMLElement>(allSelectors));
-        nodes = nodes.filter(
-            (node, index, arr) =>
-                !arr.some((other, otherIndex) => index !== otherIndex && other.contains(node))
-        );
-
-        return nodes
-            .map((node) => {
-                const isUser = userSelectors.some(
-                    (selector) => node.matches(selector) || node.closest(selector)
-                );
-                const text = (node.innerText || '').trim();
-                if (!text) return null;
-
-                return {
-                    role: isUser ? 'User' : 'Gemini',
-                    text,
-                    timestamp: '',
-                };
-            })
-            .filter((msg): msg is ChatExportMessage => msg !== null);
-    }
-
-    /**
-     * Formats a list of messages into a single plain-text string with header information.
-     * @param {Array} messages - List of message objects.
-     * @param {string} title - Chat title.
-     * @returns {string}
-     */
-    formatTextExport(messages: ChatExportMessage[], title: string): string {
-        let output = `${title}\nExported using hypergravity on: ${new Date().toLocaleString()}\n\n`;
-        messages.forEach((msg) => {
-            output += `${msg.role}\n\n${msg.text}\n\n`;
+        return parseExportDocument({
+            title,
+            exportedAt,
         });
-        return output;
     }
 
     /**
      * Main entry point for TXT export.
      */
     exportAsText() {
-        const messages = this.getChatHistory();
-        if (!messages.length) {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
             this.showToast('Cannot export empty chat', 'error');
             return;
         }
 
-        const chat = this.findActiveChatInfo();
-        const title = chat?.title || 'Gemini Chat';
-        const text = this.formatTextExport(messages, title);
-        const fileBase = sanitizeFilename(title);
+        const text = serializeDocumentAsText(exportDocument);
+        const fileBase = sanitizeFilename(exportDocument.title);
 
         downloadBlob(
             new Blob([text], { type: 'text/plain' }),
@@ -142,57 +103,55 @@ export class ChatExportController {
         this.showToast('Text downloaded', 'success');
     }
 
+    exportAsMarkdown() {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
+            this.showToast('Cannot export empty chat', 'error');
+            return;
+        }
+
+        const markdown = serializeDocumentAsMarkdown(exportDocument);
+        const fileBase = sanitizeFilename(exportDocument.title);
+
+        downloadBlob(
+            new Blob([markdown], { type: 'text/markdown' }),
+            `${fileBase}_${new Date().toISOString().slice(0, 10)}.md`
+        );
+
+        this.showToast('Markdown downloaded', 'success');
+    }
+
+    exportAsHtml() {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
+            this.showToast('Cannot export empty chat', 'error');
+            return;
+        }
+
+        const html = serializeDocumentAsStyledHtml(exportDocument);
+        const fileBase = sanitizeFilename(exportDocument.title);
+
+        downloadBlob(
+            new Blob([html], { type: 'text/html' }),
+            `${fileBase}_${new Date().toISOString().slice(0, 10)}.html`
+        );
+
+        this.showToast('HTML downloaded', 'success');
+    }
+
     async exportAsPdf() {
-        const messages = this.getChatHistory();
-        if (!messages.length) {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
             this.showToast('Cannot export empty chat', 'error');
             return;
         }
 
         try {
             const { jsPDF } = await import('jspdf');
-            const chat = this.findActiveChatInfo();
-            const title = chat?.title || 'Gemini Chat';
-            const fileBase = sanitizeFilename(title);
+            const fileBase = sanitizeFilename(exportDocument.title);
 
             const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
-            const pageWidth = pdf.internal.pageSize.getWidth();
-            const margin = 48;
-            const maxWidth = pageWidth - margin * 2;
-
-            let y = margin;
-            pdf.setFontSize(16);
-            pdf.text(title, margin, y);
-            y += 24;
-            pdf.setFontSize(10);
-            pdf.text(`Exported using hypergravity on: ${new Date().toLocaleString()}`, margin, y);
-            y += 22;
-
-            const ensureSpace = (needed = 18): void => {
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                if (y + needed > pageHeight - margin) {
-                    pdf.addPage();
-                    y = margin;
-                }
-            };
-
-            messages.forEach((msg: ChatExportMessage) => {
-                ensureSpace(24);
-                pdf.setFontSize(11);
-                pdf.setFont('helvetica', 'bold');
-                pdf.text(msg.role, margin, y);
-                y += 16;
-
-                pdf.setFont('helvetica', 'normal');
-                pdf.setFontSize(10);
-                const lines = pdf.splitTextToSize(msg.text, maxWidth);
-                lines.forEach((line: string) => {
-                    ensureSpace(14);
-                    pdf.text(line, margin, y);
-                    y += 14;
-                });
-                y += 10;
-            });
+            renderDocumentToPdf(pdf, exportDocument);
 
             pdf.save(`${fileBase}_${new Date().toISOString().slice(0, 10)}.pdf`);
             this.showToast('PDF downloaded', 'success');
@@ -203,61 +162,18 @@ export class ChatExportController {
     }
 
     async exportAsDocx() {
-        const messages = this.getChatHistory();
-        if (!messages.length) {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
             this.showToast('Cannot export empty chat', 'error');
             return;
         }
 
         try {
             const docx = await import('docx');
-            const { Document, Packer, Paragraph, TextRun } = docx;
-            const chat = this.findActiveChatInfo();
-            const title = chat?.title || 'Gemini Chat';
-            const fileBase = sanitizeFilename(title);
+            const { Packer } = docx;
+            const fileBase = sanitizeFilename(exportDocument.title);
 
-            const children = [
-                new Paragraph({
-                    children: [new TextRun({ text: title, bold: true, size: 32 })],
-                }),
-                new Paragraph({
-                    children: [
-                        new TextRun({
-                            text: `Exported using hypergravity on: ${new Date().toLocaleString()}`,
-                            size: 20,
-                        }),
-                    ],
-                }),
-                new Paragraph({ text: '' }),
-            ];
-
-            messages.forEach((msg: ChatExportMessage) => {
-                children.push(
-                    new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: msg.role,
-                                bold: true,
-                                size: 24,
-                            }),
-                        ],
-                    })
-                );
-
-                msg.text.split('\n').forEach((line: string) => {
-                    children.push(
-                        new Paragraph({
-                            children: [new TextRun({ text: line, size: 22 })],
-                        })
-                    );
-                });
-
-                children.push(new Paragraph({ text: '' }));
-            });
-
-            const documentFile = new Document({
-                sections: [{ children }],
-            });
+            const documentFile = createDocxDocument(docx, exportDocument);
 
             const blob = await Packer.toBlob(documentFile);
             downloadBlob(blob, `${fileBase}_${new Date().toISOString().slice(0, 10)}.docx`);
@@ -269,41 +185,13 @@ export class ChatExportController {
     }
 
     printChat() {
-        const messages = this.getChatHistory();
-        if (!messages.length) {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
             this.showToast('Cannot print empty chat', 'error');
             return;
         }
 
-        const chat = this.findActiveChatInfo();
-        const title = chat?.title || 'Gemini Chat';
-
-        const html = `
-            <html>
-                <head>
-                    <title>${title}</title>
-                    <style>
-                        body { font-family: 'Google Sans Flex', 'Google Sans', 'Helvetica Neue', sans-serif; padding: 24px; max-width: 900px; margin: 0 auto; }
-                        .msg { margin-bottom: 22px; }
-                        .role { font-weight: 700; margin-bottom: 8px; }
-                        .text { white-space: pre-wrap; line-height: 1.5; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${title}</h1>
-                    <p>Exported using hypergravity on: ${new Date().toLocaleString()}</p>
-                    ${messages
-                        .map(
-                            (msg) =>
-                                `<div class="msg"><div class="role">${msg.role}</div><div class="text">${msg.text
-                                    .replace(/&/g, '&amp;')
-                                    .replace(/</g, '&lt;')
-                                    .replace(/>/g, '&gt;')}</div></div>`
-                        )
-                        .join('')}
-                </body>
-            </html>
-        `;
+        const html = serializeDocumentAsStyledHtml(exportDocument);
 
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
@@ -320,15 +208,13 @@ export class ChatExportController {
     }
 
     copyToClipboard() {
-        const messages = this.getChatHistory();
-        if (!messages.length) {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
             this.showToast('Cannot copy empty chat', 'error');
             return;
         }
 
-        const chat = this.findActiveChatInfo();
-        const title = chat?.title || 'Gemini Chat';
-        const text = this.formatTextExport(messages, title);
+        const text = serializeDocumentAsText(exportDocument);
 
         navigator.clipboard
             .writeText(text)
@@ -349,14 +235,32 @@ export class ChatExportController {
 
         const close = () => this.closePopup();
 
-        const handleAction = async (format: 'copy' | 'txt' | 'pdf' | 'docx' | 'print') => {
+        const handleAction = async (
+            format: 'copy' | 'txt' | 'md' | 'html' | 'pdf' | 'docx' | 'print'
+        ) => {
             if (format === 'copy') this.copyToClipboard();
             if (format === 'txt') this.exportAsText();
+            if (format === 'md') this.exportAsMarkdown();
+            if (format === 'html') this.exportAsHtml();
             if (format === 'pdf') await this.exportAsPdf();
             if (format === 'docx') await this.exportAsDocx();
             if (format === 'print') this.printChat();
             close();
         };
+
+        const exportActions: Array<{
+            format: 'copy' | 'txt' | 'md' | 'html' | 'pdf' | 'docx' | 'print';
+            label: string;
+            Icon: typeof ClipboardExportIcon;
+        }> = [
+            { format: 'copy', label: 'Clipboard', Icon: ClipboardExportIcon },
+            { format: 'txt', label: 'Text (.txt)', Icon: TextSnippetIcon },
+            { format: 'md', label: 'Markdown (.md)', Icon: MarkdownIcon },
+            { format: 'html', label: 'HTML (.html)', Icon: HtmlIcon },
+            { format: 'pdf', label: 'PDF (.pdf)', Icon: PictureAsPdfIcon },
+            { format: 'docx', label: 'DOCX (.docx)', Icon: DocsIcon },
+            { format: 'print', label: 'Print', Icon: PrintMenuIcon },
+        ];
 
         const ExportModal = () => (
             <div class="hg-export-popup">
@@ -375,41 +279,17 @@ export class ChatExportController {
                     </button>
                 </div>
                 <div class="hg-export-actions">
-                    <button
-                        type="button"
-                        onClick={() => handleAction('copy')}
-                        class="hg-export-action"
-                    >
-                        Copy to Clipboard
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleAction('txt')}
-                        class="hg-export-action"
-                    >
-                        Export as .txt
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleAction('pdf')}
-                        class="hg-export-action"
-                    >
-                        Export as .pdf
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleAction('docx')}
-                        class="hg-export-action"
-                    >
-                        Export as .docx
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => handleAction('print')}
-                        class="hg-export-action"
-                    >
-                        Print Chat
-                    </button>
+                    {exportActions.map(({ format, label, Icon }) => (
+                        <button
+                            key={format}
+                            type="button"
+                            onClick={() => handleAction(format)}
+                            class="hg-export-action"
+                        >
+                            <Icon class="hg-export-action-icon" />
+                            <span class="hg-export-action-label">{label}</span>
+                        </button>
+                    ))}
                 </div>
             </div>
         );

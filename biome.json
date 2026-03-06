@@ -39,6 +39,14 @@
         }
     },
     "files": {
-        "includes": ["**", "!**/dist", "!**/node_modules", "!**/.local", "!**/.old", "!**/.tmp"]
+        "includes": [
+            "**",
+            "!**/dist",
+            "!**/node_modules",
+            "!**/.local",
+            "!**/.old",
+            "!**/.tmp",
+            "!*.html"
+        ]
     }
 }

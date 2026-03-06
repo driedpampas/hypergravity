@@ -164,30 +164,62 @@ top-bar-actions .right-section:has(.hg-top-bar) {
 }
 
 .hg-export-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
     padding: 14px;
 }
 
 .hg-export-action,
 .hg-folder-select-save {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
     width: 100%;
     border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
     background: transparent;
     color: inherit;
     border-radius: 8px;
-    padding: 11px 12px;
     font-size: 14px;
     cursor: pointer;
+}
+
+.hg-export-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 96px;
+    gap: 8px;
+    padding: 12px 8px;
+    border-radius: 10px;
+}
+
+.hg-export-action-icon {
+    width: 26px;
+    height: 26px;
+    opacity: 0.92;
+}
+
+.hg-export-action-label {
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.hg-folder-select-save {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 11px 12px;
 }
 
 .hg-export-action:hover,
 .hg-folder-select-save:hover {
     background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+@media (max-width: 520px) {
+    .hg-export-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 .hg-folder-select-subtitle {

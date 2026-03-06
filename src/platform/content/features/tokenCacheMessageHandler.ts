@@ -1,13 +1,13 @@
 import {
+    TOKEN_CACHE_MESSAGE_TYPES,
+    type TokenCacheMessage,
+} from '@shared/contracts/tokenCacheMessages';
+import {
     clearCacheData,
     getAllCacheData,
     getCacheStats,
     importCacheData,
 } from '@utils/tokenHashCache';
-import {
-    TOKEN_CACHE_MESSAGE_TYPES,
-    type TokenCacheMessage,
-} from '@shared/contracts/tokenCacheMessages';
 
 export function registerTokenCacheMessageHandler(): void {
     chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
