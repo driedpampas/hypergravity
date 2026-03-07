@@ -1,5 +1,5 @@
 import { useStorage } from '@hooks/useStorage';
-import { BackArrowIcon, ChevronRightIcon, EyeOffIcon } from '@icons';
+import { BackArrowIcon, BlurOnIcon, ChevronRightIcon, EyeOffIcon } from '@icons';
 import { DEFAULT_SETTINGS, SETTINGS_KEY } from '@utils/constants';
 import type { JSX } from 'preact';
 import { useState } from 'preact/hooks';
@@ -171,20 +171,20 @@ SETTINGS_PAGES.push({
 
 SETTINGS_PAGES.push({
     id: 'privacy',
-    title: 'Privacy',
-    description: 'Blur sensitive text in chats and input area',
-    icon: <EyeOffIcon width="18" height="18" />,
+    title: 'Blur Chats',
+    description: 'Blur message and title content for privacy',
+    icon: <BlurOnIcon width="18" height="18" />,
     render: ({ SettingRow }) => (
         <>
             <SettingRow
-                label="Private Mode"
+                label="Blur Chats"
                 settingKey="privacyModeEnabled"
-                description="Enable privacy blur controls across the chat page"
+                description="Enable blur controls across chats and chat titles"
             />
             <SettingRow
-                label="Blur Everything (Sidebar)"
+                label="Blur All Sidebar Chats"
                 settingKey="privacyBlurEverything"
-                description="Blur all chat titles in sidebar, not only private chats"
+                description="Blur every chat in the sidebar instead of only selected Blur Chats"
             />
             <SettingRow
                 label="Blur User Requests"
@@ -200,6 +200,27 @@ SETTINGS_PAGES.push({
                 label="Blur Input While Typing"
                 settingKey="privacyBlurInput"
                 description="Blur current input content until hovered"
+            />
+        </>
+    ),
+});
+
+SETTINGS_PAGES.push({
+    id: 'hide-chat',
+    title: 'Hide Chat',
+    description: 'Control hidden chat visibility and access behavior',
+    icon: <EyeOffIcon width="18" height="18" />,
+    render: ({ SettingRow }) => (
+        <>
+            <SettingRow
+                label="Enable Hide Chat"
+                settingKey="hideChatsEnabled"
+                description="Allow hidden chats to be managed and accessed from the hidden chats menu"
+            />
+            <SettingRow
+                label="Keep Hidden Chats Inaccessible When Disabled"
+                settingKey="hideChatsKeepInaccessibleWhenDisabled"
+                description="When Hide Chat is disabled, keep hidden chats blocked from all UI instead of restoring them"
             />
         </>
     ),

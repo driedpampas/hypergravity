@@ -3,6 +3,7 @@ import '@app/content/host-overrides.css';
 
 import { ChatExportController } from '@features/chatExport';
 import { createChatMemoryManager } from '@features/chatMemoryManager';
+import { createHiddenChatsManager } from '@features/hiddenChatsManager';
 import { createAtMentionsMemoriesManager } from '@features/memories';
 import { createPrivacyModeManager } from '@features/privacyModeManager';
 import { createTopBarToolsManager } from '@features/topBarToolsManager';
@@ -26,6 +27,7 @@ let topBarToolsManager: ReturnType<typeof createTopBarToolsManager> | null = nul
 let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
 let atMentionsMemoriesManager: ReturnType<typeof createAtMentionsMemoriesManager> | null = null;
 let privacyModeManager: ReturnType<typeof createPrivacyModeManager> | null = null;
+let hiddenChatsManager: ReturnType<typeof createHiddenChatsManager> | null = null;
 let hgEnabled = true;
 let uiRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -44,6 +46,24 @@ window.addEventListener('hg-privacy-chat-updated', (event: Event) => {
 
     if (custom?.detail?.chatId && typeof custom?.detail?.enabled === 'boolean') {
         privacyModeManager?.applyExternalUpdate({
+            chatId: custom.detail.chatId,
+            title: custom.detail.title,
+            enabled: custom.detail.enabled,
+        });
+    }
+
+    scheduleUiRefresh(0, false);
+});
+
+window.addEventListener('hg-hidden-chat-updated', (event: Event) => {
+    const custom = event as CustomEvent<{
+        chatId?: string;
+        title?: string;
+        enabled?: boolean;
+    }>;
+
+    if (custom?.detail?.chatId && typeof custom?.detail?.enabled === 'boolean') {
+        hiddenChatsManager?.applyExternalUpdate({
             chatId: custom.detail.chatId,
             title: custom.detail.title,
             enabled: custom.detail.enabled,
@@ -84,6 +104,12 @@ function initializeFeatureModules() {
             getSettings,
         });
     }
+
+    if (!hiddenChatsManager) {
+        hiddenChatsManager = createHiddenChatsManager({
+            getSettings,
+        });
+    }
 }
 
 function refreshInjectedUi() {
@@ -95,6 +121,7 @@ function refreshInjectedUi() {
     chatMemoryManager?.refresh();
     atMentionsMemoriesManager?.refresh();
     privacyModeManager?.refresh();
+    hiddenChatsManager?.refresh();
 
     const menuRoots = document.querySelectorAll('.conversation-actions-menu');
 
@@ -136,6 +163,7 @@ function removeInjectedUi() {
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
     atMentionsMemoriesManager?.cleanup();
     privacyModeManager?.destroy();
+    hiddenChatsManager?.destroy();
 }
 
 const observer = new MutationObserver(() => {

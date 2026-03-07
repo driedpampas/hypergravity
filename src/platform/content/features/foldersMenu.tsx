@@ -1,7 +1,21 @@
-import { CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, FolderAddIcon } from '@icons';
+import {
+    BlurOffIcon,
+    BlurOnIcon,
+    CheckIcon,
+    CloseIcon,
+    EyeIcon,
+    EyeOffIcon,
+    FolderAddIcon,
+} from '@icons';
 import { inferChatInfoFromConversationRow } from '@shared/chat/chatInfo';
 import { getStorageValue, setStorageValue } from '@utils/browserEnv';
-import { FOLDERS_KEY, PRIVACY_CHAT_KEY_PREFIX } from '@utils/constants';
+import {
+    DEFAULT_SETTINGS,
+    FOLDERS_KEY,
+    HIDDEN_CHAT_KEY_PREFIX,
+    PRIVACY_CHAT_KEY_PREFIX,
+    SETTINGS_KEY,
+} from '@utils/constants';
 import {
     normalizeFoldersData,
     type StoredChat,
@@ -13,6 +27,13 @@ import { render } from 'preact';
 import { useState } from 'preact/hooks';
 
 type PrivacyChatRecord = {
+    chatId: string;
+    title: string;
+    enabled: boolean;
+    updatedAt: number;
+};
+
+type HiddenChatRecord = {
     chatId: string;
     title: string;
     enabled: boolean;
@@ -129,6 +150,7 @@ export function createFoldersMenuManager({
     let lastClickedChatInfo: ChatInfo | null = null;
 
     const getPrivacyChatKey = (chatId: string) => `${PRIVACY_CHAT_KEY_PREFIX}${chatId}`;
+    const getHiddenChatKey = (chatId: string) => `${HIDDEN_CHAT_KEY_PREFIX}${chatId}`;
 
     async function getPrivacyChatRecord(chatId: string): Promise<PrivacyChatRecord | null> {
         const raw = (await getIdbValue(
@@ -145,6 +167,45 @@ export function createFoldersMenuManager({
             title: String(raw.title || '').trim(),
             enabled: Boolean(raw.enabled),
             updatedAt: Number(raw.updatedAt) || Date.now(),
+        };
+    }
+
+    async function getHiddenChatRecord(chatId: string): Promise<HiddenChatRecord | null> {
+        const raw = (await getIdbValue(
+            getHiddenChatKey(chatId),
+            null
+        )) as Partial<HiddenChatRecord> | null;
+
+        if (!raw || typeof raw !== 'object') return null;
+        const id = String(raw.chatId || '').trim();
+        if (!id) return null;
+
+        return {
+            chatId: id,
+            title: String(raw.title || '').trim(),
+            enabled: Boolean(raw.enabled),
+            updatedAt: Number(raw.updatedAt) || Date.now(),
+        };
+    }
+
+    async function getHideChatFeatureState(): Promise<{
+        hideChatsEnabled: boolean;
+        keepInaccessibleWhenDisabled: boolean;
+    }> {
+        const settings = await getStorageValue<Partial<typeof DEFAULT_SETTINGS>>(
+            SETTINGS_KEY,
+            DEFAULT_SETTINGS
+        );
+        const storedSettings: Partial<typeof DEFAULT_SETTINGS> =
+            settings && typeof settings === 'object' ? settings : {};
+        const merged = {
+            ...DEFAULT_SETTINGS,
+            ...storedSettings,
+        };
+
+        return {
+            hideChatsEnabled: merged.hideChatsEnabled !== false,
+            keepInaccessibleWhenDisabled: Boolean(merged.hideChatsKeepInaccessibleWhenDisabled),
         };
     }
 
@@ -297,7 +358,7 @@ export function createFoldersMenuManager({
         togglePrivateButton.type = 'button';
 
         const label = document.createElement('span');
-        label.textContent = 'Hide chat';
+        label.textContent = 'Blur chat';
 
         const iconHost = document.createElement('span');
         iconHost.className = 'hg-toggle-private-chat-icon';
@@ -306,12 +367,12 @@ export function createFoldersMenuManager({
         togglePrivateButton.appendChild(label);
 
         const updateToggleUi = (enabled: boolean) => {
-            label.textContent = enabled ? 'Show chat' : 'Hide chat';
+            label.textContent = enabled ? 'Unblur chat' : 'Blur chat';
             render(
                 enabled ? (
-                    <EyeIcon width="24" height="24" />
+                    <BlurOnIcon width="24" height="24" />
                 ) : (
-                    <EyeOffIcon width="24" height="24" />
+                    <BlurOffIcon width="24" height="24" />
                 ),
                 iconHost
             );
@@ -327,7 +388,7 @@ export function createFoldersMenuManager({
 
             const currentChatInfo = lastClickedChatInfo || findActiveChatInfo();
             if (!currentChatInfo?.id) {
-                showToast('Could not identify chat privacy target', 'error');
+                showToast('Could not identify chat blur target', 'error');
                 return;
             }
 
@@ -353,13 +414,96 @@ export function createFoldersMenuManager({
 
             updateToggleUi(nextEnabled);
             showToast(
-                nextEnabled ? 'Chat hidden in privacy mode' : 'Chat shown in privacy mode',
+                nextEnabled ? 'Chat added to Blur Chats' : 'Chat removed from Blur Chats',
                 'success'
             );
         });
 
         const last = nativeItems[nativeItems.length - 1];
         last.parentNode?.insertBefore(togglePrivateButton, last.nextSibling);
+
+        if (menuRoot.querySelector('.hg-toggle-hidden-chat-btn')) return;
+
+        const toggleHiddenButton = document.createElement('button');
+        toggleHiddenButton.className = 'hg-toggle-hidden-chat-btn';
+        toggleHiddenButton.setAttribute('role', 'menuitem');
+        toggleHiddenButton.type = 'button';
+
+        const hiddenLabel = document.createElement('span');
+        hiddenLabel.textContent = 'Hide chat';
+
+        const hiddenIconHost = document.createElement('span');
+        hiddenIconHost.className = 'hg-toggle-hidden-chat-icon';
+
+        toggleHiddenButton.appendChild(hiddenIconHost);
+        toggleHiddenButton.appendChild(hiddenLabel);
+
+        const updateHiddenUi = (enabled: boolean) => {
+            hiddenLabel.textContent = enabled ? 'Show chat' : 'Hide chat';
+            render(
+                enabled ? (
+                    <EyeIcon width="24" height="24" />
+                ) : (
+                    <EyeOffIcon width="24" height="24" />
+                ),
+                hiddenIconHost
+            );
+        };
+
+        void getHiddenChatRecord(chatInfo.id).then((record) => {
+            updateHiddenUi(Boolean(record?.enabled));
+        });
+
+        toggleHiddenButton.addEventListener('click', async (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const currentChatInfo = lastClickedChatInfo || findActiveChatInfo();
+            if (!currentChatInfo?.id) {
+                showToast('Could not identify chat visibility target', 'error');
+                return;
+            }
+
+            const hideFeatureState = await getHideChatFeatureState();
+            if (!hideFeatureState.hideChatsEnabled) {
+                showToast(
+                    hideFeatureState.keepInaccessibleWhenDisabled
+                        ? 'Hide Chat is disabled and hidden chats are locked'
+                        : 'Enable Hide Chat in Settings to manage hidden chats',
+                    'info'
+                );
+                return;
+            }
+
+            const existing = await getHiddenChatRecord(currentChatInfo.id);
+            const nextEnabled = !existing?.enabled;
+
+            await setIdbValue(getHiddenChatKey(currentChatInfo.id), {
+                chatId: currentChatInfo.id,
+                title: currentChatInfo.title,
+                enabled: nextEnabled,
+                updatedAt: Date.now(),
+            } as HiddenChatRecord);
+
+            window.dispatchEvent(
+                new CustomEvent('hg-hidden-chat-updated', {
+                    detail: {
+                        chatId: currentChatInfo.id,
+                        title: currentChatInfo.title,
+                        enabled: nextEnabled,
+                    },
+                })
+            );
+
+            updateHiddenUi(nextEnabled);
+            showToast(
+                nextEnabled ? 'Chat hidden from main chat list' : 'Chat restored to main chat list',
+                'success'
+            );
+        });
+
+        const hiddenLast = nativeItems[nativeItems.length - 1];
+        hiddenLast.parentNode?.insertBefore(toggleHiddenButton, hiddenLast.nextSibling);
     }
 
     return {

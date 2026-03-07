@@ -311,6 +311,21 @@ top-bar-actions .right-section:has(.hg-top-bar) {
     text-align: left;
 }
 
+.hg-toggle-hidden-chat-btn {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding-left: var(--mat-menu-item-with-icon-leading-spacing, 12px);
+    padding-right: var(--mat-menu-item-with-icon-trailing-spacing, 12px);
+    background: transparent;
+    border: none;
+    color: var(--mat-menu-item-label-text-color, var(--mat-sys-on-surface));
+    font-size: 14px;
+    font-family: var(--hg-font-family);
+    cursor: pointer;
+    text-align: left;
+}
+
 .hg-add-to-folder-btn svg {
     width: 20px;
     height: 20px;
@@ -325,11 +340,22 @@ top-bar-actions .right-section:has(.hg-top-bar) {
     margin-right: 10px;
 }
 
+.hg-toggle-hidden-chat-btn svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 10px;
+}
+
 .hg-add-to-folder-btn:hover {
     background: var(--gem-sys-color--surface-container-highest, #3c3c3c);
 }
 
 .hg-toggle-private-chat-btn:hover {
+    background: var(--gem-sys-color--surface-container-highest, #3c3c3c);
+}
+
+.hg-toggle-hidden-chat-btn:hover {
     background: var(--gem-sys-color--surface-container-highest, #3c3c3c);
 }
 
@@ -439,4 +465,8 @@ body [data-hg-private-chat="1"] {
 
 body [data-hg-private-chat="1"]:hover {
     filter: none;
+}
+
+body [data-hg-hidden-chat="1"] {
+    display: none !important;
 }

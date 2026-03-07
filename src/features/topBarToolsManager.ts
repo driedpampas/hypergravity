@@ -1,4 +1,4 @@
-import { CollapseIcon, ExpandIcon, ExportIcon, EyeIcon, EyeOffIcon } from '@icons';
+import { BlurOffIcon, BlurOnIcon, CollapseIcon, ExpandIcon, ExportIcon } from '@icons';
 import { topBarManager } from '@managers/topBarManager';
 import { findActiveChatInfo } from '@shared/chat/chatInfo';
 import { PRIVACY_CHAT_KEY_PREFIX } from '@utils/constants';
@@ -336,8 +336,8 @@ export function createTopBarToolsManager({
 
         const privacyButton = topBarManager.ensureButton({
             id: 'hg-header-privacy-btn',
-            title: privateModeEnabled ? 'Disable Privacy Mode' : 'Enable Privacy Mode',
-            iconVNode: h(privateModeEnabled ? EyeOffIcon : EyeIcon, {}),
+            title: privateModeEnabled ? 'Unblur Chat' : 'Blur Chat',
+            iconVNode: h(privateModeEnabled ? BlurOffIcon : BlurOnIcon, {}),
             onClick: async () => {
                 const active = findActiveChatInfo();
                 if (!active?.id) return;

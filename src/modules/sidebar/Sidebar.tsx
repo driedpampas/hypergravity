@@ -8,14 +8,17 @@ import {
     WelcomeHandIcon,
 } from '@icons';
 import { FoldersManager } from '@modules/sidebar/FoldersManager';
+import { HiddenChatsModal } from '@modules/sidebar/HiddenChatsModal';
 import { MemoriesModal } from '@modules/sidebar/MemoriesModal';
 import { SettingsModal } from '@modules/sidebar/SettingsModal';
 import { WelcomeModal } from '@modules/sidebar/WelcomeModal';
 import { DEFAULT_SETTINGS, SETTINGS_KEY, WELCOME_SEEN_KEY } from '@utils/constants';
-import { useEffect, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import './Sidebar.css';
 
-type ActiveMenu = 'folders' | 'memories' | 'settings' | null;
+type ActiveMenu = 'folders' | 'memories' | 'settings' | 'hidden-chats' | null;
+
+const SETTINGS_LONG_PRESS_MS = 700;
 
 export function Sidebar() {
     const [isExpanded, setIsExpanded] = useStorage('hypergravitySectionExpanded', true);
@@ -25,6 +28,8 @@ export function Sidebar() {
     const [activeMenu, setActiveMenu] = useState<ActiveMenu>(null);
     const [showWelcome, setShowWelcome] = useState(false);
     const sidebarThemedIconClass = settings.themeSidebarIcons ? 'hg-sidebar-themed-icon' : '';
+    const settingsLongPressTimerRef = useRef<number | null>(null);
+    const didOpenHiddenChatsRef = useRef(false);
 
     useEffect(() => {
         if (isWelcomeLoaded && !hasSeenWelcome) {
@@ -45,6 +50,33 @@ export function Sidebar() {
     const handleMemoriesClick = () => {
         setActiveMenu('memories');
     };
+
+    const clearSettingsLongPressTimer = () => {
+        if (settingsLongPressTimerRef.current !== null) {
+            window.clearTimeout(settingsLongPressTimerRef.current);
+            settingsLongPressTimerRef.current = null;
+        }
+    };
+
+    const handleSettingsPressStart = () => {
+        didOpenHiddenChatsRef.current = false;
+        clearSettingsLongPressTimer();
+
+        settingsLongPressTimerRef.current = window.setTimeout(() => {
+            didOpenHiddenChatsRef.current = true;
+            setActiveMenu('hidden-chats');
+        }, SETTINGS_LONG_PRESS_MS);
+    };
+
+    const handleSettingsPressEnd = () => {
+        clearSettingsLongPressTimer();
+    };
+
+    useEffect(() => {
+        return () => {
+            clearSettingsLongPressTimer();
+        };
+    }, []);
 
     return (
         <div
@@ -122,7 +154,18 @@ export function Sidebar() {
                     <button
                         class="hg-dropdown-item"
                         type="button"
-                        onClick={() => setActiveMenu('settings')}
+                        onPointerDown={handleSettingsPressStart}
+                        onPointerUp={handleSettingsPressEnd}
+                        onPointerLeave={handleSettingsPressEnd}
+                        onPointerCancel={handleSettingsPressEnd}
+                        onClick={() => {
+                            if (didOpenHiddenChatsRef.current) {
+                                didOpenHiddenChatsRef.current = false;
+                                return;
+                            }
+
+                            setActiveMenu('settings');
+                        }}
                     >
                         <SettingsGearIcon class="hg-dropdown-icon" />
                         <span>Settings</span>
@@ -135,6 +178,9 @@ export function Sidebar() {
                 <MemoriesModal onClose={() => setActiveMenu(null)} />
             )}
             {activeMenu === 'settings' && <SettingsModal onClose={() => setActiveMenu(null)} />}
+            {activeMenu === 'hidden-chats' && (
+                <HiddenChatsModal onClose={() => setActiveMenu(null)} />
+            )}
             {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
         </div>
     );

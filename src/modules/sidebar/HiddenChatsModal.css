@@ -1,0 +1,126 @@
+.hg-hidden-chats-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(420px, calc(100vw - 40px));
+    max-height: min(640px, calc(100vh - 48px));
+    background: var(--gem-sys-color--surface, #f0f4f8);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--hg-font-family);
+    z-index: 10000;
+}
+
+.hg-hidden-chats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+}
+
+.hg-hidden-chats-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hg-hidden-chats-title-wrap h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+}
+
+.hg-hidden-chats-title-icon {
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+}
+
+.hg-hidden-chats-close {
+    border: none;
+    background: transparent;
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+}
+
+.hg-hidden-chats-close:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.hg-hidden-chats-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.hg-hidden-chats-search {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--gem-sys-color--outline-variant, #dce1e9);
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    font-size: 13px;
+    outline: none;
+}
+
+.hg-hidden-chats-search:focus {
+    border-color: var(--gem-sys-color--primary, #4285f4);
+}
+
+.hg-hidden-chats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 2px;
+}
+
+.hg-hidden-chats-item {
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    text-align: left;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: inherit;
+}
+
+.hg-hidden-chats-item:hover {
+    background: var(--gem-sys-color--surface-container, #e3e8f0);
+}
+
+.hg-hidden-chats-item-title {
+    color: var(--gem-sys-color--on-surface, #1f1f1f);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.hg-hidden-chats-item-id {
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    font-size: 11px;
+}
+
+.hg-hidden-chats-empty {
+    color: var(--gem-sys-color--on-surface-variant, #575a5a);
+    font-size: 13px;
+    padding: 10px 8px;
+}

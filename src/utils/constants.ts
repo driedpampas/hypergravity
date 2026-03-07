@@ -3,6 +3,7 @@ export const FOLDERS_KEY = 'hypergravityGeminiFolders';
 export const WELCOME_SEEN_KEY = 'hypergravityWelcomeSeen';
 export const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
 export const PRIVACY_CHAT_KEY_PREFIX = 'hg_private_chat_';
+export const HIDDEN_CHAT_KEY_PREFIX = 'hg_hidden_chat_';
 
 export const DEFAULT_SETTINGS = {
     enabled: true,
@@ -22,6 +23,8 @@ export const DEFAULT_SETTINGS = {
     privacyBlurAiResponses: true,
     privacyBlurInput: false,
     privacyBlurEverything: false,
+    hideChatsEnabled: true,
+    hideChatsKeepInaccessibleWhenDisabled: false,
     tokenCounterMode: 'ring_text',
     showScrollButtons: true,
     geminiApiKey: '',
