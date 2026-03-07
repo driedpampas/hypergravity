@@ -1,3 +1,4 @@
+import { getAccountAwareUrl } from '@shared/chat/chatInfo';
 import {
     type OptimizePromptResponse,
     RUNTIME_MESSAGE_TYPES,
@@ -280,10 +281,13 @@ export async function getAllStorageData(keys?: string[]): Promise<Record<string,
 
 // Prompt Optimizer
 export async function optimizePrompt(promptText: string): Promise<OptimizePromptResponse> {
+    const sourceUrl = typeof window !== 'undefined' ? window.location.href : undefined;
+
     if (isExtension()) {
         return chrome.runtime.sendMessage({
             type: RUNTIME_MESSAGE_TYPES.optimizePrompt,
             prompt: promptText,
+            sourceUrl,
         }) as Promise<OptimizePromptResponse>;
     }
 
@@ -304,10 +308,10 @@ export async function optimizePrompt(promptText: string): Promise<OptimizePrompt
             );
 
             // Set the request payload
-            GM_setValue(`hg_opt_req_${requestId}`, { prompt: promptText });
+            GM_setValue(`hg_opt_req_${requestId}`, { prompt: promptText, sourceUrl });
 
             // Open gemini in a background tab with a hash to trigger worker mode
-            GM_openInTab(`https://gemini.google.com/app#hg_worker=${requestId}`, {
+            GM_openInTab(`${getAccountAwareUrl('', sourceUrl)}#hg_worker=${requestId}`, {
                 active: false,
                 insert: true,
             });

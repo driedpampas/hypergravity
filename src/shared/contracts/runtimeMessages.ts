@@ -32,6 +32,7 @@ export type ChatMemoryRecord = {
 export type OptimizePromptRequest = {
     type: (typeof RUNTIME_MESSAGE_TYPES)['optimizePrompt'];
     prompt?: string;
+    sourceUrl?: string;
 };
 
 export type CancelOptimizationRequest = {

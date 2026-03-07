@@ -4,9 +4,47 @@ export type ChatInfo = {
     url: string;
 };
 
-export function getAccountAwareUrl(chatId = ''): string {
-    const match = window.location.pathname.match(/^\/u\/(\d+)\//);
-    const accountPath = match ? `/u/${match[1]}/app` : '/app';
+type GeminiPathSource =
+    | string
+    | URL
+    | {
+          pathname?: string | null;
+      }
+    | null
+    | undefined;
+
+function resolveGeminiPathname(source?: GeminiPathSource): string {
+    if (typeof source === 'string') {
+        try {
+            return new URL(source, 'https://gemini.google.com').pathname;
+        } catch {
+            return source;
+        }
+    }
+
+    if (source instanceof URL) {
+        return source.pathname;
+    }
+
+    if (source && typeof source === 'object' && 'pathname' in source) {
+        return typeof source.pathname === 'string' ? source.pathname : '';
+    }
+
+    if (typeof window !== 'undefined') {
+        return window.location.pathname;
+    }
+
+    return '';
+}
+
+export function getAccountAwareAppPath(source?: GeminiPathSource): string {
+    const pathname = resolveGeminiPathname(source);
+    const match = pathname.match(/^\/u\/(\d+)(?:\/|$)/);
+    return match ? `/u/${match[1]}/app` : '/app';
+}
+
+export function getAccountAwareUrl(chatId = '', source?: GeminiPathSource): string {
+    const accountPath = getAccountAwareAppPath(source);
     return `https://gemini.google.com${chatId ? `${accountPath}/${chatId}` : accountPath}`;
 }
 

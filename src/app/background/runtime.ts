@@ -1,3 +1,4 @@
+import { getAccountAwareUrl } from '@shared/chat/chatInfo';
 import {
     type ChatMemoryRecord,
     type MemorySummaryStructured,
@@ -727,7 +728,11 @@ async function pollForResponse(
     throw new Error('Optimization timeout');
 }
 
-async function runFlashBackgroundPrompt(fullPrompt: string, pollTimeout = 60000): Promise<string> {
+async function runFlashBackgroundPrompt(
+    fullPrompt: string,
+    pollTimeout = 60000,
+    sourceUrl?: string
+): Promise<string> {
     let tabId: number | null = null;
     try {
         const [currentTab] = await chrome.tabs.query({
@@ -735,9 +740,10 @@ async function runFlashBackgroundPrompt(fullPrompt: string, pollTimeout = 60000)
             currentWindow: true,
         });
         const index = currentTab ? currentTab.index + 1 : undefined;
+        const optimizationUrl = getAccountAwareUrl('', sourceUrl || currentTab?.url);
 
         const tab = await chrome.tabs.create({
-            url: 'https://gemini.google.com/app',
+            url: optimizationUrl,
             active: false,
             index,
         });
@@ -926,15 +932,22 @@ async function handleSummarizeChatMemory(request: SummarizeChatMemoryRequest) {
     }
 }
 
-async function handleOptimizePrompt(request: OptimizePromptRequest) {
+async function handleOptimizePrompt(
+    request: OptimizePromptRequest,
+    sender?: chrome.runtime.MessageSender
+) {
     const prompt = String(request?.prompt || '').trim();
     if (!prompt) {
         return { success: false, error: 'Prompt is empty' };
     }
 
     try {
+        const sourceUrl =
+            typeof request?.sourceUrl === 'string' && request.sourceUrl.trim()
+                ? request.sourceUrl
+                : sender?.tab?.url;
         const fullPrompt = `${OPTIMIZATION_SYSTEM_PROMPT + prompt}\n\`\`\``;
-        const rawResponse = await runFlashBackgroundPrompt(fullPrompt, 60000);
+        const rawResponse = await runFlashBackgroundPrompt(fullPrompt, 60000, sourceUrl);
 
         let optimizedPrompt = parseOptimizedPromptFromJson(rawResponse || '');
         if (!optimizedPrompt) {
@@ -944,7 +957,7 @@ async function handleOptimizePrompt(request: OptimizePromptRequest) {
                 'CONTENT:\n```\n' +
                 String(rawResponse || '').slice(-24000) +
                 '\n```';
-            const repaired = await runFlashBackgroundPrompt(repairPrompt, 45000);
+            const repaired = await runFlashBackgroundPrompt(repairPrompt, 45000, sourceUrl);
             optimizedPrompt = parseOptimizedPromptFromJson(repaired || '');
         }
 
@@ -963,7 +976,7 @@ async function handleOptimizePrompt(request: OptimizePromptRequest) {
     }
 }
 
-chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: RuntimeMessage, sender, sendResponse) => {
     const handlers: {
         [RUNTIME_MESSAGE_TYPES.optimizePrompt]: RuntimeMessageHandler<OptimizePromptRequest>;
         [RUNTIME_MESSAGE_TYPES.summarizeChatMemory]: RuntimeMessageHandler<SummarizeChatMemoryRequest>;
@@ -974,7 +987,12 @@ chrome.runtime.onMessage.addListener((message: RuntimeMessage, _sender, sendResp
 
     const handler = handlers[message?.type];
     if (handler) {
-        handler(message as HandlerRequestMessage).then(sendResponse);
+        const request = message as HandlerRequestMessage;
+        const responsePromise =
+            message.type === RUNTIME_MESSAGE_TYPES.optimizePrompt
+                ? handleOptimizePrompt(request as OptimizePromptRequest, sender)
+                : handler(request);
+        responsePromise.then(sendResponse);
         return true;
     }
 
