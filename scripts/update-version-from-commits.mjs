@@ -31,6 +31,19 @@ function updateJsonFile(filePath, updater) {
     writeFileSync(filePath, `${JSON.stringify(updated, null, 4)}\n`, 'utf8');
 }
 
+function updateTopLevelStringPropertyPreservingFormatting(filePath, key, value) {
+    const raw = readFileSync(filePath, 'utf8');
+    const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`(^\\s*"${escapedKey}"\\s*:\\s*")([^"]*)("\\s*,?)`, 'm');
+
+    if (!pattern.test(raw)) {
+        throw new Error(`Could not find top-level string property "${key}" in ${filePath}`);
+    }
+
+    const updated = raw.replace(pattern, `$1${value}$3`);
+    writeFileSync(filePath, updated, 'utf8');
+}
+
 const commitCount = getCommitCount();
 const nextVersion = `${commitCount}`;
 
@@ -39,9 +52,6 @@ updateJsonFile(packageJsonPath, (pkg) => ({
     version: nextVersion,
 }));
 
-updateJsonFile(manifestJsonPath, (manifest) => ({
-    ...manifest,
-    version: nextVersion,
-}));
+updateTopLevelStringPropertyPreservingFormatting(manifestJsonPath, 'version', nextVersion);
 
 console.log(`Updated version to ${nextVersion}`);
