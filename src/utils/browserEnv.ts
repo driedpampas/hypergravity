@@ -1,5 +1,7 @@
 import { getAccountAwareUrl } from '@shared/chat/chatInfo';
 import {
+    type OpenBranchWindowRequest,
+    type OpenBranchWindowResponse,
     type OptimizePromptResponse,
     RUNTIME_MESSAGE_TYPES,
     type SummarizeChatMemoryRequest,
@@ -346,4 +348,23 @@ export async function summarizeChatMemory(payload: {
     }
 
     throw new Error('Chat memory summarization is not supported here');
+}
+
+export async function openBranchWindow(url: string): Promise<OpenBranchWindowResponse> {
+    const normalizedUrl = String(url || '').trim();
+    if (!normalizedUrl) {
+        return { success: false, error: 'Missing branch URL' };
+    }
+
+    if (isExtension()) {
+        return chrome.runtime.sendMessage({
+            type: RUNTIME_MESSAGE_TYPES.openBranchWindow,
+            url: normalizedUrl,
+        } satisfies OpenBranchWindowRequest) as Promise<OpenBranchWindowResponse>;
+    }
+
+    const opened = window.open(normalizedUrl, '_blank', 'noopener');
+    return opened
+        ? { success: true }
+        : { success: false, error: 'Popup blocked while opening branched chat' };
 }

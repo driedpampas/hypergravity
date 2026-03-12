@@ -1,6 +1,7 @@
 import './content.css';
 import '@app/content/host-overrides.css';
 
+import { createChatBranchManager } from '@features/chatBranchManager';
 import { ChatExportController } from '@features/chatExport';
 import { createChatMemoryManager } from '@features/chatMemoryManager';
 import { createHiddenChatsManager } from '@features/hiddenChatsManager';
@@ -25,6 +26,7 @@ let lastWideChatUrl = window.location.href;
 let chatExportController: ChatExportController | null = null;
 let topBarToolsManager: ReturnType<typeof createTopBarToolsManager> | null = null;
 let chatMemoryManager: ReturnType<typeof createChatMemoryManager> | null = null;
+let chatBranchManager: ReturnType<typeof createChatBranchManager> | null = null;
 let atMentionsMemoriesManager: ReturnType<typeof createAtMentionsMemoriesManager> | null = null;
 let privacyModeManager: ReturnType<typeof createPrivacyModeManager> | null = null;
 let hiddenChatsManager: ReturnType<typeof createHiddenChatsManager> | null = null;
@@ -88,11 +90,20 @@ function initializeFeatureModules() {
             getSettings,
             updateSettings,
             onExportClick: () => chatExportController?.showPopup(),
+            onBranchClick: () => chatBranchManager?.startBranch(),
         });
     }
 
     if (!chatMemoryManager) {
         chatMemoryManager = createChatMemoryManager();
+    }
+
+    if (!chatBranchManager) {
+        chatBranchManager = createChatBranchManager({
+            getSettings,
+            getBranchMarkdown: () => chatExportController?.getMarkdownExport() || null,
+            showToast,
+        });
     }
 
     if (!atMentionsMemoriesManager) {
@@ -119,6 +130,7 @@ function refreshInjectedUi() {
     insertChatTools();
     topBarToolsManager?.refresh();
     chatMemoryManager?.refresh();
+    chatBranchManager?.refresh();
     atMentionsMemoriesManager?.refresh();
     privacyModeManager?.refresh();
     hiddenChatsManager?.refresh();
@@ -161,6 +173,7 @@ function removeInjectedUi() {
 
     document.querySelector('#hypergravity-root')?.remove();
     document.querySelector('#hypergravity-chat-tools-root')?.remove();
+    chatBranchManager?.destroy();
     atMentionsMemoriesManager?.cleanup();
     privacyModeManager?.destroy();
     hiddenChatsManager?.destroy();

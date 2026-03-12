@@ -69,7 +69,7 @@ SETTINGS_PAGES.push({
     id: 'navigation',
     title: 'Navigation',
     description: 'Sidebar, wide mode, and top-bar behavior',
-    render: ({ SettingRow }) => (
+    render: ({ SettingRow, SelectRow }) => (
         <>
             <SettingRow
                 label="Enable Folders"
@@ -100,6 +100,15 @@ SETTINGS_PAGES.push({
                 label="Show Export Button"
                 settingKey="showExportButton"
                 description="Add chat export button in the top action bar"
+            />
+            <SelectRow
+                label="Branch Chat Opens In"
+                settingKey="chatBranchTarget"
+                description="Choose whether branched chats reuse this window or open in a separate window"
+                options={[
+                    { label: 'Same window', value: 'same_window' },
+                    { label: 'Separate window', value: 'new_window' },
+                ]}
             />
         </>
     ),

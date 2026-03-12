@@ -1,6 +1,7 @@
 export const RUNTIME_MESSAGE_TYPES = {
     optimizePrompt: 'OPTIMIZE_PROMPT',
     summarizeChatMemory: 'SUMMARIZE_CHAT_MEMORY',
+    openBranchWindow: 'OPEN_BRANCH_WINDOW',
     cancelOptimization: 'CANCEL_OPTIMIZATION',
 } as const;
 
@@ -46,10 +47,16 @@ export type SummarizeChatMemoryRequest = {
     sourceHash?: string;
 };
 
+export type OpenBranchWindowRequest = {
+    type: (typeof RUNTIME_MESSAGE_TYPES)['openBranchWindow'];
+    url?: string;
+};
+
 export type RuntimeMessage =
     | OptimizePromptRequest
     | CancelOptimizationRequest
-    | SummarizeChatMemoryRequest;
+    | SummarizeChatMemoryRequest
+    | OpenBranchWindowRequest;
 
 export type OptimizePromptResponse = {
     success: boolean;
@@ -61,5 +68,10 @@ export type SummarizeChatMemoryResponse = {
     success: boolean;
     memory?: ChatMemoryRecord;
     skipped?: boolean;
+    error?: string;
+};
+
+export type OpenBranchWindowResponse = {
+    success: boolean;
     error?: string;
 };

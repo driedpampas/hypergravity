@@ -2,6 +2,7 @@ import { getAccountAwareUrl } from '@shared/chat/chatInfo';
 import {
     type ChatMemoryRecord,
     type MemorySummaryStructured,
+    type OpenBranchWindowRequest,
     type OptimizePromptRequest,
     RUNTIME_MESSAGE_TYPES,
     type RuntimeMessage,
@@ -84,7 +85,10 @@ type RetryWithTimeoutResult<TValue> =
     | { success: true; value: TValue }
     | { success: false; value: null };
 
-type HandlerRequestMessage = SummarizeChatMemoryRequest | OptimizePromptRequest;
+type HandlerRequestMessage =
+    | SummarizeChatMemoryRequest
+    | OptimizePromptRequest
+    | OpenBranchWindowRequest;
 type RuntimeMessageHandler<TRequest extends HandlerRequestMessage> = (
     request: TRequest
 ) => Promise<Record<string, unknown>>;
@@ -976,13 +980,35 @@ async function handleOptimizePrompt(
     }
 }
 
+async function handleOpenBranchWindow(request: OpenBranchWindowRequest) {
+    const url = String(request?.url || '').trim();
+    if (!url) {
+        return { success: false, error: 'Missing branch URL' };
+    }
+
+    try {
+        await chrome.windows.create({
+            url,
+            focused: true,
+        });
+        return { success: true };
+    } catch (error) {
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to open branch window',
+        };
+    }
+}
+
 chrome.runtime.onMessage.addListener((message: RuntimeMessage, sender, sendResponse) => {
     const handlers: {
         [RUNTIME_MESSAGE_TYPES.optimizePrompt]: RuntimeMessageHandler<OptimizePromptRequest>;
         [RUNTIME_MESSAGE_TYPES.summarizeChatMemory]: RuntimeMessageHandler<SummarizeChatMemoryRequest>;
+        [RUNTIME_MESSAGE_TYPES.openBranchWindow]: RuntimeMessageHandler<OpenBranchWindowRequest>;
     } = {
         [RUNTIME_MESSAGE_TYPES.optimizePrompt]: handleOptimizePrompt,
         [RUNTIME_MESSAGE_TYPES.summarizeChatMemory]: handleSummarizeChatMemory,
+        [RUNTIME_MESSAGE_TYPES.openBranchWindow]: handleOpenBranchWindow,
     };
 
     const handler = handlers[message?.type];

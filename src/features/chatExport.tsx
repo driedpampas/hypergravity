@@ -82,6 +82,15 @@ export class ChatExportController {
         });
     }
 
+    getMarkdownExport(): string | null {
+        const exportDocument = this.buildExportDocument();
+        if (!exportDocument.messages.length) {
+            return null;
+        }
+
+        return serializeDocumentAsMarkdown(exportDocument);
+    }
+
     /**
      * Main entry point for TXT export.
      */
@@ -104,13 +113,13 @@ export class ChatExportController {
     }
 
     exportAsMarkdown() {
-        const exportDocument = this.buildExportDocument();
-        if (!exportDocument.messages.length) {
+        const markdown = this.getMarkdownExport();
+        if (!markdown) {
             this.showToast('Cannot export empty chat', 'error');
             return;
         }
 
-        const markdown = serializeDocumentAsMarkdown(exportDocument);
+        const exportDocument = this.buildExportDocument();
         const fileBase = sanitizeFilename(exportDocument.title);
 
         downloadBlob(

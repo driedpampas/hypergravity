@@ -2,6 +2,7 @@ export const SETTINGS_KEY = 'hypergravityGeminiSettings';
 export const FOLDERS_KEY = 'hypergravityGeminiFolders';
 export const WELCOME_SEEN_KEY = 'hypergravityWelcomeSeen';
 export const CHAT_MEMORIES_KEY = 'hypergravityChatMemories';
+export const PENDING_CHAT_BRANCH_KEY = 'hypergravityPendingChatBranch';
 export const PRIVACY_CHAT_KEY_PREFIX = 'hg_private_chat_';
 export const HIDDEN_CHAT_KEY_PREFIX = 'hg_hidden_chat_';
 
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS = {
     wideModeEnabled: false,
     hideSidebarEnabled: false,
     showExportButton: true,
+    chatBranchTarget: 'same_window',
     chatboxStyleEnabled: false,
     chatboxCompactEnabled: false,
     privacyModeEnabled: false,

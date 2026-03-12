@@ -1,9 +1,9 @@
 {
     "manifest_version": 3,
     "name": "hypergravity",
-    "version": "71",
+    "version": "73",
     "description": "Enhance the Gemini web interface",
-    "permissions": ["storage", "tabs", "scripting"],
+    "permissions": ["storage", "tabs", "scripting", "windows"],
     "host_permissions": ["*://gemini.google.com/*"],
     "background": {
         "service_worker": "src/entry/background.ts"

@@ -1,4 +1,12 @@
-import { BlurOffIcon, BlurOnIcon, CollapseIcon, ExpandIcon, ExportIcon } from '@icons';
+import { findChatBranchDisabledReason } from '@features/chatBranchManager';
+import {
+    BlurOffIcon,
+    BlurOnIcon,
+    BranchChatIcon,
+    CollapseIcon,
+    ExpandIcon,
+    ExportIcon,
+} from '@icons';
 import { topBarManager } from '@managers/topBarManager';
 import { findActiveChatInfo } from '@shared/chat/chatInfo';
 import { PRIVACY_CHAT_KEY_PREFIX } from '@utils/constants';
@@ -9,6 +17,7 @@ import { h } from 'preact';
 type SettingsShape = {
     wideModeEnabled?: boolean;
     showExportButton?: boolean;
+    chatBranchTarget?: string;
 };
 
 type PrivacyChatRecord = {
@@ -22,6 +31,7 @@ type TopBarToolsManagerOptions = {
     getSettings: () => Promise<SettingsShape>;
     updateSettings: (patch: Partial<SettingsShape>) => Promise<SettingsShape>;
     onExportClick: () => void;
+    onBranchClick: () => void | Promise<void>;
     onWideToggleDebug?: (enabled: boolean) => void;
 };
 
@@ -269,6 +279,7 @@ export function createTopBarToolsManager({
     getSettings,
     updateSettings,
     onExportClick,
+    onBranchClick,
     onWideToggleDebug,
 }: TopBarToolsManagerOptions) {
     const wideLayoutEngine = createWideLayoutEngine();
@@ -366,6 +377,23 @@ export function createTopBarToolsManager({
         });
 
         privacyButton?.classList.toggle('hg-privacy-active', privateModeEnabled);
+
+        const branchDisabledReason = findChatBranchDisabledReason();
+        const branchButton = topBarManager.ensureButton({
+            id: 'hg-header-branch-btn',
+            title: branchDisabledReason || 'Branch Chat',
+            iconVNode: h(BranchChatIcon, {}),
+            onClick: () => {
+                if (findChatBranchDisabledReason()) return;
+                void onBranchClick();
+            },
+        }) as HTMLButtonElement | null;
+
+        if (branchButton) {
+            branchButton.disabled = Boolean(branchDisabledReason);
+            branchButton.setAttribute('aria-disabled', branchButton.disabled ? 'true' : 'false');
+            branchButton.classList.toggle('hg-header-btn-disabled', branchButton.disabled);
+        }
 
         const shouldShowExport = settings.showExportButton !== false;
         const existingExport = document.getElementById('hg-header-export-btn');
