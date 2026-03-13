@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
     wideModeEnabled: false,
     hideSidebarEnabled: false,
     showExportButton: true,
+    removeUpsellButton: false,
     chatBranchTarget: 'same_window',
     chatboxStyleEnabled: false,
     chatboxCompactEnabled: false,

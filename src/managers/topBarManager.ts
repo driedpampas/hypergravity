@@ -2,6 +2,7 @@ import type { VNode } from 'preact';
 import { render } from 'preact';
 
 const TOP_BAR_SELECTOR = 'top-bar-actions .right-section .buttons-container';
+const UPSELL_TAG = 'g1-dynamic-upsell-button';
 
 type EnsureButtonOptions = {
     id: string;
@@ -19,6 +20,46 @@ type AddToolOptions = {
  * Finds the Gemini top bar container for tool injection.
  * @returns {HTMLElement|null}
  */
+let upsellObserver: MutationObserver | null = null;
+
+function stopUpsellObserver(container?: HTMLElement | null) {
+    upsellObserver?.disconnect();
+    upsellObserver = null;
+    // Restore any upsell buttons that were suppressed (let Gemini manage them).
+    // We simply stop intercepting; already-removed nodes won't be re-added by us.
+    void container;
+}
+
+function startUpsellObserver(container: HTMLElement) {
+    if (upsellObserver) return;
+
+    // Remove any already-present upsell buttons before observing.
+    container.querySelectorAll(UPSELL_TAG).forEach((el) => {
+        el.remove();
+    });
+
+    upsellObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            for (const node of Array.from(mutation.addedNodes)) {
+                if (node instanceof Element && node.tagName.toLowerCase() === UPSELL_TAG) {
+                    node.remove();
+                }
+            }
+        }
+    });
+
+    upsellObserver.observe(container, { childList: true });
+}
+
+function setUpsellRemovalEnabled(enabled: boolean) {
+    const container = document.querySelector<HTMLElement>(TOP_BAR_SELECTOR);
+    if (enabled && container) {
+        startUpsellObserver(container);
+    } else {
+        stopUpsellObserver(container);
+    }
+}
+
 function getTopBar() {
     const top_bar = document.querySelector<HTMLElement>(TOP_BAR_SELECTOR);
     if (top_bar) {
@@ -144,4 +185,5 @@ export const topBarManager = {
     addTool,
     removeTool,
     hasTool,
+    setUpsellRemovalEnabled,
 };

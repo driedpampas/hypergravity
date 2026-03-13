@@ -17,6 +17,7 @@ import { h } from 'preact';
 type SettingsShape = {
     wideModeEnabled?: boolean;
     showExportButton?: boolean;
+    removeUpsellButton?: boolean;
     chatBranchTarget?: string;
 };
 
@@ -394,6 +395,8 @@ export function createTopBarToolsManager({
             branchButton.setAttribute('aria-disabled', branchButton.disabled ? 'true' : 'false');
             branchButton.classList.toggle('hg-header-btn-disabled', branchButton.disabled);
         }
+
+        topBarManager.setUpsellRemovalEnabled(Boolean(settings.removeUpsellButton));
 
         const shouldShowExport = settings.showExportButton !== false;
         const existingExport = document.getElementById('hg-header-export-btn');

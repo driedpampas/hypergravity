@@ -101,6 +101,11 @@ SETTINGS_PAGES.push({
                 settingKey="showExportButton"
                 description="Add chat export button in the top action bar"
             />
+            <SettingRow
+                label="Remove Upsell Button"
+                settingKey="removeUpsellButton"
+                description="Hide Gemini's dynamic upsell button from the top bar"
+            />
             <SelectRow
                 label="Branch Chat Opens In"
                 settingKey="chatBranchTarget"
